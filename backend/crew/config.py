@@ -9,7 +9,7 @@ GEMINI_API_KEY = os.getenv("GEMINI_API_KEY")
 DEFAULT_MODEL = "gemini/gemini-2.0-flash"
 
 # File paths for intermediate results
-OUTPUT_DIR = "outputs"
+OUTPUT_DIR = "backend/crew/outputs"
 PRODUCT_INFO_FILE = f"{OUTPUT_DIR}/producto.json"
 USER_PROFILES_FILE = f"{OUTPUT_DIR}/reviewers.json"
 REVIEWS_DIR = f"{OUTPUT_DIR}/reviews"
