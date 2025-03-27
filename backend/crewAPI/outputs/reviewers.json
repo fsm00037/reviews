@@ -1,0 +1,64 @@
+{
+  "profiles": [
+    {
+      "id": 1,
+      "name": "Sofía Rodríguez",
+      "avatar": "https://example.com/avatar/sofia_rodriguez.jpg",
+      "bio": "Apasionada por la sostenibilidad y la tecnología. Siempre buscando formas de mejorar el mundo.",
+      "age": 28,
+      "location": "Barcelona, España",
+      "gender": "Female",
+      "education_level": "Máster en Energías Renovables",
+      "personality": {
+        "introvert_extrovert": 60,
+        "analytical_creative": 75,
+        "busy_free_time": 80,
+        "disorganized_organized": 70,
+        "independent_cooperative": 50,
+        "environmentalist": 95,
+        "safe_risky": 40
+      },
+      "backstory": "Sofía creció en un pequeño pueblo rural donde aprendió a apreciar la naturaleza. Estudió ingeniería y luego se especializó en energías renovables. Trabaja en una startup que desarrolla soluciones de energía solar para comunidades remotas. Le gusta pasar su tiempo libre haciendo senderismo y leyendo sobre temas ambientales. Le preocupa el cambio climático y busca activamente formas de reducir su huella de carbono."
+    },
+    {
+      "id": 2,
+      "name": "Carlos Pérez",
+      "avatar": "https://example.com/avatar/carlos_perez.jpg",
+      "bio": "Padre de familia, aficionado a los deportes y la buena comida. Busco productos que me faciliten la vida.",
+      "age": 45,
+      "location": "Madrid, España",
+      "gender": "Male",
+      "education_level": "Licenciatura en Administración de Empresas",
+      "personality": {
+        "introvert_extrovert": 70,
+        "analytical_creative": 40,
+        "busy_free_time": 90,
+        "disorganized_organized": 30,
+        "independent_cooperative": 70,
+        "environmentalist": 60,
+        "safe_risky": 65
+      },
+      "backstory": "Carlos es un ejecutivo de ventas que trabaja en una empresa de telecomunicaciones. Está casado y tiene dos hijos adolescentes. Su vida es bastante ajetreada entre el trabajo y la familia. Le gusta jugar al fútbol con sus amigos los fines de semana y disfrutar de una buena paella los domingos. Busca productos que sean prácticos, funcionales y que le ahorren tiempo. Valora la calidad y la durabilidad, pero también le importa el precio."
+    },
+    {
+      "id": 3,
+      "name": "Aisha Diallo",
+      "avatar": "https://example.com/avatar/aisha_diallo.jpg",
+      "bio": "Estudiante de diseño, amante del arte y la cultura. Siempre conectada y buscando nuevas tendencias.",
+      "age": 22,
+      "location": "Valencia, España",
+      "gender": "Female",
+      "education_level": "Estudiante de Diseño Gráfico",
+      "personality": {
+        "introvert_extrovert": 85,
+        "analytical_creative": 90,
+        "busy_free_time": 60,
+        "disorganized_organized": 40,
+        "independent_cooperative": 80,
+        "environmentalist": 70,
+        "safe_risky": 75
+      },
+      "backstory": "Aisha es una estudiante de diseño gráfico de origen senegalés. Se mudó a España para estudiar y está muy interesada en el arte, la moda y la cultura digital. Pasa mucho tiempo en redes sociales y le gusta descubrir nuevas tendencias. Es creativa, innovadora y siempre está buscando inspiración. Le preocupa la justicia social y le gusta apoyar marcas que tengan un impacto positivo en la sociedad. Valora la originalidad y la autenticidad."
+    }
+  ]
+}

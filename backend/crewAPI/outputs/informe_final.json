@@ -1,0 +1,61 @@
+{
+  "average_rating": 4.33,
+  "rating_distribution": [
+    0,
+    0,
+    0,
+    2,
+    1
+  ],
+  "positive_points": [
+    "Personalizable lighting",
+    "Easy to use",
+    "Affordable price",
+    "Convenient remote control",
+    "Good for creating different ambiances",
+    "Long lamp life",
+    "Integration with IKEA Home smart",
+    "Minimalist and modern design"
+  ],
+  "negative_points": [
+    "Energy efficiency could be better",
+    "Concerns about energy consumption"
+  ],
+  "keyword_analysis": [
+    {
+      "word": "lighting",
+      "count": 9,
+      "sentiment": "positive"
+    },
+    {
+      "word": "energy efficiency",
+      "count": 6,
+      "sentiment": "negative"
+    },
+    {
+      "word": "price",
+      "count": 3,
+      "sentiment": "positive"
+    },
+    {
+      "word": "easy to use",
+      "count": 2,
+      "sentiment": "positive"
+    },
+    {
+      "word": "remote control",
+      "count": 2,
+      "sentiment": "positive"
+    },
+    {
+      "word": "consumption",
+      "count": 2,
+      "sentiment": "negative"
+    }
+  ],
+  "demographic_insights": [
+    "Engineer in renewable energies",
+    "Parent with little free time",
+    "Graphic design student"
+  ]
+}

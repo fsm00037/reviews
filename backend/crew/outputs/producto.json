@@ -1,0 +1,42 @@
+```json
+{
+  "nombre": "TRÅDFRI kit básico de iluminación",
+  "descripcion": "Kit básico de iluminación inteligente para regular la intensidad y el color de la luz de forma inalámbrica.",
+  "caracteristicas_principales": [
+    "Color regulable",
+    "Funciona con IKEA Home smart",
+    "Control de intensidad inalámbrico",
+    "Permite elegir diferentes colores para crear el entorno adecuado",
+    "Se puede regular la intensidad y tonalidad de la luz",
+    "El mando a distancia puede controlar hasta 10 fuentes de iluminación",
+    "Compatible con el hub DIRIGERA para productos inteligentes",
+    "Compatible con plataformas domésticas inteligentes que usan el estándar Matter"
+  ],
+  "especificaciones_tecnicas": {
+    "Número de artículo": "105.476.03",
+    "Nombre de marca": "IKEA",
+    "Referencia de modelo": "LED2109G6",
+    "Clase de eficiencia energética": "E",
+    "Consumo energético de la fuente luminosa": "8 kWh/1.000 h",
+    "Consumo de electricidad en modo de espera": "0,2 Vatio",
+    "Potencia nominal": "7,3 W",
+    "Flujo luminoso útil asignado": "806 lúmenes",
+    "Temperatura de color": "2700 Kelvin",
+    "Rendimiento de color": "90",
+    "Vida útil asignada de la lámpara": "25000 h",
+    "Tiempo de encendido": "0,5 segundos",
+    "Intensidad regulable inalámbrica": "Sí",
+    "Temperatura del color por defecto": "2700 K",
+    "Flujo luminoso por defecto": "806 lm",
+    "Efecto": "7.3 W",
+    "Consumo energético modo de espera": "0.2 W",
+    "Duración del LED": "25000 hr",
+    "Alcance del mando a distancia": "10 m",
+    "Incluye": "1 mando a distancia STYRBAR (72x72, Al 18 mm) y 1 bombilla regulable TRÅDFRI E27/806 lúmenes",
+    "Consumo en modo espera": "0,3W",
+    "Tipo de bombilla": "E27"
+  },
+  "precio": "19,99 €",
+  "valoracion_general": "5 (basado en 2 reseñas)"
+}
+```
