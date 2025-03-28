@@ -4,49 +4,17 @@
             "id": 0,
             "bot_id": 1,
             "product_id": 1,
-            "rating": 4,
-            "title": "Una opción familiar con potencial ecológico",
-            "content": "Como investigadora en conservación marina, estoy muy preocupada por la huella de carbono que dejamos. Este Peugeot 308 SW GT Hybrid representa un paso en la dirección correcta al ser un híbrido enchufable. La autonomía eléctrica de 60 km es decente para trayectos urbanos y podría reducir significativamente las emisiones en el día a día. Valoro positivamente la etiqueta de eficiencia energética C y las bajas emisiones WLTP. \n\nSin embargo, me gustaría ver un mayor compromiso con materiales sostenibles en la fabricación y una mayor autonomía eléctrica. El consumo de combustible en modo híbrido también es un factor a considerar. Aunque es una mejora respecto a los coches convencionales, todavía hay margen para optimizar la eficiencia. \n\nEl tamaño familiar y la capacidad de carga son prácticos, pero la etiqueta C me indica que podría ser mejor en cuanto a eficiencia. En general, considero que este coche es una opción interesante para familias concienciadas con el medio ambiente, aunque con algunas limitaciones."
+            "rating": 3,
+            "title": "Puerta BERGSBO: Estética agradable, pero ¿sostenibilidad?",
+            "content": "La puerta BERGSBO tiene un diseño limpio y moderno que se adapta bien a muchos espacios, y el cierre suave es un buen detalle. Sin embargo, desde una perspectiva de sostenibilidad, me preocupa la falta de información sobre los materiales utilizados. ¿Es madera certificada FSC? ¿Qué tipo de recubrimiento se usa y cuál es su impacto ambiental? La durabilidad es clave para la sostenibilidad, y aunque la garantía de 10 años es positiva, me gustaría saber más sobre la vida útil esperada del producto y si es fácilmente reparable. \n\nEl precio es atractivo, lo que podría hacerla accesible a más personas, pero creo que IKEA podría mejorar la transparencia sobre el ciclo de vida completo del producto. Para un consumidor consciente como yo, esta información es crucial para tomar una decisión de compra responsable. Si IKEA pudiera proporcionar más detalles sobre el origen de los materiales, los procesos de fabricación y las opciones de reciclaje al final de su vida útil, estaría más inclinada a recomendar este producto. Por ahora, la considero una opción estética aceptable, pero con margen de mejora en términos de sostenibilidad."
         },
         {
             "id": 1,
             "bot_id": 2,
             "product_id": 1,
             "rating": 4,
-            "title": "Híbrido enchufable con estilo y potencial para la innovación",
-            "content": "Como emprendedor tecnológico, siempre busco la innovación y la eficiencia. Este Peugeot 308 SW GT Hybrid me parece una propuesta interesante. El diseño es atractivo y la tecnología híbrida enchufable es un paso adelante. La autonomía eléctrica de 60 km es un buen punto de partida para reducir la dependencia de los combustibles fósiles, aunque me gustaría ver más innovación en la tecnología de baterías para ampliar esa autonomía. \n\nLa potencia de 180 CV y la aceleración de 0 a 100 en 7.7 segundos son decentes para un coche familiar, aunque, siendo sincero, me gustaría algo con un poco más de adrenalina. El cambio automático con levas en el volante es un buen detalle. \n\nEn general, creo que este coche tiene potencial, pero Peugeot podría arriesgarse más con la innovación en la tecnología híbrida y la experiencia de conducción. El precio me parece un poco elevado considerando que es un coche de segunda mano, pero si el estado es bueno y la batería está en óptimas condiciones, podría valer la pena."
-        },
-        {
-            "id": 2,
-            "bot_id": 3,
-            "product_id": 1,
-            "rating": 4,
-            "title": "Un familiar híbrido enchufable práctico y con estilo",
-            "content": "Como madre de dos hijos y consultora financiera a tiempo parcial, necesito un coche que sea práctico, seguro y eficiente. Este Peugeot 308 SW GT Hybrid me parece una opción interesante. El hecho de ser híbrido enchufable es un gran atractivo, ya que me permite reducir mi huella de carbono y ahorrar en combustible, especialmente en mis trayectos diarios por la ciudad. La autonomía eléctrica de 60 km sería suficiente para llevar a los niños al colegio, ir al supermercado y hacer mis recados sin gastar gasolina. \n\nEl espacio interior y la capacidad del maletero son importantes para mi familia, y este modelo parece ofrecer un buen equilibrio. Valoro mucho la seguridad, así que investigaría a fondo las características de seguridad activa y pasiva del vehículo. El precio de 27.290 € me parece razonable para un coche de segunda mano con estas características, pero negociaría para intentar conseguir un mejor precio. \n\nEn general, creo que este Peugeot 308 SW GT Hybrid podría ser una buena opción para mi familia, ya que combina la practicidad de un coche familiar con la eficiencia de un híbrido enchufable. Sin embargo, me aseguraría de revisarlo a fondo antes de tomar una decisión final."
-        },
-        {
-            "id": 3,
-            "bot_id": 4,
-            "product_id": 1,
-            "rating": 3,
-            "title": "Interesante, pero con margen de mejora en sostenibilidad",
-            "content": "Como futuro arquitecto enfocado en la sostenibilidad, este Peugeot 308 SW GT Hybrid me parece un paso en la dirección correcta, pero no suficiente. La tecnología híbrida enchufable es un avance, y la autonomía eléctrica de 60 km es útil para reducir emisiones en ciudad. Sin embargo, me decepciona la falta de información sobre el uso de materiales reciclados o de origen sostenible en la fabricación del vehículo. \n\nEn el diseño, echo de menos una mayor innovación enfocada en la eficiencia y la reducción del impacto ambiental. Por ejemplo, se podrían haber explorado materiales más ligeros y ecológicos para la carrocería o integrar paneles solares para aumentar la autonomía. \n\nEl consumo de combustible en modo híbrido sigue siendo un factor a considerar. Si bien es mejor que un coche tradicional, me gustaría ver cifras más ambiciosas. El precio me parece elevado para un coche de segunda mano, especialmente si no hay una clara ventaja en términos de sostenibilidad más allá del sistema híbrido. En resumen, lo veo como un buen punto de partida, pero espero que los fabricantes de automóviles apuesten por diseños y materiales mucho más sostenibles en el futuro."
-        },
-        {
-            "id": 4,
-            "bot_id": 5,
-            "product_id": 1,
-            "rating": 4,
-            "title": "Un coche familiar interesante para una jubilada activa",
-            "content": "Este Peugeot 308 SW GT Hybrid me parece una opción atractiva como jubilada que disfruta de viajar y ayudar a los demás. El hecho de ser híbrido enchufable es un gran punto a favor, ya que me preocupa el medio ambiente y quiero reducir mi huella de carbono. La autonomía eléctrica de 60 km sería suficiente para mis trayectos diarios y mis actividades de voluntariado. Además, el espacio interior y la capacidad del maletero serían perfectos para mis viajes culturales y para transportar cosas para el comedor social en el que colaboro.\n\nSin embargo, como persona mayor, la comodidad es fundamental. Me gustaría saber más sobre la facilidad de acceso al coche, la ergonomía de los asientos y la suavidad de la conducción. También es importante que sea fácil de aparcar, ya que a veces me cuesta maniobrar en espacios reducidos. El precio de 27.290 € me parece un poco elevado para un coche de segunda mano, así que intentaría negociar un poco. En general, creo que este coche podría ser una buena opción para mí, pero necesito investigar más a fondo sobre la comodidad y la facilidad de uso."
-        },
-        {
-            "id": 5,
-            "bot_id": 6,
-            "product_id": 1,
-            "rating": 4,
-            "title": "Un Familiar Híbrido con Potencial para la Aventura Digital",
-            "content": "Como nómada digital, busco herramientas que me permitan vivir y trabajar desde cualquier lugar. Este Peugeot 308 SW GT Hybrid me parece interesante por su versatilidad. La combinación de motor híbrido enchufable y carrocería familiar ofrece espacio y eficiencia para mis viajes, tanto personales como profesionales. La autonomía eléctrica de 60 km es ideal para moverme por ciudades sin depender de gasolina, lo cual es un plus considerando que a veces trabajo desde lugares remotos. \n\nEl espacio de carga es crucial para llevar mi equipo de trabajo y mis pertenencias. La conectividad es otro factor importante, y me gustaría saber más sobre las opciones de infoentretenimiento y conectividad a internet que ofrece el coche. La transmisión automática es un alivio para los largos trayectos. \n\nAunque no soy un fanático del medio ambiente, valoro la eficiencia y el ahorro de combustible. El precio me parece un poco elevado para un coche de segunda mano, así que buscaría una buena oferta. En general, creo que este coche tiene potencial para adaptarse a mi estilo de vida, combinando funcionalidad, eficiencia y un toque de aventura. Sería perfecto para explorar nuevos lugares y seguir conectado con mi trabajo."
+            "title": "BERGSBO: Diseño moderno y funcional, pero podría ser más 'tech'",
+            "content": "La puerta BERGSBO tiene un diseño limpio y minimalista que encaja bien con mi estilo. El cierre suave es un detalle que aprecio mucho, ya que valoro la funcionalidad y la comodidad. La facilidad de montaje (izquierda o derecha) también es un punto a favor. Sin embargo, siendo un entusiasta de la tecnología, me gustaría ver alguna opción para integrar esta puerta con sistemas de domótica. Por ejemplo, sería genial que tuviera algún tipo de sensor para detectar si está abierta o cerrada, o incluso la posibilidad de integrarla con un sistema de control de acceso. \n\nSi bien entiendo que es un producto de gama media, creo que IKEA podría explorar la posibilidad de ofrecer una versión 'smart' de esta puerta en el futuro. Desde el punto de vista de la durabilidad, la garantía de 10 años es un buen indicativo, pero me gustaría saber más sobre los materiales utilizados y su resistencia al uso diario. En general, la puerta BERGSBO me parece una buena opción por su diseño y precio, pero creo que tiene potencial para ser aún mejor si se incorporaran algunas características tecnológicas adicionales."
         }
     ]
 }

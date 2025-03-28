@@ -180,7 +180,7 @@ def execute_phase4(model_name: str = None) -> Dict[str, Any]:
     try:
         print("Ejecutando fase 4: Compilación de reseñas y generación de informe...")
         phase4_results = run_phase4(model_name)
-        return phase4_results.raw
+        return phase4_results.json_dict
     except Exception as e:
         print(f"Error durante la fase 4: {str(e)}")
         raise

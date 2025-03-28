@@ -1,75 +1,58 @@
 {
-  "average_rating": 3.83,
+  "average_rating": 3.5,
   "rating_distribution": [
     0,
     0,
     1,
-    5,
+    1,
     0
   ],
   "positive_points": [
-    "Autonomía eléctrica adecuada para trayectos urbanos",
-    "Diseño atractivo",
-    "Espacio interior y capacidad de maletero adecuados para familias",
-    "Tecnología híbrida enchufable que permite reducir la huella de carbono y ahorrar combustible",
-    "Potencial para reducir emisiones",
-    "Buen punto de partida hacia la sostenibilidad"
+    "Diseño limpio y moderno",
+    "Cierre suave",
+    "Facilidad de montaje",
+    "Precio atractivo"
   ],
   "negative_points": [
-    "Precio elevado para un coche de segunda mano",
-    "Consumo de combustible en modo híbrido aún mejorable",
-    "Falta de información sobre el uso de materiales reciclados o sostenibles",
-    "Necesidad de mayor innovación en tecnología de baterías para ampliar la autonomía eléctrica",
-    "Comodidad y facilidad de uso para personas mayores podrían mejorarse"
+    "Falta de información sobre sostenibilidad",
+    "Podría ser más 'tech'",
+    "Falta de integración con domótica",
+    "Información limitada sobre los materiales"
   ],
   "keyword_analysis": [
     {
-      "word": "híbrido",
-      "count": 16,
+      "word": "diseño",
+      "count": 2,
       "sentiment": "positive"
     },
     {
-      "word": "eléctrica",
-      "count": 7,
+      "word": "sostenibilidad",
+      "count": 2,
+      "sentiment": "negative"
+    },
+    {
+      "word": "cierre suave",
+      "count": 2,
       "sentiment": "positive"
     },
     {
-      "word": "autonomía",
-      "count": 8,
+      "word": "tecnología",
+      "count": 1,
       "sentiment": "neutral"
     },
     {
-      "word": "sostenible",
-      "count": 5,
-      "sentiment": "positive"
-    },
-    {
       "word": "precio",
-      "count": 6,
-      "sentiment": "negative"
-    },
-    {
-      "word": "familiar",
-      "count": 7,
+      "count": 1,
       "sentiment": "positive"
     },
     {
-      "word": "eficiencia",
-      "count": 6,
-      "sentiment": "positive"
-    },
-    {
-      "word": "combustible",
-      "count": 5,
-      "sentiment": "negative"
+      "word": "materiales",
+      "count": 2,
+      "sentiment": "neutral"
     }
   ],
   "demographic_insights": [
-    "Interés de familias concienciadas con el medio ambiente",
-    "Atractivo para emprendedores tecnológicos que buscan innovación y eficiencia",
-    "Opción considerada por madres que buscan practicidad y seguridad",
-    "Relevancia para arquitectos enfocados en la sostenibilidad",
-    "Considerado por jubilados activos que viajan y ayudan a otros",
-    "Interés para nómadas digitales que buscan versatilidad y eficiencia"
+    "Consumidores preocupados por la sostenibilidad",
+    "Entusiastas de la tecnología"
   ]
 }

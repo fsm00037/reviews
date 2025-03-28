@@ -3,122 +3,42 @@
     {
       "id": 1,
       "name": "Sofía Rodríguez",
-      "avatar": "https://example.com/avatar/sofia_rodriguez.jpg",
-      "bio": "Amante de la naturaleza y defensora de los animales. Siempre buscando formas de reducir mi huella ecológica.",
+      "avatar": "https://ejemplo.com/avatares/sofia_rodriguez.jpg",
+      "bio": "Apasionada por la sostenibilidad y el diseño minimalista. Siempre buscando formas de reducir mi huella de carbono.",
       "age": 28,
       "location": "Barcelona, España",
       "gender": "Female",
-      "education_level": "Máster en Biología Marina",
+      "education_level": "Máster en Diseño Sostenible",
       "personality": {
         "introvert_extrovert": 30,
-        "analytical_creative": 70,
-        "busy_free_time": 40,
-        "disorganized_organized": 60,
-        "independent_cooperative": 70,
+        "analytical_creative": 75,
+        "busy_free_time": 60,
+        "disorganized_organized": 70,
+        "independent_cooperative": 40,
         "environmentalist": 95,
-        "safe_risky": 30
+        "safe_risky": 35
       },
-      "backstory": "Sofía trabaja como investigadora en un centro de conservación marina. Desde pequeña ha estado involucrada en actividades de protección ambiental. Le preocupa el impacto del cambio climático en los océanos y busca soluciones sostenibles para el futuro."
+      "backstory": "Sofía creció en un pequeño pueblo costero donde aprendió a amar la naturaleza. Después de estudiar diseño, se especializó en sostenibilidad, buscando aplicar sus habilidades creativas para crear productos y sistemas más respetuosos con el medio ambiente. Trabaja como diseñadora freelance y pasa su tiempo libre explorando nuevas formas de vivir de manera más sostenible, desde la permacultura hasta el consumo responsable. Le preocupa el impacto del cambio climático y busca activamente formas de marcar la diferencia."
     },
     {
       "id": 2,
       "name": "Carlos Pérez",
-      "avatar": "https://example.com/avatar/carlos_perez.jpg",
-      "bio": "Emprendedor tecnológico y apasionado por la innovación. Siempre buscando la próxima gran idea.",
+      "avatar": "https://ejemplo.com/avatares/carlos_perez.jpg",
+      "bio": "Entusiasta de la tecnología y los videojuegos. Siempre a la última en gadgets y tendencias digitales.",
       "age": 35,
       "location": "Ciudad de México, México",
       "gender": "Male",
-      "education_level": "Ingeniería en Sistemas",
-      "personality": {
-        "introvert_extrovert": 80,
-        "analytical_creative": 90,
-        "busy_free_time": 85,
-        "disorganized_organized": 40,
-        "independent_cooperative": 80,
-        "environmentalist": 50,
-        "safe_risky": 80
-      },
-      "backstory": "Carlos fundó su primera startup a los 25 años y desde entonces ha estado involucrado en varios proyectos tecnológicos. Le motiva la idea de crear productos que mejoren la vida de las personas.  Trabaja incansablemente para alcanzar sus metas."
-    },
-    {
-      "id": 3,
-      "name": "Elena García",
-      "avatar": "https://example.com/avatar/elena_garcia.jpg",
-      "bio": "Madre de dos hijos, trabajadora a tiempo parcial y amante del yoga. Buscando el equilibrio entre la vida familiar y el bienestar personal.",
-      "age": 42,
-      "location": "Madrid, España",
-      "gender": "Female",
-      "education_level": "Licenciatura en Administración de Empresas",
-      "personality": {
-        "introvert_extrovert": 60,
-        "analytical_creative": 50,
-        "busy_free_time": 70,
-        "disorganized_organized": 70,
-        "independent_cooperative": 40,
-        "environmentalist": 70,
-        "safe_risky": 60
-      },
-      "backstory": "Elena trabajó a tiempo completo en el sector bancario antes de tener hijos. Ahora trabaja a tiempo parcial como consultora financiera para poder pasar más tiempo con su familia. Practica yoga para reducir el estrés y mantenerse en forma."
-    },
-    {
-      "id": 4,
-      "name": "Javier López",
-      "avatar": "https://example.com/avatar/javier_lopez.jpg",
-      "bio": "Estudiante de arquitectura con pasión por el diseño sostenible y la construcción con materiales reciclados.",
-      "age": 22,
-      "location": "Valencia, España",
-      "gender": "Male",
-      "education_level": "Estudiante Universitario",
-      "personality": {
-        "introvert_extrovert": 40,
-        "analytical_creative": 95,
-        "busy_free_time": 60,
-        "disorganized_organized": 50,
-        "independent_cooperative": 60,
-        "environmentalist": 90,
-        "safe_risky": 70
-      },
-      "backstory": "Javier siempre ha sido creativo y le interesa el impacto ambiental de la construcción.  Está buscando formas de integrar prácticas sostenibles en sus diseños arquitectónicos. Le gusta experimentar con nuevos materiales y técnicas."
-    },
-    {
-      "id": 5,
-      "name": "María Fernanda Gómez",
-      "avatar": "https://example.com/avatar/maria_gomez.jpg",
-      "bio": "Jubilada activa, voluntaria en un comedor social y aficionada a los viajes culturales.",
-      "age": 68,
-      "location": "Buenos Aires, Argentina",
-      "gender": "Female",
-      "education_level": "Bachillerato",
+      "education_level": "Licenciatura en Ingeniería en Sistemas Computacionales",
       "personality": {
         "introvert_extrovert": 70,
-        "analytical_creative": 40,
-        "busy_free_time": 50,
-        "disorganized_organized": 80,
-        "independent_cooperative": 30,
-        "environmentalist": 60,
-        "safe_risky": 40
+        "analytical_creative": 80,
+        "busy_free_time": 85,
+        "disorganized_organized": 40,
+        "independent_cooperative": 70,
+        "environmentalist": 20,
+        "safe_risky": 75
       },
-      "backstory": "María Fernanda trabajó como maestra de primaria durante 40 años.  Ahora que está jubilada, dedica su tiempo a ayudar a los demás y a explorar nuevas culturas. Le gusta mantenerse activa y conectada con la comunidad."
-    },
-    {
-      "id": 6,
-      "name": "Alejandro Vargas",
-      "avatar": "https://example.com/avatar/alejandro_vargas.jpg",
-      "bio": "Freelancer digital nómada, experto en marketing online y amante de la vida minimalista.",
-      "age": 31,
-      "location": "Medellín, Colombia",
-      "gender": "Male",
-      "education_level": "Diplomado en Marketing Digital",
-      "personality": {
-        "introvert_extrovert": 90,
-        "analytical_creative": 75,
-        "busy_free_time": 75,
-        "disorganized_organized": 30,
-        "independent_cooperative": 90,
-        "environmentalist": 40,
-        "safe_risky": 90
-      },
-      "backstory": "Alejandro dejó su trabajo de oficina hace cinco años para viajar por el mundo y trabajar como freelancer. Le apasiona el marketing digital y disfruta de la libertad y flexibilidad que le ofrece su estilo de vida. Siempre está buscando nuevas aventuras y desafíos."
+      "backstory": "Carlos es un ingeniero en sistemas que trabaja en una empresa de desarrollo de software. Desde niño, ha sido un apasionado de la tecnología, pasando horas jugando videojuegos y explorando nuevos programas. Es un early adopter de nuevas tecnologías y le encanta estar al día con las últimas tendencias. Invierte gran parte de su tiempo libre en aprender nuevas habilidades y experimentar con diferentes gadgets. Aunque está enfocado en su carrera, también disfruta pasar tiempo con sus amigos y familiares, aunque a veces le cuesta desconectarse del mundo digital."
     }
   ]
 }

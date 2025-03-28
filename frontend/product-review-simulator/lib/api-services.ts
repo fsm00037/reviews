@@ -189,44 +189,195 @@ export const AnalysisService = {
         model_name: modelName
       }),
     }).then(response => {
+      console.log('Respuesta original del API en phase4:', response);
+      
+      // Si la respuesta es una cadena, intentar parsearla
+      if (typeof response === 'string') {
+        try {
+          console.log('La respuesta del API es una cadena, intentando parsear');
+          response = JSON.parse(response);
+        } catch (error) {
+          console.error('Error al parsear la respuesta:', error);
+          // Si falla el parsing, devolver un objeto con estructura mínima
+          return {
+            average_rating: 0,
+            rating_distribution: [0, 0, 0, 0, 0],
+            positive_points: [],
+            negative_points: [],
+            keyword_analysis: [],
+            demographic_insights: []
+          };
+        }
+      }
+      
       // Verificar si la respuesta es válida
       if (typeof response === 'object' && response !== null) {
         // Asegurarse de que todos los campos son serializables
         const safeResponse: any = {};
         
         // Copiar solo los campos que sabemos que son seguros
-        if ('average_rating' in response) safeResponse.average_rating = response.average_rating;
-        if ('rating_distribution' in response) safeResponse.rating_distribution = response.rating_distribution;
-        if ('positive_points' in response) safeResponse.positive_points = response.positive_points;
-        if ('negative_points' in response) safeResponse.negative_points = response.negative_points;
-        if ('keyword_analysis' in response) safeResponse.keyword_analysis = response.keyword_analysis;
-        if ('demographic_insights' in response) safeResponse.demographic_insights = response.demographic_insights;
+        if ('average_rating' in response) safeResponse.average_rating = Number(response.average_rating);
         
+        // Asegurar que rating_distribution sea un array de 5 elementos
+        if ('rating_distribution' in response) {
+          if (Array.isArray(response.rating_distribution)) {
+            // Asegurar que hay exactamente 5 elementos
+            const distribution = [...response.rating_distribution];
+            while (distribution.length < 5) {
+              distribution.push(0);
+            }
+            // Tomar solo los primeros 5 elementos si hay más
+            safeResponse.rating_distribution = distribution.slice(0, 5).map(Number);
+          } else {
+            // Si no es un array, crear uno por defecto
+            safeResponse.rating_distribution = [0, 0, 0, 0, 0];
+          }
+        } else {
+          safeResponse.rating_distribution = [0, 0, 0, 0, 0];
+        }
+        
+        // Asegurar que los arrays de puntos son arrays
+        if ('positive_points' in response && Array.isArray(response.positive_points)) {
+          safeResponse.positive_points = response.positive_points;
+        } else {
+          safeResponse.positive_points = [];
+        }
+        
+        if ('negative_points' in response && Array.isArray(response.negative_points)) {
+          safeResponse.negative_points = response.negative_points;
+        } else {
+          safeResponse.negative_points = [];
+        }
+        
+        // Asegurar que keyword_analysis sea un array válido
+        if ('keyword_analysis' in response && Array.isArray(response.keyword_analysis)) {
+          safeResponse.keyword_analysis = response.keyword_analysis.map((keyword: any) => ({
+            word: keyword.word || "",
+            count: Number(keyword.count || 0),
+            sentiment: keyword.sentiment || "neutral"
+          }));
+        } else {
+          safeResponse.keyword_analysis = [];
+        }
+        
+        // Asegurar que demographic_insights sea un array
+        if ('demographic_insights' in response && Array.isArray(response.demographic_insights)) {
+          safeResponse.demographic_insights = response.demographic_insights;
+        } else {
+          safeResponse.demographic_insights = [];
+        }
+        
+        console.log('Respuesta normalizada:', safeResponse);
         return safeResponse;
       }
-      return response;
+      
+      // Si no es un objeto, devolver un objeto con estructura mínima
+      console.warn('Respuesta no válida del API, devolviendo estructura mínima');
+      return {
+        average_rating: 0,
+        rating_distribution: [0, 0, 0, 0, 0],
+        positive_points: [],
+        negative_points: [],
+        keyword_analysis: [],
+        demographic_insights: []
+      };
     });
   },
   
   // Obtener análisis actual
   getAnalysis: () => {
     return fetchAPI<any>('/analysis').then(response => {
+      console.log('Respuesta original del API en getAnalysis:', response);
+      
+      // Si la respuesta es una cadena, intentar parsearla
+      if (typeof response === 'string') {
+        try {
+          console.log('La respuesta del API es una cadena, intentando parsear');
+          response = JSON.parse(response);
+        } catch (error) {
+          console.error('Error al parsear la respuesta:', error);
+          // Si falla el parsing, devolver un objeto con estructura mínima
+          return {
+            average_rating: 0,
+            rating_distribution: [0, 0, 0, 0, 0],
+            positive_points: [],
+            negative_points: [],
+            keyword_analysis: [],
+            demographic_insights: []
+          };
+        }
+      }
+      
       // Verificar si la respuesta es válida
       if (typeof response === 'object' && response !== null) {
         // Asegurarse de que todos los campos son serializables
         const safeResponse: any = {};
         
         // Copiar solo los campos que sabemos que son seguros
-        if ('average_rating' in response) safeResponse.average_rating = response.average_rating;
-        if ('rating_distribution' in response) safeResponse.rating_distribution = response.rating_distribution;
-        if ('positive_points' in response) safeResponse.positive_points = response.positive_points;
-        if ('negative_points' in response) safeResponse.negative_points = response.negative_points;
-        if ('keyword_analysis' in response) safeResponse.keyword_analysis = response.keyword_analysis;
-        if ('demographic_insights' in response) safeResponse.demographic_insights = response.demographic_insights;
+        if ('average_rating' in response) safeResponse.average_rating = Number(response.average_rating);
+        
+        // Asegurar que rating_distribution sea un array de 5 elementos
+        if ('rating_distribution' in response) {
+          if (Array.isArray(response.rating_distribution)) {
+            // Asegurar que hay exactamente 5 elementos
+            const distribution = [...response.rating_distribution];
+            while (distribution.length < 5) {
+              distribution.push(0);
+            }
+            // Tomar solo los primeros 5 elementos si hay más
+            safeResponse.rating_distribution = distribution.slice(0, 5).map(Number);
+          } else {
+            // Si no es un array, crear uno por defecto
+            safeResponse.rating_distribution = [0, 0, 0, 0, 0];
+          }
+        } else {
+          safeResponse.rating_distribution = [0, 0, 0, 0, 0];
+        }
+        
+        // Asegurar que los arrays de puntos son arrays
+        if ('positive_points' in response && Array.isArray(response.positive_points)) {
+          safeResponse.positive_points = response.positive_points;
+        } else {
+          safeResponse.positive_points = [];
+        }
+        
+        if ('negative_points' in response && Array.isArray(response.negative_points)) {
+          safeResponse.negative_points = response.negative_points;
+        } else {
+          safeResponse.negative_points = [];
+        }
+        
+        // Asegurar que keyword_analysis sea un array válido
+        if ('keyword_analysis' in response && Array.isArray(response.keyword_analysis)) {
+          safeResponse.keyword_analysis = response.keyword_analysis.map((keyword: any) => ({
+            word: keyword.word || "",
+            count: Number(keyword.count || 0),
+            sentiment: keyword.sentiment || "neutral"
+          }));
+        } else {
+          safeResponse.keyword_analysis = [];
+        }
+        
+        // Asegurar que demographic_insights sea un array
+        if ('demographic_insights' in response && Array.isArray(response.demographic_insights)) {
+          safeResponse.demographic_insights = response.demographic_insights;
+        } else {
+          safeResponse.demographic_insights = [];
+        }
         
         return safeResponse;
       }
-      return response;
+      
+      // Si no es un objeto, devolver un objeto con estructura mínima
+      console.warn('Respuesta no válida del API, devolviendo estructura mínima');
+      return {
+        average_rating: 0,
+        rating_distribution: [0, 0, 0, 0, 0],
+        positive_points: [],
+        negative_points: [],
+        keyword_analysis: [],
+        demographic_insights: []
+      };
     });
   }
 };

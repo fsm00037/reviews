@@ -129,6 +129,7 @@ def phase4_analyze_reviews():
         
         results = execute_phase4(model_name)
         return jsonify(results)
+    
     except Exception as e:
         return jsonify({"error": str(e)}), 500
 
