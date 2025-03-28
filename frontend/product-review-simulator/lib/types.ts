@@ -6,6 +6,16 @@ export interface Product {
   price: string;
   image: string;
   category: string;
+  main_features?: {
+    feature: string;
+    value?: string;
+    description?: string;
+  }[];
+  technical_specs?: {
+    spec: string;
+    value?: string;
+    description?: string;
+  }[];
 }
 
 // Tipos para configuración demográfica
@@ -48,6 +58,7 @@ export interface BotProfile {
   gender: string;
   education_level: string;
   personality: BotPersonality;
+  backstory?: string;
 }
 
 // Tipo para review
@@ -58,8 +69,8 @@ export interface Review {
   rating: number;
   title: string;
   content: string;
-  date: string;
-  helpful_votes: number;
+  date?: string;
+  helpful_votes?: number;
 }
 
 // Tipo para análisis de palabras clave
@@ -88,4 +99,11 @@ export interface BotConfigRequest {
   detail_level: [number, number];
   demographics: DemographicConfig;
   personality: PersonalityConfig;
+}
+
+// Tipo para errores de API
+export interface APIError {
+  status: number;
+  message: string;
+  details: string | null;
 } 

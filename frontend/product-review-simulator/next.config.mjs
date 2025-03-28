@@ -21,6 +21,18 @@ const nextConfig = {
     parallelServerBuildTraces: true,
     parallelServerCompiles: true,
   },
+  // Configuración de proxy para API
+  async rewrites() {
+    return [
+      {
+        source: '/api/:path*',
+        destination: 'http://localhost:5000/api/:path*',
+      },
+    ]
+  },
+  env: {
+    NEXT_PUBLIC_API_URL: '/api',
+  },
 }
 
 mergeConfig(nextConfig, userConfig)

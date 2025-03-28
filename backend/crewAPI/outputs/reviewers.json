@@ -4,61 +4,61 @@
       "id": 1,
       "name": "Sofía Rodríguez",
       "avatar": "https://example.com/avatar/sofia_rodriguez.jpg",
-      "bio": "Apasionada por la sostenibilidad y la tecnología. Siempre buscando formas de mejorar el mundo.",
+      "bio": "Apasionada por la tecnología y la sostenibilidad. Siempre buscando soluciones innovadoras para un futuro mejor.",
       "age": 28,
       "location": "Barcelona, España",
       "gender": "Female",
-      "education_level": "Máster en Energías Renovables",
+      "education_level": "Máster en Ingeniería Ambiental",
       "personality": {
-        "introvert_extrovert": 60,
-        "analytical_creative": 75,
-        "busy_free_time": 80,
-        "disorganized_organized": 70,
+        "introvert_extrovert": 65,
+        "analytical_creative": 80,
+        "busy_free_time": 70,
+        "disorganized_organized": 60,
         "independent_cooperative": 50,
         "environmentalist": 95,
         "safe_risky": 40
       },
-      "backstory": "Sofía creció en un pequeño pueblo rural donde aprendió a apreciar la naturaleza. Estudió ingeniería y luego se especializó en energías renovables. Trabaja en una startup que desarrolla soluciones de energía solar para comunidades remotas. Le gusta pasar su tiempo libre haciendo senderismo y leyendo sobre temas ambientales. Le preocupa el cambio climático y busca activamente formas de reducir su huella de carbono."
+      "backstory": "Sofía creció en una pequeña ciudad costera, donde desarrolló un profundo amor por la naturaleza. Estudió ingeniería ambiental para poder contribuir a la protección del planeta. Actualmente trabaja en una startup que desarrolla tecnologías para la gestión eficiente de recursos hídricos. En su tiempo libre, le gusta practicar senderismo, leer sobre energías renovables y participar en iniciativas de voluntariado ambiental."
     },
     {
       "id": 2,
       "name": "Carlos Pérez",
       "avatar": "https://example.com/avatar/carlos_perez.jpg",
-      "bio": "Padre de familia, aficionado a los deportes y la buena comida. Busco productos que me faciliten la vida.",
+      "bio": "Padre de familia, emprendedor y amante del deporte. Disfruto pasar tiempo con mis hijos y construir mi propio negocio.",
       "age": 45,
       "location": "Madrid, España",
       "gender": "Male",
       "education_level": "Licenciatura en Administración de Empresas",
       "personality": {
-        "introvert_extrovert": 70,
-        "analytical_creative": 40,
-        "busy_free_time": 90,
-        "disorganized_organized": 30,
-        "independent_cooperative": 70,
-        "environmentalist": 60,
-        "safe_risky": 65
+        "introvert_extrovert": 75,
+        "analytical_creative": 55,
+        "busy_free_time": 85,
+        "disorganized_organized": 40,
+        "independent_cooperative": 80,
+        "environmentalist": 30,
+        "safe_risky": 60
       },
-      "backstory": "Carlos es un ejecutivo de ventas que trabaja en una empresa de telecomunicaciones. Está casado y tiene dos hijos adolescentes. Su vida es bastante ajetreada entre el trabajo y la familia. Le gusta jugar al fútbol con sus amigos los fines de semana y disfrutar de una buena paella los domingos. Busca productos que sean prácticos, funcionales y que le ahorren tiempo. Valora la calidad y la durabilidad, pero también le importa el precio."
+      "backstory": "Carlos es un emprendedor nato. Después de trabajar varios años en el sector bancario, decidió abrir su propio negocio de venta de artículos deportivos. Está casado y tiene dos hijos pequeños, con quienes disfruta pasar tiempo jugando al fútbol y haciendo excursiones al campo. Su principal motivación es asegurar el bienestar de su familia y construir un legado para sus hijos. Aunque le preocupa el medio ambiente, sus prioridades actuales son el crecimiento de su negocio y la educación de sus hijos."
     },
     {
       "id": 3,
-      "name": "Aisha Diallo",
-      "avatar": "https://example.com/avatar/aisha_diallo.jpg",
-      "bio": "Estudiante de diseño, amante del arte y la cultura. Siempre conectada y buscando nuevas tendencias.",
+      "name": "Elena García",
+      "avatar": "https://example.com/avatar/elena_garcia.jpg",
+      "bio": "Estudiante de arte, viajera incansable y apasionada por la cultura. Siempre en busca de nuevas experiencias y formas de expresión.",
       "age": 22,
       "location": "Valencia, España",
       "gender": "Female",
-      "education_level": "Estudiante de Diseño Gráfico",
+      "education_level": "Estudiante de Bellas Artes",
       "personality": {
         "introvert_extrovert": 85,
         "analytical_creative": 90,
-        "busy_free_time": 60,
-        "disorganized_organized": 40,
-        "independent_cooperative": 80,
+        "busy_free_time": 30,
+        "disorganized_organized": 70,
+        "independent_cooperative": 75,
         "environmentalist": 70,
-        "safe_risky": 75
+        "safe_risky": 80
       },
-      "backstory": "Aisha es una estudiante de diseño gráfico de origen senegalés. Se mudó a España para estudiar y está muy interesada en el arte, la moda y la cultura digital. Pasa mucho tiempo en redes sociales y le gusta descubrir nuevas tendencias. Es creativa, innovadora y siempre está buscando inspiración. Le preocupa la justicia social y le gusta apoyar marcas que tengan un impacto positivo en la sociedad. Valora la originalidad y la autenticidad."
+      "backstory": "Elena es una joven artista con un espíritu libre y aventurero. Está estudiando Bellas Artes en la universidad y sueña con convertirse en una artista reconocida a nivel internacional. Le encanta viajar y conocer nuevas culturas, y siempre lleva consigo su cuaderno de dibujo para plasmar sus experiencias. Aunque es extrovertida y sociable, también valora mucho su tiempo a solas para reflexionar y crear. Se preocupa por el medio ambiente y trata de adoptar un estilo de vida sostenible en la medida de lo posible."
     }
   ]
 }

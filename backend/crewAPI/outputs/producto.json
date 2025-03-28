@@ -1,55 +1,59 @@
 {
-  "name": "TRÅDFRI kit básico de iluminación, inteligente regulac lumin inalámbr/color y espectro blanco, E27",
-  "description": "Con este kit preconfigurado puedes elegir diferentes colores para crear el entorno adecuado. También puedes regular la intensidad. Con una bombilla LED conectada puedes regular la intensidad y tonalidad de la luz, y adaptarla a distintas actividades, por ejemplo una iluminación más cálida para cenar y una más fría y brillante para trabajar. Con el mando a distancia, podrás elegir los colores, cambiar de luz cálida a fría, regular la intensidad, y apagar y encender la luz. Con el mando a distancia, puedes elegir entre 9 tonalidades de blanco distintas o colores diferentes. Puedes usar el mando a distancia para controlar hasta 10 fuentes iluminación.",
-  "price": "19,99 €",
-  "image": "https://www.ikea.com/es/es/p/tradfri-kit-basico-iluminacion-inteligente-regulac-lumin-inalambr-color-espectro-blanco-10547603/",
-  "category": "Bombillas LED inteligentes",
+  "name": "PAX / HASVIK Armario",
+  "description": "Una solución básica y sencilla para empezar, con espacio de sobra para introducir mejoras. ",
+  "price": "473 €",
+  "image": "https://www.ikea.com/es/es/images/products/pax-hasvik-armario-blanco-blanco__1235156_pe937621_s5.jpg?f=s",
+  "category": "Armarios PAX con puertas",
   "main_features": [
     {
-      "feature": "Color regulable",
-      "description": "Funciona con IKEA Home smart"
+      "feature": "10 años de garantía.",
+      "description": "Consulta las condiciones generales en el folleto de garantía."
     },
     {
-      "feature": "Control de intensidad",
-      "description": "Inalámbrico"
+      "feature": "Planificador PAX",
+      "description": "Utiliza la herramienta de planificación PAX para adaptar esta combinación PAX/KOMPLEMENT a tus gustos y necesidades."
+    },
+    {
+      "feature": "Patas regulables",
+      "description": "Las patas regulables permiten corregir posibles desniveles en el suelo."
+    },
+    {
+      "feature": "Puertas correderas",
+      "description": "Las puertas correderas te dejan más sitio para poner muebles, ya que no ocupan espacio cuando están abiertas."
+    },
+    {
+      "feature": "Cierre suave",
+      "description": "El mecanismo de cierre suave está integrado en los rieles y consigue que las puertas abran y cierren de forma silenciosa, suave y lenta."
+    },
+    {
+      "feature": "Iluminación integrada",
+      "description": "Con el planificador PAX puedes integrar la iluminación en la combinación. Una vez que hayas elegido la fuente luminosa, el planificador te indicará los accesorios que necesitas para completar la solución."
+    },
+    {
+      "feature": "Cesto de rejilla",
+      "description": "El cesto de rejilla permite que circule el aire y es perfecto para guardar ropa doblada, calcetines y complementos."
+    },
+    {
+      "feature": "Organización flexible",
+      "description": "Mover los organizadores de interior a tu gusto es un juego de niños. Con un ligero cambio puedes modificar tu solución de almacenaje para que se adapte a tu ropa, y no al revés."
+    },
+    {
+      "feature": "Diseño sin tiradores",
+      "description": "Las puertas correderas no necesitan pomos ni tiradores, tienen un estilo intemporal y combinan fácilmente con otros estilos."
     }
   ],
   "technical_specs": [
     {
-      "spec": "Número de artículo",
-      "value": "105.476.03"
+      "spec": "Ancho:",
+      "value": "200 cm"
     },
     {
-      "spec": "Nombre de marca",
-      "value": "IKEA"
+      "spec": "fondo:",
+      "value": "66 cm"
     },
     {
-      "spec": "Referencia de modelo",
-      "value": "LED2109G6"
-    },
-    {
-      "spec": "Clase de eficiencia energética",
-      "value": "E"
-    },
-    {
-      "spec": "Consumo energético de la fuente luminosa",
-      "value": "8 kWh/1.000 h"
-    },
-    {
-      "spec": "Potencia nominal",
-      "value": "7,3 W"
-    },
-    {
-      "spec": "Flujo luminoso útil asignado",
-      "value": "806 lúmenes"
-    },
-    {
-      "spec": "Temperatura de color",
-      "value": "2700 Kelvin"
-    },
-    {
-      "spec": "Vida útil asignada de la lámpara",
-      "value": "25000 h"
+      "spec": "Altura:",
+      "value": "236.4 cm"
     }
   ]
 }

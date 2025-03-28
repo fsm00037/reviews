@@ -163,24 +163,20 @@ def run_phase3(product_info: Dict[str, Any], user_profiles: List[Dict[str, Any]]
     )
     
     # Run the crew - each task produces a Review object
-    phase3_results = phase3_crew.kickoff()
-    
-    # Create reviews directory if it doesn't exist
-    if not os.path.exists(config.REVIEWS_DIR):
-        os.makedirs(config.REVIEWS_DIR)
+    phase3_crew.kickoff()
     
     # Load reviews
     try:
         reviews_list = load_reviews(config.REVIEWS_DIR)
         reviews = [review.dict() for review in reviews_list]
+        with open(os.path.join(config.OUTPUT_DIR, 'reviews.json'), 'w', encoding='utf-8') as json_file:
+            json.dump({"reviews": reviews}, json_file, ensure_ascii=False, indent=4)
+    
     except Exception as e:
         print(f"Error loading reviews: {e}")
         reviews = []
     
-    return {
-        "reviews": reviews,
-        "phase3_results": phase3_results
-    }
+    return reviews
 
 def run_phase4(model_name: str = None) -> Dict[str, Any]:
     """Run phase 4: Compile reviews and generate final report"""
