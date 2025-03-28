@@ -1,0 +1,43 @@
+{
+  "name": "BERGSBO puerta con bisagras",
+  "description": "Esta puerta clásica está preparada para incorporar bisagras y tiene un diseño moderno y cuadrado. Una elección elegante y atemporal, idónea para la mayoría de los hogares. Combínala con una estructura PAX blanca para lograr una solución a juego.",
+  "price": "46 €",
+  "image": "https://www.ikea.com/es/es/images/products/bergsbo-puerta-con-bisagras-blanco__0732150_pe738794_s5.jpg?f=s",
+  "category": "Puertas con bisagras para armarios PAX",
+  "main_features": [
+    {
+      "feature": "Garantía",
+      "description": "10 años de garantía. Consulta las condiciones generales en el folleto de garantía."
+    },
+    {
+      "feature": "Montaje",
+      "description": "La puerta se puede montar hacia la derecha o la izquierda."
+    },
+    {
+      "feature": "Cierre",
+      "description": "Gracias a las bisagras con amortiguador la puerta se cierra despacio, suave y en silencio."
+    },
+    {
+      "feature": "Diseño",
+      "description": "El diseño de BERGSBO es una versión moderna de la clásica puerta de cuatro paneles con un marco sencillo de líneas rectas."
+    }
+  ],
+  "technical_specs": [
+    {
+      "spec": "Ancho:",
+      "value": "49.5 cm"
+    },
+    {
+      "spec": "Altura:",
+      "value": "229.4 cm"
+    },
+    {
+      "spec": "Estructura, alto:",
+      "value": "236.4 cm"
+    },
+    {
+      "spec": "Grosor:",
+      "value": "1.9 cm"
+    }
+  ]
+}

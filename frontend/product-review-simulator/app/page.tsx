@@ -3,7 +3,8 @@
 import Link from "next/link"
 import { ArrowRight, Sparkles, BarChart3, UserCircle2, MessageSquare } from "lucide-react"
 import { motion } from "framer-motion"
-import { useState } from "react"
+import { useState, useRef } from "react"
+import { useRouter } from "next/navigation"
 import { useTheme } from "next-themes"
 
 import { Button } from "@/components/ui/button"
@@ -11,10 +12,19 @@ import { Input } from "@/components/ui/input"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import AnimatedBackground from "@/components/animated-background"
 import { ThemeToggle } from "@/components/theme-toggle"
+import { SimulatorService } from "@/lib/api-services"
+import { ApiErrorAlert } from "@/components/api-error-alert"
+import { LoadingSpinner } from "@/components/loading-spinner"
+import { APIError } from "@/lib/types"
+import { ProductService } from "@/lib/api-services"
 
 export default function Home() {
   const [hovered, setHovered] = useState(false)
   const { theme, setTheme } = useTheme()
+  const router = useRouter()
+  const [isAnalyzing, setIsAnalyzing] = useState(false)
+  const [analyzeError, setAnalyzeError] = useState<APIError | null>(null)
+  const urlInputRef = useRef<HTMLInputElement>(null)
 
   const container = {
     hidden: { opacity: 0 },
@@ -29,6 +39,45 @@ export default function Home() {
   const item = {
     hidden: { opacity: 0, y: 20 },
     show: { opacity: 1, y: 0 },
+  }
+
+  const handleQuickAnalysis = async (e: React.FormEvent) => {
+    e.preventDefault()
+    
+    if (!urlInputRef.current?.value) {
+      setAnalyzeError({
+        status: 400,
+        message: "La URL del producto es obligatoria",
+        details: "Por favor, ingresa la URL de un producto para analizar"
+      })
+      return
+    }
+    
+    setIsAnalyzing(true)
+    setAnalyzeError(null)
+    
+    try {
+      const productUrl = urlInputRef.current.value
+      
+      // Ejecutar sólo la fase 1: análisis del producto
+      await ProductService.analyzeProduct(productUrl)
+      
+      // Redirigir a la página del simulador
+      router.push('/simulator')
+    } catch (err) {
+      console.error("Error al analizar el producto:", err)
+      if ((err as APIError).status !== undefined) {
+        setAnalyzeError(err as APIError)
+      } else {
+        setAnalyzeError({
+          status: 500,
+          message: `Error: ${(err as Error).message || 'Desconocido'}`,
+          details: 'No se pudo realizar el análisis inicial del producto'
+        })
+      }
+    } finally {
+      setIsAnalyzing(false)
+    }
   }
 
   return (
@@ -101,32 +150,49 @@ export default function Home() {
                 </motion.p>
               </motion.div>
               <motion.div variants={item} className="w-full max-w-sm space-y-2">
-                <div className="flex flex-col space-y-2 sm:flex-row sm:space-y-0 sm:space-x-2">
+                {analyzeError && (
+                  <ApiErrorAlert 
+                    error={analyzeError} 
+                    onDismiss={() => setAnalyzeError(null)} 
+                  />
+                )}
+                <form onSubmit={handleQuickAnalysis} className="flex flex-col space-y-2 sm:flex-row sm:space-y-0 sm:space-x-2">
                   <Input
                     className="max-w-lg flex-1 bg-white/80 dark:bg-gray-800/80 backdrop-blur-sm border-purple-200 dark:border-gray-700 focus-visible:ring-purple-500"
-                    placeholder="Enter product URL or start a new simulation"
+                    placeholder="Ingresa URL del producto para iniciar el análisis"
                     type="text"
+                    name="productUrl"
+                    ref={urlInputRef}
+                    disabled={isAnalyzing}
+                    required
                   />
-                  <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
+                  <motion.div whileHover={{ scale: isAnalyzing ? 1 : 1.05 }} whileTap={{ scale: isAnalyzing ? 1 : 0.95 }}>
                     <Button
-                      asChild
-                      className="bg-gradient-to-r from-indigo-500 via-purple-500 to-pink-500 text-white hover:opacity-90 transition-opacity"
+                      type="submit"
+                      className="bg-gradient-to-r from-indigo-500 via-purple-500 to-pink-500 text-white hover:opacity-90 transition-opacity w-full sm:w-auto"
                       onMouseEnter={() => setHovered(true)}
                       onMouseLeave={() => setHovered(false)}
+                      disabled={isAnalyzing}
                     >
-                      <Link href="/simulator" className="relative group">
-                        <span>Start</span>
-                        <motion.div
-                          animate={{ x: hovered ? 5 : 0 }}
-                          transition={{ type: "spring", stiffness: 400, damping: 10 }}
-                        >
-                          <ArrowRight className="ml-2 h-4 w-4" />
-                        </motion.div>
-                        <span className="absolute inset-0 rounded-md bg-white dark:bg-gray-950 opacity-0 group-hover:opacity-20 transition-opacity" />
-                      </Link>
+                      {isAnalyzing ? (
+                        <LoadingSpinner text="Analizando..." size="sm" />
+                      ) : (
+                        <>
+                          <span>Iniciar análisis</span>
+                          <motion.div
+                            animate={{ x: hovered ? 5 : 0 }}
+                            transition={{ type: "spring", stiffness: 400, damping: 10 }}
+                          >
+                            <ArrowRight className="ml-2 h-4 w-4" />
+                          </motion.div>
+                        </>
+                      )}
                     </Button>
                   </motion.div>
-                </div>
+                </form>
+                <p className="text-xs text-center mt-2 text-gray-500 dark:text-gray-400">
+                  El análisis se realizará paso a paso en la página del simulador
+                </p>
               </motion.div>
             </motion.div>
           </div>
