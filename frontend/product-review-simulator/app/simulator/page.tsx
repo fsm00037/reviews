@@ -1860,7 +1860,7 @@ export default function SimulatorPage() {
                         </CardHeader>
                         <CardContent className="p-4">
                           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                            {analysisResult.demographic_insights.map((insight, index) => (
+                            {(analysisResult?.demographic_insights || []).map((insight, index) => (
                               <motion.div
                                 key={index}
                                 className="flex items-start gap-2"
