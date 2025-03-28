@@ -433,8 +433,13 @@ export default function SimulatorPage() {
 
   // Componente para gráfico de barras de calificaciones
   const RatingBarChart = ({ distribution }: { distribution: number[] }) => {
-    const total = distribution.reduce((sum, count) => sum + count, 0)
-    const percentages = distribution.map((count) => (count / total) * 100)
+    // Asegurarse de que la distribución sea un array válido de longitud 5
+    const safeDistribution = Array.isArray(distribution) && distribution.length === 5 
+      ? distribution 
+      : [0, 0, 0, 0, 0];
+      
+    const total = safeDistribution.reduce((sum, count) => sum + count, 0) || 1;  // Evitar división por cero
+    const percentages = safeDistribution.map((count) => total > 0 ? (count / total) * 100 : 0);
 
     return (
       <div className="space-y-3">
@@ -452,7 +457,7 @@ export default function SimulatorPage() {
               </div>
             </div>
             <div className="w-12 text-sm text-gray-500 dark:text-gray-400">
-              {distribution[5 - stars]} ({percentages[5 - stars].toFixed(0)}%)
+              {safeDistribution[5 - stars] || 0} ({(percentages[5 - stars] || 0).toFixed(0)}%)
             </div>
           </div>
         ))}
@@ -462,18 +467,18 @@ export default function SimulatorPage() {
 
   // Componente para gráfico circular de sentimiento
   const SentimentPieChart = () => {
-    const positive = reviews.filter((r) => r.rating >= 4).length
-    const neutral = reviews.filter((r) => r.rating === 3).length
-    const negative = reviews.filter((r) => r.rating <= 2).length
-    const total = reviews.length
+    const positive = reviews?.filter((r) => r.rating >= 4)?.length || 0
+    const neutral = reviews?.filter((r) => r.rating === 3)?.length || 0
+    const negative = reviews?.filter((r) => r.rating <= 2)?.length || 0
+    const total = reviews?.length || 1 // Evitar división por cero
 
-    const positivePercent = (positive / total) * 100
-    const neutralPercent = (neutral / total) * 100
-    const negativePercent = (negative / total) * 100
+    const positivePercent = total > 0 ? (positive / total) * 100 : 0
+    const neutralPercent = total > 0 ? (neutral / total) * 100 : 0
+    const negativePercent = total > 0 ? (negative / total) * 100 : 0
 
     // Calcular ángulos para el gráfico circular
-    const positiveAngle = (positive / total) * 360
-    const neutralAngle = (neutral / total) * 360
+    const positiveAngle = total > 0 ? (positive / total) * 360 : 0
+    const neutralAngle = total > 0 ? (neutral / total) * 360 : 0
 
     return (
       <div className="flex flex-col items-center">
@@ -534,30 +539,37 @@ export default function SimulatorPage() {
 
   // Componente para nube de palabras clave
   const KeywordCloud = ({ keywords }: { keywords: KeywordAnalysis[] }) => {
+    // Verificar si keywords es un array válido
+    const safeKeywords = Array.isArray(keywords) ? keywords : [];
+    
     return (
       <div className="flex flex-wrap justify-center gap-2 p-4">
-        {keywords.map((keyword, index) => {
-          const fontSize = 0.8 + (keyword.count / 5) * 0.2 // Escala de 0.8 a 1.2rem
-          const color =
-            keyword.sentiment === "positive"
-              ? "text-green-500 dark:text-green-400"
-              : keyword.sentiment === "negative"
-                ? "text-red-500 dark:text-red-400"
-                : "text-gray-500 dark:text-gray-400"
+        {safeKeywords.length > 0 ? (
+          safeKeywords.map((keyword, index) => {
+            const fontSize = 0.8 + ((keyword.count || 1) / 5) * 0.2 // Escala de 0.8 a 1.2rem
+            const color =
+              keyword.sentiment === "positive"
+                ? "text-green-500 dark:text-green-400"
+                : keyword.sentiment === "negative"
+                  ? "text-red-500 dark:text-red-400"
+                  : "text-gray-500 dark:text-gray-400"
 
-          return (
-            <motion.span
-              key={keyword.word}
-              className={`${color} font-medium px-2 py-1 rounded-full border border-gray-200 dark:border-gray-700`}
-              style={{ fontSize: `${fontSize}rem` }}
-              initial={{ opacity: 0, scale: 0.5 }}
-              animate={{ opacity: 1, scale: 1 }}
-              transition={{ duration: 0.3, delay: index * 0.05 }}
-            >
-              {keyword.word}
-            </motion.span>
-          )
-        })}
+            return (
+              <motion.span
+                key={keyword.word || index}
+                className={`${color} font-medium px-2 py-1 rounded-full border border-gray-200 dark:border-gray-700`}
+                style={{ fontSize: `${fontSize}rem` }}
+                initial={{ opacity: 0, scale: 0.5 }}
+                animate={{ opacity: 1, scale: 1 }}
+                transition={{ duration: 0.3, delay: index * 0.05 }}
+              >
+                {keyword.word || ""}
+              </motion.span>
+            )
+          })
+        ) : (
+          <p className="text-gray-500 dark:text-gray-400">No hay palabras clave disponibles</p>
+        )}
       </div>
     )
   }
@@ -1583,7 +1595,7 @@ export default function SimulatorPage() {
             )}
 
             {/* Fase de dashboard con análisis */}
-            {activeStep === 4 && analysisResult && (
+            {activeStep === 4 && analysisResult && typeof analysisResult === 'object' && (
               <div className="space-y-6">
                 <Card className="border-purple-200 dark:border-gray-800 bg-white/80 dark:bg-gray-950/80 backdrop-blur-sm overflow-hidden">
                   <CardHeader className="bg-gradient-to-r from-indigo-500/10 via-purple-500/10 to-pink-500/10">
@@ -1592,7 +1604,7 @@ export default function SimulatorPage() {
                       Dashboard de análisis de reseñas
                     </CardTitle>
                     <CardDescription>
-                      Análisis e insights basados en {reviews.length} reseñas para {product.name}
+                      Análisis e insights basados en {reviews?.length || 0} reseñas para {product.name}
                     </CardDescription>
                   </CardHeader>
                   <CardContent className="p-6">
@@ -1607,7 +1619,7 @@ export default function SimulatorPage() {
                         <CardContent>
                           <div className="flex items-center justify-center">
                             <div className="text-5xl font-bold text-center bg-clip-text text-transparent bg-gradient-to-r from-indigo-500 via-purple-500 to-pink-500">
-                              {(analysisResult?.average_rating ?? 0).toFixed(1)}
+                              {(analysisResult && typeof analysisResult.average_rating === 'number' ? analysisResult.average_rating : 0).toFixed(1)}
                             </div>
                             <div className="text-xl text-gray-400 mt-2 ml-1">/5</div>
                           </div>
@@ -1615,7 +1627,7 @@ export default function SimulatorPage() {
                             {[1, 2, 3, 4, 5].map((star) => (
                               <Star
                                 key={star}
-                                className={`h-5 w-5 ${star <= Math.round(analysisResult?.average_rating || 0) ? "fill-yellow-400 text-yellow-400" : "text-gray-300 dark:text-gray-600"}`}
+                                className={`h-5 w-5 ${star <= Math.round(analysisResult && typeof analysisResult.average_rating === 'number' ? analysisResult.average_rating : 0) ? "fill-yellow-400 text-yellow-400" : "text-gray-300 dark:text-gray-600"}`}
                               />
                             ))}
                           </div>
@@ -1802,18 +1814,22 @@ export default function SimulatorPage() {
                               Puntos positivos
                             </h3>
                             <ul className="space-y-2">
-                              {analysisResult?.positive_points?.map((point, index) => (
-                                <motion.li
-                                  key={index}
-                                  className="flex items-center text-green-600 dark:text-green-400"
-                                  initial={{ opacity: 0, x: -5 }}
-                                  animate={{ opacity: 1, x: 0 }}
-                                  transition={{ delay: index * 0.1 }}
-                                >
-                                  <Check className="h-5 w-5 mr-2 flex-shrink-0" />
-                                  <span>{point}</span>
-                                </motion.li>
-                              )) || <li className="text-gray-500 dark:text-gray-400">No hay puntos positivos identificados</li>}
+                              {analysisResult && Array.isArray(analysisResult.positive_points) && analysisResult.positive_points.length > 0 ? (
+                                analysisResult.positive_points.map((point, index) => (
+                                  <motion.li
+                                    key={index}
+                                    className="flex items-center text-green-600 dark:text-green-400"
+                                    initial={{ opacity: 0, x: -5 }}
+                                    animate={{ opacity: 1, x: 0 }}
+                                    transition={{ delay: index * 0.1 }}
+                                  >
+                                    <Check className="h-5 w-5 mr-2 flex-shrink-0" />
+                                    <span>{point}</span>
+                                  </motion.li>
+                                ))
+                              ) : (
+                                <li className="text-gray-500 dark:text-gray-400">No hay puntos positivos identificados</li>
+                              )}
                             </ul>
                           </div>
                         </CardContent>
@@ -1832,18 +1848,22 @@ export default function SimulatorPage() {
                               Puntos negativos
                             </h3>
                             <ul className="space-y-2">
-                              {analysisResult?.negative_points?.map((point, index) => (
-                                <motion.li
-                                  key={index}
-                                  className="flex items-center text-red-600 dark:text-red-400"
-                                  initial={{ opacity: 0, x: -5 }}
-                                  animate={{ opacity: 1, x: 0 }}
-                                  transition={{ delay: index * 0.1 }}
-                                >
-                                  <AlertTriangle className="h-5 w-5 mr-2 flex-shrink-0" />
-                                  <span>{point}</span>
-                                </motion.li>
-                              )) || <li className="text-gray-500 dark:text-gray-400">No hay puntos negativos identificados</li>}
+                              {analysisResult && Array.isArray(analysisResult.negative_points) && analysisResult.negative_points.length > 0 ? (
+                                analysisResult.negative_points.map((point, index) => (
+                                  <motion.li
+                                    key={index}
+                                    className="flex items-center text-red-600 dark:text-red-400"
+                                    initial={{ opacity: 0, x: -5 }}
+                                    animate={{ opacity: 1, x: 0 }}
+                                    transition={{ delay: index * 0.1 }}
+                                  >
+                                    <AlertTriangle className="h-5 w-5 mr-2 flex-shrink-0" />
+                                    <span>{point}</span>
+                                  </motion.li>
+                                ))
+                              ) : (
+                                <li className="text-gray-500 dark:text-gray-400">No hay puntos negativos identificados</li>
+                              )}
                             </ul>
                           </div>
                         </CardContent>

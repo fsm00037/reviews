@@ -1,0 +1,59 @@
+{
+  "name": "Peugeot 308 SW GT Hybrid 180 eEAT8",
+  "description": "Coche de segunda mano Peugeot 308 SW GT Hybrid 180 eEAT8, 2022, 60.000 km, Híbrido enchufable, Automática, Cáceres. Carrocería tipo familiar con 5 puertas, batalla corta, volante al lado izquierdo, código de plataforma: EMP2, carrocería & puertas (local): familiar de 5 puertas. Motor híbrido enchufable (PHEV). Dimensiones exteriores: 4.636 mm de largo, 1.852 mm de ancho, 1.442 mm de alto, 2.732 mm de batalla, 1.559 mm de ancho de vía delantero, 1.554 mm de ancho de vía trasero, 10.510 mm de diámetro de giro entre bordillos, 2.062 y 1.860 Dimensiones interiores: 891 mm de altura entre banqueta-techo (delante), 882 mm de altura entre banqueta-techo (detrás), 1.428 mm de anchura en las caderas (delante), 1.367 mm de anchura en las caderas (detrás), 886 mm de espacio para las piernas (delante), 1.443 mm de anchura en los hombros (delante) y 1.414 mm de anchura en los hombros (detrás). Capacidad del compartimento de carga: 548 litros. Tracción delantera. Transmisión de tipo automático con cambio automático con modo manual de ocho marchas con paso a modo manual, palanca en el volante y levas en el volante palancas tras el volante. Motor de 1,6 litros ( 1.598 cc ) , cuatro cilindros en línea con cuatro válvulas por cilindro, 77,0 mm de diámetro, 85,8 mm de carrera, relación de compresión: 10,2 y distribución variable 10,2 Compresor: uno de tipo turbo. Norma de emisiones EU6 D y 0 emisiones. Etiqueta de eficiciencia energética clase C. Filtro de partículas. Start/Stop parada y arranque automático. Recuperación de la energía motor. Emisiones WLTP HEV modo ahorro de la batería, emisiones WLTP HEV modo EV, emisiones WLTP HEV Factor de Utilidad ponderado, 26,0, 26,0 y 27,0. Alimentación : inyección directa gasolina y multipunto. Combustible: eléctrico, combustible adicional: Gasolina sin plomo y Combustible primario: eléctrico. Depósito principal de combustible: 40 litros. Bandeja trasera rígida. Sujeción de carga. Prestaciones: 225 km/h de velocidad máxima y 7,7 segs de aceleración 0-100 km/h. Potencia de 180 CV ( CEE ) 132 kW @ 5.500 rpm (potencia max) 360 Nm de par máximo @ 1.750 rpm (par max) potencia con combustible primario Potencia secundaria de 150 CV, 110 kW de potencia máxima, 250 Nm de par máximo, 4.250 rpm para la potencia máxima y 1.750 rpm para el par maximo",
+  "price": "27.290 €",
+  "image": "https://cdn.flexicar.es/img-vehiculos/9030/903000000147515_g.jpg",
+  "category": "Coches de segunda mano",
+  "main_features": [
+    {
+      "feature": "Año",
+      "value": "2022"
+    },
+    {
+      "feature": "Kilometraje",
+      "value": "60.000 km"
+    },
+    {
+      "feature": "Combustible",
+      "value": "Híbrido enchufable"
+    },
+    {
+      "feature": "Transmisión",
+      "value": "Automática"
+    },
+    {
+      "feature": "Ubicación",
+      "value": "Cáceres"
+    }
+  ],
+  "technical_specs": [
+    {
+      "spec": "Motor",
+      "value": "1.6 litros (1.598 cc), 4 cilindros"
+    },
+    {
+      "spec": "Potencia",
+      "value": "180 CV"
+    },
+    {
+      "spec": "Par máximo",
+      "value": "360 Nm"
+    },
+    {
+      "spec": "Velocidad máxima",
+      "value": "225 km/h"
+    },
+    {
+      "spec": "Aceleración 0-100 km/h",
+      "value": "7,7 segundos"
+    },
+    {
+      "spec": "Consumo (WLTP HEV)",
+      "value": "1,1 l/100km (mixto)"
+    },
+    {
+      "spec": "Autonomía eléctrica (WLTP)",
+      "value": "60 km"
+    }
+  ]
+}
