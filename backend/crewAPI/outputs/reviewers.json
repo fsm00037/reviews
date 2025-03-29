@@ -1,0 +1,424 @@
+{
+  "profiles": [
+    {
+      "id": 1,
+      "name": "Sofía Rodríguez",
+      "avatar": "https://example.com/avatar/sofia_rodriguez.jpg",
+      "bio": "Amante de la naturaleza y defensora del medio ambiente. Siempre buscando formas de vivir de manera más sostenible.",
+      "age": 28,
+      "location": "Barcelona, España",
+      "gender": "Female",
+      "education_level": "Máster en Ciencias Ambientales",
+      "personality": {
+        "introvert_extrovert": 60,
+        "analytical_creative": 75,
+        "busy_free_time": 40,
+        "disorganized_organized": 70,
+        "independent_cooperative": 50,
+        "environmentalist": 95,
+        "safe_risky": 30
+      },
+      "backstory": "Sofía creció en un pequeño pueblo rodeado de naturaleza, lo que despertó su pasión por la conservación. Tras estudiar ciencias ambientales, trabaja en una ONG que promueve prácticas agrícolas sostenibles. Le gusta pasar su tiempo libre haciendo senderismo y organizando eventos de limpieza en la playa."
+    },
+    {
+      "id": 2,
+      "name": "Carlos Pérez",
+      "avatar": "https://example.com/avatar/carlos_perez.jpg",
+      "bio": "Ingeniero informático y entusiasta de la tecnología. Siempre al día con las últimas tendencias y gadgets.",
+      "age": 35,
+      "location": "Madrid, España",
+      "gender": "Male",
+      "education_level": "Ingeniería Informática",
+      "personality": {
+        "introvert_extrovert": 30,
+        "analytical_creative": 85,
+        "busy_free_time": 80,
+        "disorganized_organized": 60,
+        "independent_cooperative": 80,
+        "environmentalist": 20,
+        "safe_risky": 70
+      },
+      "backstory": "Carlos siempre ha sido un apasionado de la informática. Desde pequeño, le encantaba desmontar y volver a montar ordenadores. Después de estudiar ingeniería, trabaja en una empresa de desarrollo de software. Le gusta jugar videojuegos y asistir a conferencias de tecnología."
+    },
+    {
+      "id": 3,
+      "name": "Ana García",
+      "avatar": "https://example.com/avatar/ana_garcia.jpg",
+      "bio": "Profesora de primaria y amante de los niños. Dedicada a la educación y el desarrollo de los más pequeños.",
+      "age": 42,
+      "location": "Sevilla, España",
+      "gender": "Female",
+      "education_level": "Magisterio",
+      "personality": {
+        "introvert_extrovert": 70,
+        "analytical_creative": 65,
+        "busy_free_time": 90,
+        "disorganized_organized": 80,
+        "independent_cooperative": 30,
+        "environmentalist": 60,
+        "safe_risky": 40
+      },
+      "backstory": "Ana siempre supo que quería ser maestra. Le encanta ver cómo los niños aprenden y crecen. Después de estudiar magisterio, ha trabajado en varias escuelas primarias. En su tiempo libre, disfruta leyendo y haciendo manualidades."
+    },
+    {
+      "id": 4,
+      "name": "Javier López",
+      "avatar": "https://example.com/avatar/javier_lopez.jpg",
+      "bio": "Jubilado y aficionado a la jardinería. Disfrutando de la vida después de años de trabajo.",
+      "age": 68,
+      "location": "Valencia, España",
+      "gender": "Male",
+      "education_level": "Formación Profesional",
+      "personality": {
+        "introvert_extrovert": 40,
+        "analytical_creative": 50,
+        "busy_free_time": 30,
+        "disorganized_organized": 50,
+        "independent_cooperative": 70,
+        "environmentalist": 70,
+        "safe_risky": 50
+      },
+      "backstory": "Javier trabajó durante muchos años como mecánico. Ahora que está jubilado, dedica su tiempo a cuidar su jardín y a viajar con su esposa. Le gusta leer el periódico y pasar tiempo con sus nietos."
+    },
+    {
+      "id": 5,
+      "name": "María Martínez",
+      "avatar": "https://example.com/avatar/maria_martinez.jpg",
+      "bio": "Estudiante de medicina y voluntaria en un hospital. Apasionada por la salud y el bienestar.",
+      "age": 22,
+      "location": "Granada, España",
+      "gender": "Female",
+      "education_level": "Estudiante Universitario",
+      "personality": {
+        "introvert_extrovert": 80,
+        "analytical_creative": 70,
+        "busy_free_time": 95,
+        "disorganized_organized": 90,
+        "independent_cooperative": 40,
+        "environmentalist": 80,
+        "safe_risky": 60
+      },
+      "backstory": "María siempre ha querido ser médico. Le apasiona la ciencia y le gusta ayudar a los demás. Además de estudiar, trabaja como voluntaria en un hospital local. Le gusta correr y pasar tiempo con sus amigos."
+    },
+    {
+      "id": 6,
+      "name": "David Sánchez",
+      "avatar": "https://example.com/avatar/david_sanchez.jpg",
+      "bio": "Emprendedor y dueño de una startup tecnológica. Siempre buscando nuevas oportunidades de negocio.",
+      "age": 31,
+      "location": "Bilbao, España",
+      "gender": "Male",
+      "education_level": "MBA",
+      "personality": {
+        "introvert_extrovert": 20,
+        "analytical_creative": 90,
+        "busy_free_time": 90,
+        "disorganized_organized": 40,
+        "independent_cooperative": 90,
+        "environmentalist": 30,
+        "safe_risky": 90
+      },
+      "backstory": "David siempre ha tenido una mentalidad emprendedora. Después de trabajar varios años en una gran empresa, decidió crear su propia startup. Le gusta trabajar duro y asumir riesgos. En su tiempo libre, disfruta haciendo deporte y leyendo libros de negocios."
+    },
+    {
+      "id": 7,
+      "name": "Laura Fernández",
+      "avatar": "https://example.com/avatar/laura_fernandez.jpg",
+      "bio": "Artista plástica y profesora de arte. Expresando su creatividad a través de la pintura y la enseñanza.",
+      "age": 39,
+      "location": "Málaga, España",
+      "gender": "Female",
+      "education_level": "Bellas Artes",
+      "personality": {
+        "introvert_extrovert": 50,
+        "analytical_creative": 95,
+        "busy_free_time": 60,
+        "disorganized_organized": 30,
+        "independent_cooperative": 60,
+        "environmentalist": 50,
+        "safe_risky": 40
+      },
+      "backstory": "Laura siempre ha sido una persona creativa. Desde pequeña, le encantaba dibujar y pintar. Después de estudiar bellas artes, trabaja como profesora de arte y vende sus obras en galerías locales. Le gusta visitar museos y asistir a exposiciones."
+    },
+    {
+      "id": 8,
+      "name": "Pedro Gómez",
+      "avatar": "https://example.com/avatar/pedro_gomez.jpg",
+      "bio": "Abogado y defensor de los derechos humanos. Luchando por la justicia y la igualdad.",
+      "age": 45,
+      "location": "Zaragoza, España",
+      "gender": "Male",
+      "education_level": "Derecho",
+      "personality": {
+        "introvert_extrovert": 40,
+        "analytical_creative": 80,
+        "busy_free_time": 85,
+        "disorganized_organized": 70,
+        "independent_cooperative": 70,
+        "environmentalist": 40,
+        "safe_risky": 60
+      },
+      "backstory": "Pedro siempre ha creído en la justicia y la igualdad. Después de estudiar derecho, trabaja como abogado especializado en derechos humanos. Le gusta leer sobre temas sociales y políticos. En su tiempo libre, participa en manifestaciones y protestas."
+    },
+    {
+      "id": 9,
+      "name": "Isabel Ruiz",
+      "avatar": "https://example.com/avatar/isabel_ruiz.jpg",
+      "bio": "Diseñadora gráfica y blogger de moda. Compartiendo su estilo y creatividad con el mundo.",
+      "age": 26,
+      "location": "Murcia, España",
+      "gender": "Female",
+      "education_level": "Diseño Gráfico",
+      "personality": {
+        "introvert_extrovert": 70,
+        "analytical_creative": 90,
+        "busy_free_time": 70,
+        "disorganized_organized": 60,
+        "independent_cooperative": 50,
+        "environmentalist": 40,
+        "safe_risky": 70
+      },
+      "backstory": "Isabel siempre ha tenido un gran sentido del estilo. Después de estudiar diseño gráfico, trabaja como freelance y escribe un blog de moda. Le gusta ir de compras y crear contenido para sus redes sociales. En su tiempo libre, disfruta yendo a fiestas y eventos."
+    },
+    {
+      "id": 10,
+      "name": "Manuel Jiménez",
+      "avatar": "https://example.com/avatar/manuel_jimenez.jpg",
+      "bio": "Chef y dueño de un restaurante. Apasionado por la gastronomía y la cocina tradicional.",
+      "age": 52,
+      "location": "Córdoba, España",
+      "gender": "Male",
+      "education_level": "Hostelería",
+      "personality": {
+        "introvert_extrovert": 60,
+        "analytical_creative": 80,
+        "busy_free_time": 90,
+        "disorganized_organized": 70,
+        "independent_cooperative": 60,
+        "environmentalist": 50,
+        "safe_risky": 40
+      },
+      "backstory": "Manuel creció en una familia de cocineros. Después de estudiar hostelería, abrió su propio restaurante, donde ofrece platos tradicionales con un toque moderno. Le gusta experimentar con nuevos sabores y técnicas culinarias. En su tiempo libre, disfruta comiendo en otros restaurantes y leyendo libros de cocina."
+    },
+    {
+      "id": 11,
+      "name": "Elena Vargas",
+      "avatar": "https://example.com/avatar/elena_vargas.jpg",
+      "bio": "Bibliotecaria y amante de la lectura. Promoviendo el acceso a la información y la cultura.",
+      "age": 33,
+      "location": "A Coruña, España",
+      "gender": "Female",
+      "education_level": "Biblioteconomía",
+      "personality": {
+        "introvert_extrovert": 85,
+        "analytical_creative": 60,
+        "busy_free_time": 50,
+        "disorganized_organized": 85,
+        "independent_cooperative": 45,
+        "environmentalist": 75,
+        "safe_risky": 35
+      },
+      "backstory": "Elena ha estado rodeada de libros desde que era niña. Después de estudiar biblioteconomía, trabaja en la biblioteca pública local. Le apasiona ayudar a la gente a encontrar la información que necesitan y organizar eventos culturales. En su tiempo libre, le gusta leer, ir al cine y visitar museos."
+    },
+    {
+      "id": 12,
+      "name": "Ricardo Torres",
+      "avatar": "https://example.com/avatar/ricardo_torres.jpg",
+      "bio": "Entrenador personal y atleta aficionado. Ayudando a otros a alcanzar sus metas de fitness.",
+      "age": 29,
+      "location": "Tenerife, España",
+      "gender": "Male",
+      "education_level": "Ciencias del Deporte",
+      "personality": {
+        "introvert_extrovert": 65,
+        "analytical_creative": 55,
+        "busy_free_time": 75,
+        "disorganized_organized": 65,
+        "independent_cooperative": 55,
+        "environmentalist": 55,
+        "safe_risky": 65
+      },
+      "backstory": "Ricardo siempre ha sido un apasionado del deporte. Después de estudiar ciencias del deporte, trabaja como entrenador personal. Le gusta ayudar a sus clientes a mejorar su salud y su forma física. En su tiempo libre, practica running, ciclismo y natación."
+    },
+    {
+      "id": 13,
+      "name": "Carmen Díaz",
+      "avatar": "https://example.com/avatar/carmen_diaz.jpg",
+      "bio": "Consultora de marketing y viajera. Explorando el mundo y ayudando a las empresas a crecer.",
+      "age": 37,
+      "location": "Las Palmas de Gran Canaria, España",
+      "gender": "Female",
+      "education_level": "Marketing",
+      "personality": {
+        "introvert_extrovert": 35,
+        "analytical_creative": 85,
+        "busy_free_time": 85,
+        "disorganized_organized": 55,
+        "independent_cooperative": 75,
+        "environmentalist": 35,
+        "safe_risky": 75
+      },
+      "backstory": "Carmen siempre ha sido una persona curiosa y aventurera. Después de estudiar marketing, trabajó en varias empresas antes de convertirse en consultora freelance. Le gusta viajar por el mundo y conocer nuevas culturas. En su tiempo libre, disfruta haciendo senderismo y tomando fotografías."
+    },
+    {
+      "id": 14,
+      "name": "Jorge Castro",
+      "avatar": "https://example.com/avatar/jorge_castro.jpg",
+      "bio": "Programador y músico. Combinando la tecnología y el arte en su vida.",
+      "age": 25,
+      "location": "Salamanca, España",
+      "gender": "Male",
+      "education_level": "Ingeniería del Software",
+      "personality": {
+        "introvert_extrovert": 55,
+        "analytical_creative": 75,
+        "busy_free_time": 65,
+        "disorganized_organized": 75,
+        "independent_cooperative": 65,
+        "environmentalist": 45,
+        "safe_risky": 55
+      },
+      "backstory": "Jorge siempre ha estado interesado en la tecnología y la música. Después de estudiar ingeniería del software, trabaja como programador y toca la guitarra en una banda. Le gusta crear aplicaciones y componer canciones. En su tiempo libre, disfruta asistiendo a conciertos y jugando videojuegos."
+    },
+    {
+      "id": 15,
+      "name": "Patricia Vega",
+      "avatar": "https://example.com/avatar/patricia_vega.jpg",
+      "bio": "Psicóloga y terapeuta familiar. Ayudando a las personas a mejorar sus relaciones y su bienestar emocional.",
+      "age": 41,
+      "location": "Oviedo, España",
+      "gender": "Female",
+      "education_level": "Psicología",
+      "personality": {
+        "introvert_extrovert": 75,
+        "analytical_creative": 65,
+        "busy_free_time": 85,
+        "disorganized_organized": 85,
+        "independent_cooperative": 35,
+        "environmentalist": 65,
+        "safe_risky": 25
+      },
+      "backstory": "Patricia siempre ha sido una persona empática y comprensiva. Después de estudiar psicología, trabaja como terapeuta familiar. Le gusta ayudar a las personas a superar sus problemas y mejorar sus vidas. En su tiempo libre, disfruta leyendo libros de psicología y meditando."
+    },
+    {
+      "id": 16,
+      "name": "Alejandro Rios",
+      "avatar": "https://example.com/avatar/alejandro_rios.jpg",
+      "bio": "Agricultor ecológico y activista. Promoviendo una alimentación sana y sostenible.",
+      "age": 58,
+      "location": "Cáceres, España",
+      "gender": "Male",
+      "education_level": "Agricultura",
+      "personality": {
+        "introvert_extrovert": 45,
+        "analytical_creative": 55,
+        "busy_free_time": 65,
+        "disorganized_organized": 55,
+        "independent_cooperative": 45,
+        "environmentalist": 90,
+        "safe_risky": 35
+      },
+      "backstory": "Alejandro heredó la granja familiar de sus padres. Después de estudiar agricultura, decidió convertirla en una granja ecológica. Le gusta cultivar alimentos sanos y respetuosos con el medio ambiente. En su tiempo libre, participa en manifestaciones y protestas contra la agricultura industrial."
+    },
+    {
+      "id": 17,
+      "name": "Cristina Nieto",
+      "avatar": "https://example.com/avatar/cristina_nieto.jpg",
+      "bio": "Intérprete y traductora. Facilitando la comunicación entre personas de diferentes culturas.",
+      "age": 30,
+      "location": "Santiago de Compostela, España",
+      "gender": "Female",
+      "education_level": "Traducción e Interpretación",
+      "personality": {
+        "introvert_extrovert": 65,
+        "analytical_creative": 75,
+        "busy_free_time": 55,
+        "disorganized_organized": 75,
+        "independent_cooperative": 35,
+        "environmentalist": 55,
+        "safe_risky": 45
+      },
+      "backstory": "Cristina siempre ha tenido facilidad para los idiomas. Después de estudiar traducción e interpretación, trabaja como freelance para varias empresas y organizaciones. Le gusta viajar por el mundo y conocer nuevas culturas. En su tiempo libre, disfruta leyendo libros en diferentes idiomas y viendo películas extranjeras."
+    },
+    {
+      "id": 18,
+      "name": "Rubén Moral",
+      "avatar": "https://example.com/avatar/ruben_moral.jpg",
+      "bio": "Bombero y rescatista. Arriesgando su vida para salvar a los demás.",
+      "age": 34,
+      "location": "Valladolid, España",
+      "gender": "Male",
+      "education_level": "Formación Profesional",
+      "personality": {
+        "introvert_extrovert": 55,
+        "analytical_creative": 45,
+        "busy_free_time": 85,
+        "disorganized_organized": 65,
+        "independent_cooperative": 35,
+        "environmentalist": 45,
+        "safe_risky": 95
+      },
+      "backstory": "Rubén siempre ha querido ayudar a los demás. Después de completar su formación, trabaja como bombero. Le gusta arriesgar su vida para salvar a las personas en peligro. En su tiempo libre, practica deportes de riesgo y participa en actividades de voluntariado."
+    },
+    {
+      "id": 19,
+      "name": "Marta Blanco",
+      "avatar": "https://example.com/avatar/marta_blanco.jpg",
+      "bio": "Activista por los derechos de los animales. Luchando por un mundo más justo para todos los seres vivos.",
+      "age": 27,
+      "location": "Almería, España",
+      "gender": "Female",
+      "education_level": "Derecho",
+      "personality": {
+        "introvert_extrovert": 45,
+        "analytical_creative": 65,
+        "busy_free_time": 75,
+        "disorganized_organized": 55,
+        "independent_cooperative": 25,
+        "environmentalist": 95,
+        "safe_risky": 65
+      },
+      "backstory": "Marta siempre ha amado a los animales. Después de estudiar derecho, decidió dedicarse a la defensa de sus derechos. Participa en manifestaciones y campañas de concienciación. En su tiempo libre, trabaja como voluntaria en un refugio de animales y promueve el veganismo."
+    },
+    {
+      "id": 20,
+      "name": "Adrián Sanz",
+      "avatar": "https://example.com/avatar/adrian_sanz.jpg",
+      "bio": "Profesor de historia y escritor. Compartiendo su pasión por el pasado con el mundo.",
+      "age": 49,
+      "location": "Badajoz, España",
+      "gender": "Male",
+      "education_level": "Historia",
+      "personality": {
+        "introvert_extrovert": 75,
+        "analytical_creative": 65,
+        "busy_free_time": 65,
+        "disorganized_organized": 85,
+        "independent_cooperative": 45,
+        "environmentalist": 35,
+        "safe_risky": 25
+      },
+      "backstory": "Adrián siempre ha sido un apasionado de la historia. Después de estudiar historia, trabaja como profesor y escribe novelas históricas. Le gusta investigar sobre el pasado y compartir sus conocimientos con los demás. En su tiempo libre, disfruta leyendo libros de historia y visitando lugares históricos."
+    },
+    {
+      "id": 21,
+      "name": "Claudia Costa",
+      "avatar": "https://example.com/avatar/claudia_costa.jpg",
+      "bio": "Estudiante de arquitectura y diseñadora de interiores. Creando espacios funcionales y estéticos.",
+      "age": 23,
+      "location": "Pamplona, España",
+      "gender": "Female",
+      "education_level": "Arquitectura",
+      "personality": {
+        "introvert_extrovert": 55,
+        "analytical_creative": 85,
+        "busy_free_time": 75,
+        "disorganized_organized": 75,
+        "independent_cooperative": 55,
+        "environmentalist": 65,
+        "safe_risky": 55
+      },
+      "backstory": "Claudia siempre ha tenido una gran imaginación y un sentido del espacio. Estudia arquitectura y trabaja como diseñadora de interiores a tiempo parcial. Le gusta crear espacios que sean a la vez funcionales y estéticos. En su tiempo libre, disfruta visitando edificios históricos y leyendo revistas de diseño."
+    }
+  ]
+}

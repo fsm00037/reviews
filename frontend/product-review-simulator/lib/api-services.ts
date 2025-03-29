@@ -27,7 +27,39 @@ async function fetchAPI<T>(
       headers,
     });
     
-    const data = await response.json();
+    // Verificar si la respuesta está vacía
+    const responseText = await response.text();
+    
+    if (!responseText || responseText.trim() === '') {
+      console.log(`Respuesta vacía recibida de ${endpoint}`);
+      // Para endpoints que inician procesos, devolver un objeto vacío es válido
+      if (endpoint.includes('/phase') && options.method === 'POST') {
+        return {} as T;
+      }
+    }
+    
+    let data;
+    try {
+      // Intentar parsear la respuesta como JSON
+      data = responseText ? JSON.parse(responseText) : {};
+    } catch (parseError) {
+      console.error(`Error al parsear respuesta JSON de ${endpoint}:`, parseError);
+      console.log('Respuesta que causó el error:', responseText);
+      
+      // Para endpoints que inician procesos en el backend, no necesitamos la respuesta inmediata
+      if (endpoint.includes('/phase') && options.method === 'POST') {
+        console.log('Operación de inicio de fase, continuando sin respuesta JSON válida');
+        return {} as T;
+      }
+      
+      // Para otros endpoints, este es un error crítico
+      const error: APIError = {
+        status: response.status,
+        message: `Error al procesar la respuesta del servidor: ${(parseError as Error).message}`,
+        details: 'La respuesta no es un JSON válido. Posiblemente el servidor está procesando la solicitud.'
+      };
+      throw error;
+    }
     
     if (!response.ok) {
       const error: APIError = {
@@ -49,7 +81,18 @@ async function fetchAPI<T>(
       throw networkError;
     }
     
-    throw error;
+    // Si ya es un APIError, lo propagamos directamente
+    if ((error as any).status !== undefined && (error as any).message) {
+      throw error;
+    }
+    
+    // Otros errores no manejados
+    const unknownError: APIError = {
+      status: 500,
+      message: `Error inesperado: ${(error as Error).message || 'Desconocido'}`,
+      details: 'Se produjo un error al procesar la solicitud'
+    };
+    throw unknownError;
   }
 }
 
