@@ -168,7 +168,7 @@ def run_phase3(product_info: Dict[str, Any], user_profiles: List[Dict[str, Any]]
     # Load reviews
     try:
         reviews_list = load_reviews(config.REVIEWS_DIR)
-        reviews = [review.dict() for review in reviews_list]
+        reviews = [review.model_dump() for review in reviews_list] if reviews_list else []
         with open(os.path.join(config.OUTPUT_DIR, 'reviews.json'), 'w', encoding='utf-8') as json_file:
             json.dump({"reviews": reviews}, json_file, ensure_ascii=False, indent=4)
     

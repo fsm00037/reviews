@@ -31,28 +31,47 @@ interface DashboardPhaseProps {
 }
 
 // Componente para gráfico de barras de calificaciones
-const RatingBarChart = ({ distribution }: { distribution: number[] }) => {
+const RatingBarChart = ({ distribution }: { distribution: number[] | any }) => {
   // Asegurarse de que la distribución sea un array válido de longitud 5
   const safeDistribution = React.useMemo(() => {
-    // Verificar si la distribución es un array válido
-    if (!Array.isArray(distribution)) {
-      return [0, 0, 0, 0, 0];
+    // Si es un array, procesarlo como antes
+    if (Array.isArray(distribution)) {
+      // Si la longitud es 5, usar el array tal cual
+      if (distribution.length === 5) {
+        return distribution;
+      }
+      
+      // Si la longitud es diferente de 5, crear un nuevo array con ceros
+      const result = [0, 0, 0, 0, 0];
+      
+      // Copiar los valores disponibles (asegurándonos de no exceder los límites)
+      for (let i = 0; i < Math.min(distribution.length, 5); i++) {
+        result[i] = typeof distribution[i] === 'number' ? distribution[i] : 0;
+      }
+      
+      return result;
+    } 
+    // Si es un objeto con formato RatingDistribution, convertirlo a array
+    else if (distribution && typeof distribution === 'object') {
+      // Comprobar si tiene las propiedades del formato RatingDistribution
+      if ('one_star' in distribution || 
+          'two_stars' in distribution || 
+          'three_stars' in distribution || 
+          'four_stars' in distribution || 
+          'five_stars' in distribution) {
+        // Crear array donde el índice 0 = one_star, índice 1 = two_stars, etc.
+        return [
+          Number(distribution.one_star || 0),
+          Number(distribution.two_stars || 0),
+          Number(distribution.three_stars || 0),
+          Number(distribution.four_stars || 0),
+          Number(distribution.five_stars || 0)
+        ];
+      }
     }
     
-    // Si la longitud es 5, usar el array tal cual
-    if (distribution.length === 5) {
-      return distribution;
-    }
-    
-    // Si la longitud es diferente de 5, crear un nuevo array con ceros
-    const result = [0, 0, 0, 0, 0];
-    
-    // Copiar los valores disponibles (asegurándonos de no exceder los límites)
-    for (let i = 0; i < Math.min(distribution.length, 5); i++) {
-      result[i] = typeof distribution[i] === 'number' ? distribution[i] : 0;
-    }
-    
-    return result;
+    // Si no es ni array ni objeto válido, devolver zeros
+    return [0, 0, 0, 0, 0];
   }, [distribution]);
     
   const total = safeDistribution.reduce((sum, count) => sum + count, 0) || 1;  // Evitar división por cero
@@ -60,24 +79,30 @@ const RatingBarChart = ({ distribution }: { distribution: number[] }) => {
 
   return (
     <div className="space-y-3">
-      {[5, 4, 3, 2, 1].map((stars, index) => (
-        <div key={stars} className="flex items-center gap-2">
-          <div className="w-8 text-right font-medium">{stars}★</div>
-          <div className="flex-1">
-            <div className="h-5 w-full bg-gray-100 dark:bg-gray-800 rounded-full overflow-hidden">
-              <motion.div
-                className="h-full bg-gradient-to-r from-indigo-500 to-purple-500 rounded-full"
-                initial={{ width: 0 }}
-                animate={{ width: `${percentages[5 - stars]}%` }}
-                transition={{ duration: 1, delay: index * 0.1 }}
-              />
+      {[5, 4, 3, 2, 1].map((stars, index) => {
+        // El valor en el array es: índice 0 = one_star, índice 4 = five_stars
+        // Así que para 5 estrellas queremos safeDistribution[4], para 4 estrellas safeDistribution[3], etc.
+        const arrayIndex = stars - 1;
+        
+        return (
+          <div key={stars} className="flex items-center gap-2">
+            <div className="w-8 text-right font-medium">{stars}★</div>
+            <div className="flex-1">
+              <div className="h-5 w-full bg-gray-100 dark:bg-gray-800 rounded-full overflow-hidden">
+                <motion.div
+                  className="h-full bg-gradient-to-r from-indigo-500 to-purple-500 rounded-full"
+                  initial={{ width: 0 }}
+                  animate={{ width: `${percentages[arrayIndex]}%` }}
+                  transition={{ duration: 1, delay: index * 0.1 }}
+                />
+              </div>
+            </div>
+            <div className="w-16 text-sm text-gray-500 dark:text-gray-400">
+              {safeDistribution[arrayIndex] || 0} ({(percentages[arrayIndex] || 0).toFixed(0)}%)
             </div>
           </div>
-          <div className="w-16 text-sm text-gray-500 dark:text-gray-400">
-            {safeDistribution[5 - stars] || 0} ({(percentages[5 - stars] || 0).toFixed(0)}%)
-          </div>
-        </div>
-      ))}
+        );
+      })}
     </div>
   );
 };
@@ -271,6 +296,12 @@ export const DashboardPhase: React.FC<DashboardPhaseProps> = ({
     return (
       (parsedAnalysisResult.average_rating !== undefined) ||
       (Array.isArray(parsedAnalysisResult.rating_distribution) && parsedAnalysisResult.rating_distribution.length > 0) ||
+      (parsedAnalysisResult.rating_distribution && typeof parsedAnalysisResult.rating_distribution === 'object' && 
+        ('one_star' in parsedAnalysisResult.rating_distribution || 
+         'two_stars' in parsedAnalysisResult.rating_distribution || 
+         'three_stars' in parsedAnalysisResult.rating_distribution || 
+         'four_stars' in parsedAnalysisResult.rating_distribution || 
+         'five_stars' in parsedAnalysisResult.rating_distribution)) ||
       (Array.isArray(parsedAnalysisResult.positive_points) && parsedAnalysisResult.positive_points.length > 0) ||
       (Array.isArray(parsedAnalysisResult.keyword_analysis) && parsedAnalysisResult.keyword_analysis.length > 0)
     );

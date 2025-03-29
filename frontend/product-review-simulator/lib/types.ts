@@ -73,6 +73,15 @@ export interface Review {
   helpful_votes?: number;
 }
 
+// Tipo para distribución de calificaciones
+export interface RatingDistribution {
+  one_star: number;
+  two_stars: number;
+  three_stars: number;
+  four_stars: number;
+  five_stars: number;
+}
+
 // Tipo para análisis de palabras clave
 export interface KeywordAnalysis {
   word: string;
@@ -83,7 +92,7 @@ export interface KeywordAnalysis {
 // Tipo para resultado de análisis
 export interface AnalysisResult {
   average_rating: number;
-  rating_distribution: number[];
+  rating_distribution: number[] | RatingDistribution;
   positive_points: string[];
   negative_points: string[];
   keyword_analysis: KeywordAnalysis[];

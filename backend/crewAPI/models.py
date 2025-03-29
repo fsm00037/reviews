@@ -1,14 +1,22 @@
 from pydantic import BaseModel, Field
 from typing import Literal, Optional, List, Tuple, Dict, Any
 
+class Feature(BaseModel):
+    feature: str = Field(..., description="Característica del producto")
+    value: str = Field(..., description="Valor de la característica")
+
+class TechnicalSpec(BaseModel):
+    spec: str = Field(..., description="Especificación técnica del producto")
+    value: str = Field(..., description="Valor de la especificación técnica")
+
 class Product(BaseModel):
     name: str = Field(..., description="Nombre del producto")
     description: str = Field(..., description="Descripción detallada del producto")
     price: str = Field(..., description="Precio del producto en formato string (ej. '149.99€')")
     image: str = Field(..., description="URL de la imagen del producto")
     category: str = Field(..., description="Categoría del producto")
-    main_features: List[Dict[str, str]] = Field(..., description="Lista de características principales y sus explicaciones")
-    technical_specs: List[Dict[str, str]] = Field(..., description="Lista de especificaciones técnicas y sus explicaciones")
+    main_features: List[Feature] = Field(..., description="Lista de características principales y sus explicaciones")
+    technical_specs: List[TechnicalSpec] = Field(..., description="Lista de especificaciones técnicas y sus explicaciones")
 
 class BotPersonality(BaseModel):
     introvert_extrovert: int = Field(..., ge=0, le=100)
@@ -47,9 +55,16 @@ class KeywordAnalysis(BaseModel):
     count: int = Field(..., description="Frecuencia de aparición")
     sentiment: Literal["positive", "negative", "neutral"] = Field(..., description="Sentimiento asociado")
 
+class RatingDistribution(BaseModel):
+    one_star: int = Field(..., description="Número de 1 estrella")
+    two_stars: int = Field(..., description="Número de 2 estrellas")
+    three_stars: int = Field(..., description="Número de 3 estrellas")
+    four_stars: int = Field(..., description="Número de 4 estrellas")
+    five_stars: int = Field(..., description="Número de 5 estrellas")
+
 class AnalysisResult(BaseModel):
     average_rating: float = Field(..., description="Calificación promedio")
-    rating_distribution: List[int] = Field(..., description="Distribución de calificaciones [1★, 2★, 3★, 4★, 5★]")
+    rating_distribution: RatingDistribution = Field(..., description="Distribución de calificaciones")
     positive_points: List[str] = Field(..., description="Puntos positivos destacados")
     negative_points: List[str] = Field(..., description="Puntos negativos destacados")
     keyword_analysis: List[KeywordAnalysis] = Field(..., description="Análisis de palabras clave")

@@ -148,19 +148,20 @@ export default function SimulatorPage() {
 
   // New personality configuration with ranges
   const [personality, setPersonality] = useState<PersonalityConfig>({
-    introvert_extrovert: [40, 80],
-    analytical_creative: [30, 60],
-    busy_free_time: [50, 90],
-    disorganized_organized: [40, 70],
-    independent_cooperative: [10, 40],
-    environmentalist: [50, 80],
-    safe_risky: [60, 90],
+    introvert_extrovert: [0, 100],
+    analytical_creative: [0, 100],
+    busy_free_time: [0, 100],
+    disorganized_organized: [0, 100],
+    independent_cooperative: [0, 100],
+    environmentalist: [0, 100],
+    safe_risky: [0, 100],
   })
 
   // State for generated bots and reviews
   const [bots, setBots] = useState<BotProfile[]>([])
   const [reviews, setReviews] = useState<Review[]>([])
   const [activeStep, setActiveStep] = useState(0)
+  const [checkpointStep, setCheckpointStep] = useState(0)
   const [isGeneratingBots, setIsGeneratingBots] = useState(false)
   const [isGeneratingReviews, setIsGeneratingReviews] = useState(false)
   const [isGeneratingAnalysis, setIsGeneratingAnalysis] = useState(false)
@@ -182,19 +183,59 @@ export default function SimulatorPage() {
       const numReviewers = Math.floor(Math.random() * 
         (populationRange[1] - populationRange[0] + 1)) + populationRange[0];
       
-      // Ejecutar fase 2 para generar perfiles de bot
-      const response = await BotService.generateBots(numReviewers);
+      // Ejecutar fase 2 para generar perfiles de bot (solo inicia el proceso)
+      await BotService.generateBots(numReviewers);
       
-      if (response && response.profiles) {
-        setBots(response.profiles);
-        setActiveStep(2);
-      } else {
-        throw {
-          status: 500,
-          message: 'La respuesta del servidor no contiene perfiles',
-          details: 'La API no devolvió datos de perfiles válidos'
-        };
-      }
+      // Implementar un sistema de polling para verificar cuando los perfiles estén listos
+      let attemptCount = 0;
+      const maxAttempts = 30; // Intentar por 5 minutos (30 intentos x 10 segundos)
+      const pollingInterval = 10000; // 10 segundos entre cada intento
+      
+      const checkBotProfiles = async () => {
+        if (attemptCount >= maxAttempts) {
+          setIsGeneratingBots(false); // Asegurarse de desactivar el estado de generación
+          throw {
+            status: 408, // Request Timeout
+            message: 'Tiempo de espera agotado',
+            details: 'Los perfiles de bot no se generaron en el tiempo esperado. Intenta nuevamente.'
+          };
+        }
+        
+        try {
+          console.log(`Intento ${attemptCount + 1} de ${maxAttempts} para verificar perfiles de bot...`);
+          const profiles = await BotService.getReviewerProfiles();
+          
+          if (profiles && Array.isArray(profiles) && profiles.length > 0) {
+            console.log('Perfiles de bot generados exitosamente:', profiles);
+            setBots(profiles);
+            setActiveStep(2);
+            setCheckpointStep(2);
+            setIsGeneratingBots(false); // Desactivar el estado de generación al terminar exitosamente
+            return true; // Éxito, terminar el polling
+          } else {
+            console.log('Los perfiles de bot aún no están listos, esperando...');
+            attemptCount++;
+            // Programar el próximo intento
+            setTimeout(checkBotProfiles, pollingInterval);
+            return false; // Continuar con el polling
+          }
+        } catch (err) {
+          console.error('Error al verificar perfiles de bot:', err);
+          // Si hay un error pero no es 404 (no encontrado), considerarlo como crítico
+          if ((err as APIError).status !== 404) {
+            setIsGeneratingBots(false); // Desactivar en caso de error crítico
+            throw err;
+          }
+          attemptCount++;
+          // Si es 404, los perfiles aún no existen, seguir esperando
+          setTimeout(checkBotProfiles, pollingInterval);
+          return false;
+        }
+      };
+      
+      // Iniciar el proceso de polling después de un breve retraso inicial
+      setTimeout(checkBotProfiles, 5000);
+      
     } catch (err) {
       console.error("Error al generar los bots:", err);
       if ((err as APIError).status !== undefined) {
@@ -206,7 +247,6 @@ export default function SimulatorPage() {
           details: 'No se pudieron generar los perfiles de bot'
         });
       }
-    } finally {
       setIsGeneratingBots(false);
     }
   }
@@ -217,21 +257,61 @@ export default function SimulatorPage() {
     setError(null)
 
     try {
-      // Ejecutar fase 3 para generar reseñas
-      const response = await ReviewService.generateReviews();
+      // Ejecutar fase 3 para generar reseñas (solo inicia el proceso)
+      await ReviewService.generateReviews();
       
-      if (response && response.reviews) {
-        setReviews(response.reviews);
-        setShowConfetti(true);
-        setTimeout(() => setShowConfetti(false), 3000);
-        setActiveStep(3);
-      } else {
-        throw {
-          status: 500,
-          message: 'La respuesta del servidor no contiene reseñas',
-          details: 'La API no devolvió datos de reseñas válidos'
-        };
-      }
+      // Implementar un sistema de polling para verificar cuando las reseñas estén listas
+      let attemptCount = 0;
+      const maxAttempts = 30; // Intentar por 5 minutos (30 intentos x 10 segundos)
+      const pollingInterval = 10000; // 10 segundos entre cada intento
+      
+      const checkReviews = async () => {
+        if (attemptCount >= maxAttempts) {
+          setIsGeneratingReviews(false); // Asegurarse de desactivar el estado de generación
+          throw {
+            status: 408, // Request Timeout
+            message: 'Tiempo de espera agotado',
+            details: 'Las reseñas no se generaron en el tiempo esperado. Intenta nuevamente.'
+          };
+        }
+        
+        try {
+          console.log(`Intento ${attemptCount + 1} de ${maxAttempts} para verificar reseñas...`);
+          const response = await ReviewService.getReviews();
+          
+          if (response && Array.isArray(response) && response.length > 0) {
+            console.log('Reseñas generadas exitosamente:', response);
+            setReviews(response);
+            setShowConfetti(true);
+            setTimeout(() => setShowConfetti(false), 3000);
+            setActiveStep(3);
+            setCheckpointStep(3);
+            setIsGeneratingReviews(false); // Desactivar el estado de generación al terminar exitosamente
+            return true; // Éxito, terminar el polling
+          } else {
+            console.log('Las reseñas aún no están listas, esperando...');
+            attemptCount++;
+            // Programar el próximo intento
+            setTimeout(checkReviews, pollingInterval);
+            return false; // Continuar con el polling
+          }
+        } catch (err) {
+          console.error('Error al verificar reseñas:', err);
+          // Si hay un error pero no es 404 (no encontrado), considerarlo como crítico
+          if ((err as APIError).status !== 404) {
+            setIsGeneratingReviews(false); // Desactivar en caso de error crítico
+            throw err;
+          }
+          attemptCount++;
+          // Si es 404, las reseñas aún no existen, seguir esperando
+          setTimeout(checkReviews, pollingInterval);
+          return false;
+        }
+      };
+      
+      // Iniciar el proceso de polling después de un breve retraso inicial
+      setTimeout(checkReviews, 5000);
+      
     } catch (err) {
       console.error("Error al generar las reseñas:", err);
       if ((err as APIError).status !== undefined) {
@@ -243,7 +323,6 @@ export default function SimulatorPage() {
           details: 'No se pudieron generar las reseñas'
         });
       }
-    } finally {
       setIsGeneratingReviews(false);
     }
   }
@@ -254,38 +333,74 @@ export default function SimulatorPage() {
     setError(null)
 
     try {
-      // Ejecutar fase 4 para generar análisis
-      const analysis = await AnalysisService.generateAnalysis();
+      // Ejecutar fase 4 para generar análisis (solo inicia el proceso)
+      await AnalysisService.generateAnalysis();
       
-      if (analysis) {
-        console.log('Análisis recibido del API:', JSON.stringify(analysis, null, 2));
-        console.log('Estructura de rating_distribution:', analysis.rating_distribution);
-        
-        // Asegurarse de que el resultado es un objeto y no una cadena
-        let analysisObject = analysis;
-        if (typeof analysis === 'string') {
-          try {
-            console.log('El análisis recibido es una cadena, intentando convertir a objeto');
-            analysisObject = JSON.parse(analysis);
-          } catch (error) {
-            console.error('Error al convertir análisis de cadena a objeto:', error);
-            throw {
-              status: 500,
-              message: 'Error al procesar el análisis recibido',
-              details: 'El formato de respuesta del análisis no es válido'
-            };
-          }
+      // Implementar un sistema de polling para verificar cuando el análisis esté listo
+      let attemptCount = 0;
+      const maxAttempts = 30; // Intentar por 5 minutos (30 intentos x 10 segundos)
+      const pollingInterval = 10000; // 10 segundos entre cada intento
+      
+      const checkAnalysis = async () => {
+        if (attemptCount >= maxAttempts) {
+          setIsGeneratingAnalysis(false); // Asegurarse de desactivar el estado de generación
+          throw {
+            status: 408, // Request Timeout
+            message: 'Tiempo de espera agotado',
+            details: 'El análisis no se generó en el tiempo esperado. Intenta nuevamente.'
+          };
         }
         
-        setAnalysisResult(analysisObject);
-        setActiveStep(4);
-      } else {
-        throw {
-          status: 500,
-          message: 'La respuesta del servidor no contiene análisis',
-          details: 'La API no devolvió datos de análisis válidos'
-        };
-      }
+        try {
+          console.log(`Intento ${attemptCount + 1} de ${maxAttempts} para verificar análisis...`);
+          const analysis = await AnalysisService.getAnalysis();
+          
+          if (analysis && Object.keys(analysis).length > 0) {
+            console.log('Análisis generado exitosamente:', JSON.stringify(analysis, null, 2));
+            
+            // Verificar el formato de rating_distribution
+            let safeAnalysis = analysis;
+            
+            if (!safeAnalysis.rating_distribution) {
+              console.warn('No se encontró rating_distribution en el análisis');
+              safeAnalysis.rating_distribution = [0, 0, 0, 0, 0];
+            } else if (Array.isArray(safeAnalysis.rating_distribution)) {
+              // Mantener el formato de array
+              console.log('rating_distribution es un array:', safeAnalysis.rating_distribution);
+            } else if (typeof safeAnalysis.rating_distribution === 'object') {
+              // Si es un objeto, verificar que tenga el formato esperado
+              console.log('rating_distribution es un objeto:', safeAnalysis.rating_distribution);
+            }
+            
+            setAnalysisResult(safeAnalysis);
+            setActiveStep(4);
+            setCheckpointStep(4);
+            setIsGeneratingAnalysis(false); // Desactivar el estado de generación al terminar exitosamente
+            return true; // Éxito, terminar el polling
+          } else {
+            console.log('El análisis aún no está listo, esperando...');
+            attemptCount++;
+            // Programar el próximo intento
+            setTimeout(checkAnalysis, pollingInterval);
+            return false; // Continuar con el polling
+          }
+        } catch (err) {
+          console.error('Error al verificar análisis:', err);
+          // Si hay un error pero no es 404 (no encontrado), considerarlo como crítico
+          if ((err as APIError).status !== 404) {
+            setIsGeneratingAnalysis(false); // Desactivar en caso de error crítico
+            throw err;
+          }
+          attemptCount++;
+          // Si es 404, el análisis aún no existe, seguir esperando
+          setTimeout(checkAnalysis, pollingInterval);
+          return false;
+        }
+      };
+      
+      // Iniciar el proceso de polling después de un breve retraso inicial
+      setTimeout(checkAnalysis, 5000);
+      
     } catch (err) {
       console.error("Error al generar el análisis:", err);
       if ((err as APIError).status !== undefined) {
@@ -297,7 +412,6 @@ export default function SimulatorPage() {
           details: 'No se pudo generar el análisis'
         });
       }
-    } finally {
       setIsGeneratingAnalysis(false);
     }
   }
@@ -316,25 +430,29 @@ export default function SimulatorPage() {
         setAnalysisResult(results.analysis);
         
         // Determinar en qué paso estamos basado en los datos disponibles
+        let newCheckpoint = 0;
         if (results.analysis && Object.keys(results.analysis).length > 0) {
-          setActiveStep(4);
+          newCheckpoint = 4;
         } else if (results.reviews && results.reviews.length > 0) {
-          setActiveStep(3);
+          newCheckpoint = 3;
         } else if (results.reviewers && results.reviewers.length > 0) {
-          setActiveStep(2);
+          newCheckpoint = 2;
         } else if (results.product && Object.keys(results.product).length > 0) {
-          setActiveStep(1); // Si hay información del producto, ir a la fase de configuración
-        } else {
-          setActiveStep(0); // Si no hay información, iniciar en la fase 0 (información del producto)
+          newCheckpoint = 0; // Si hay información del producto, ir a la fase de configuración
         }
+        
+        setActiveStep(newCheckpoint);
+        setCheckpointStep(newCheckpoint);
       } else {
         setActiveStep(0); // Si no hay resultados disponibles, iniciar en la fase 0
+        setCheckpointStep(0);
       }
     } catch (err) {
       console.error("Error al cargar los resultados:", err);
       // No mostrar error si no hay resultados disponibles aún (simplemente ir a fase 0)
       if ((err as APIError).status === 404) {
         setActiveStep(0);
+        setCheckpointStep(0);
       } else if ((err as APIError).status !== undefined) {
         setError(err as APIError);
       } else {
@@ -387,8 +505,8 @@ export default function SimulatorPage() {
             steps={steps}
             currentStep={activeStep}
             onStepClick={(step) => {
-              // Only allow going back to previous steps or current step
-              if (step <= activeStep) {
+              // Solo permitir ir a pasos hasta el checkpoint actual
+              if (step <= checkpointStep) {
                 setActiveStep(step)
               }
             }}
@@ -412,7 +530,11 @@ export default function SimulatorPage() {
               <ProductPhase 
                 product={product}
                 setProduct={setProduct}
-                setActiveStep={setActiveStep}
+                setActiveStep={(step) => {
+                  setActiveStep(step);
+                  // Al configurar el producto, establecemos el checkpoint en 1 (fase de configuración)
+                  setCheckpointStep(1);
+                }}
                 isGeneratingBots={isGeneratingBots}
                 setIsGeneratingBots={setIsGeneratingBots}
                 setError={setError}
