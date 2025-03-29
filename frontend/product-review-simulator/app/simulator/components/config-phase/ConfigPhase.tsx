@@ -63,7 +63,7 @@ export const ConfigPhase: React.FC<ConfigPhaseProps> = ({
                 minValue={populationRange[0]}
                 maxValue={populationRange[1]}
                 absoluteMin={1}
-                absoluteMax={20}
+                absoluteMax={100}
                 onChange={(min, max) => setPopulationRange([min, max])}
               />
             </div>
@@ -79,7 +79,7 @@ export const ConfigPhase: React.FC<ConfigPhaseProps> = ({
                   maxLabel="max"
                   minValue={demographics.age_range[0]}
                   maxValue={demographics.age_range[1]}
-                  absoluteMin={18}
+                  absoluteMin={12}
                   absoluteMax={80}
                   onChange={(min, max) => setDemographics({ ...demographics, age_range: [min, max] })}
                 />

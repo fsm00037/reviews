@@ -148,13 +148,13 @@ export default function SimulatorPage() {
 
   // New personality configuration with ranges
   const [personality, setPersonality] = useState<PersonalityConfig>({
-    introvert_extrovert: [40, 80],
-    analytical_creative: [30, 60],
-    busy_free_time: [50, 90],
-    disorganized_organized: [40, 70],
-    independent_cooperative: [10, 40],
-    environmentalist: [50, 80],
-    safe_risky: [60, 90],
+    introvert_extrovert: [0, 100],
+    analytical_creative: [0, 100],
+    busy_free_time: [0, 100],
+    disorganized_organized: [0, 100],
+    independent_cooperative: [0, 100],
+    environmentalist: [0, 100],
+    safe_risky: [0, 100],
   })
 
   // State for generated bots and reviews
@@ -259,7 +259,6 @@ export default function SimulatorPage() {
       
       if (analysis) {
         console.log('Análisis recibido del API:', JSON.stringify(analysis, null, 2));
-        console.log('Estructura de rating_distribution:', analysis.rating_distribution);
         
         // Asegurarse de que el resultado es un objeto y no una cadena
         let analysisObject = analysis;
@@ -275,6 +274,32 @@ export default function SimulatorPage() {
               details: 'El formato de respuesta del análisis no es válido'
             };
           }
+        }
+        
+        // Verificar el formato de rating_distribution
+        if (analysisObject.rating_distribution) {
+          if (Array.isArray(analysisObject.rating_distribution)) {
+            console.log('rating_distribution es un array:', analysisObject.rating_distribution);
+          } else if (typeof analysisObject.rating_distribution === 'object') {
+            console.log('rating_distribution es un objeto:', analysisObject.rating_distribution);
+            // Comprobar que las propiedades necesarias existen
+            const hasCorrectProperties = 
+              'one_star' in analysisObject.rating_distribution ||
+              'two_stars' in analysisObject.rating_distribution ||
+              'three_stars' in analysisObject.rating_distribution ||
+              'four_stars' in analysisObject.rating_distribution ||
+              'five_stars' in analysisObject.rating_distribution;
+              
+            if (!hasCorrectProperties) {
+              console.warn('rating_distribution no tiene las propiedades esperadas, se usará un formato por defecto');
+            }
+          } else {
+            console.warn('rating_distribution no es ni array ni objeto:', analysisObject.rating_distribution);
+          }
+        } else {
+          console.warn('No se encontró rating_distribution en el análisis');
+          // Añadir un rating_distribution por defecto si no existe
+          analysisObject.rating_distribution = [0, 0, 0, 0, 0];
         }
         
         setAnalysisResult(analysisObject);
