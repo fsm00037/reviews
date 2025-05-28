@@ -66,18 +66,20 @@ def phase2_create_reviewers():
     
     Espera un JSON con:
     - num_reviewers: número de reseñadores a crear
+    - profile_parameters: parámetros de los perfiles a crear
     - model_name: (opcional) nombre del modelo a utilizar
     """
     data = request.json
     
-    if not data or 'num_reviewers' not in data:
-        return jsonify({"error": "Se requiere el número de reseñadores"}), 400
+    if not data or 'num_reviewers' not in data or 'profile_parameters' not in data:
+        return jsonify({"error": "Se requieren el número de reseñadores y los parámetros de los perfiles"}), 400
     
     num_reviewers = data['num_reviewers']
+    profile_parameters = data['profile_parameters']
     model_name = data.get('model_name', None)
     
     try:
-        results = execute_phase2(num_reviewers, model_name)
+        results = execute_phase2(num_reviewers, profile_parameters, model_name)
         return jsonify(results)
     except Exception as e:
         return jsonify({"error": str(e)}), 500

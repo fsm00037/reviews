@@ -110,7 +110,7 @@ def run_phase1(product_url: str, model_name: str = None) -> Dict[str, Any]:
     return product_results
     
 
-def run_phase2(num_reviewers: int, model_name: str = None) -> Dict[str, Any]:
+def run_phase2(num_reviewers: int, profile_parameters: Dict[str, Any], model_name: str = None) -> Dict[str, Any]:
     """Run phase 2: Create user profiles"""
     # Ensure output directories exist
   
@@ -124,7 +124,7 @@ def run_phase2(num_reviewers: int, model_name: str = None) -> Dict[str, Any]:
     # Create user profiles only if num_reviewers > 0
     if num_reviewers > 0:
         # Create user profiles task
-        user_profiles_task = create_user_profiles_task(num_reviewers, user_creator_agent)
+        user_profiles_task = create_user_profiles_task(num_reviewers, profile_parameters, user_creator_agent)
         
         # Create and run user profiles crew
         user_crew = Crew(

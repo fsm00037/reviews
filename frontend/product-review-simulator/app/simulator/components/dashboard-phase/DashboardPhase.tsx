@@ -447,25 +447,12 @@ export const DashboardPhase: React.FC<DashboardPhaseProps> = ({
                     </div>
                     <Progress value={75} className="h-1.5" />
                   </div>
-                  <div>
-                    <div className="flex justify-between mb-1">
-                      <span className="text-gray-500 dark:text-gray-400">Proporción de géneros</span>
-                      <span className="font-medium">
-                        {demographics.gender_ratio}% H / {100 - demographics.gender_ratio}% M
-                      </span>
-                    </div>
-                    <div className="h-1.5 w-full bg-gray-100 dark:bg-gray-800 rounded-full overflow-hidden">
-                      <div
-                        className="h-full bg-blue-500 rounded-full"
-                        style={{ width: `${demographics.gender_ratio}%` }}
-                      />
-                    </div>
-                  </div>
+                 
                   <div>
                     <div className="flex justify-between mb-1">
                       <span className="text-gray-500 dark:text-gray-400">Educación</span>
                       <span className="font-medium">
-                        {demographics.education_range[0]}-{demographics.education_range[1]} años
+                        {demographics.education_level}
                       </span>
                     </div>
                     <Progress value={60} className="h-1.5" />

@@ -68,48 +68,7 @@ export const ProductPhase: React.FC<ProductPhaseProps> = ({
       </CardHeader>
       <CardContent className="p-6">
         <form onSubmit={handleProductSubmit} className="space-y-4">
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            <div className="space-y-2">
-              <Label htmlFor="productUrl" className="text-sm font-medium">
-                URL del producto
-              </Label>
-              <Input
-                id="productUrl"
-                placeholder="https://example.com/product"
-                className="bg-white/70 dark:bg-gray-800/70 border-purple-200 dark:border-gray-700 focus-visible:ring-purple-500"
-              />
-              <Button
-                type="submit"
-                variant="outline"
-                className="mt-2 border-purple-200 dark:border-gray-700 hover:bg-purple-50 dark:hover:bg-gray-800 transition-colors w-full"
-                disabled={isGeneratingBots}
-              >
-                {isGeneratingBots ? (
-                  <LoadingSpinner text="Analizando producto..." size="sm" />
-                ) : (
-                  <>Extraer información del producto</>
-                )}
-              </Button>
-              <p className="text-sm text-gray-500 dark:text-gray-400 mt-2">
-                O ingresa los datos del producto manualmente a continuación
-              </p>
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="productImage" className="text-sm font-medium">
-                Imagen del producto
-              </Label>
-              <div className="border border-purple-200 dark:border-gray-700 rounded-md p-2 flex justify-center bg-white/50 dark:bg-gray-800/50">
-                <motion.img
-                  src={product.image || "/placeholder.svg"}
-                  alt="Product"
-                  className="h-40 w-40 object-contain"
-                  initial={{ scale: 0.9, opacity: 0 }}
-                  animate={{ scale: 1, opacity: 1 }}
-                  transition={{ type: "spring", stiffness: 260, damping: 20 }}
-                />
-              </div>
-            </div>
-          </div>
+          
 
           <div className="space-y-2">
             <Label htmlFor="productName" className="text-sm font-medium">

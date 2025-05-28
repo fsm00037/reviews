@@ -142,8 +142,8 @@ export default function SimulatorPage() {
   // New demographic configuration
   const [demographics, setDemographics] = useState<DemographicConfig>({
     age_range: [25, 45],
-    education_range: [12, 18], // Years of education (12 = high school, 16 = bachelor's, 18 = master's)
-    gender_ratio: 50, // 50% male, 50% female
+    education_level: "Mixed", // Opción mixta por defecto
+    gender_ratio: "Male&Female", // Opción mixta por defecto
   })
 
   // New personality configuration with ranges
@@ -184,7 +184,15 @@ export default function SimulatorPage() {
         (populationRange[1] - populationRange[0] + 1)) + populationRange[0];
       
       // Ejecutar fase 2 para generar perfiles de bot (solo inicia el proceso)
-      await BotService.generateBots(numReviewers);
+      await BotService.generateBots(
+        numReviewers,
+        populationRange,
+        positivityBias,
+        verbosity,
+        detailLevel,
+        demographics,
+        personality
+      );
       
       // Implementar un sistema de polling para verificar cuando los perfiles estén listos
       let attemptCount = 0;
