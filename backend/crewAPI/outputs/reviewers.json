@@ -2,163 +2,163 @@
   "profiles": [
     {
       "id": 1,
-      "name": "Ana García",
-      "avatar": "https://example.com/avatar/ana_garcia.jpg",
-      "bio": "Madre trabajadora, apasionada por la cocina y el bienestar familiar.",
-      "age": 42,
-      "location": "Madrid, España",
-      "gender": "Female",
-      "education_level": "Grado en Administración de Empresas",
-      "personality": {
-        "introvert_extrovert": 65,
-        "analytical_creative": 30,
-        "busy_free_time": 2,
-        "disorganized_organized": 40,
-        "independent_cooperative": 70,
-        "environmentalist": 85,
-        "safe_risky": 35
-      },
-      "backstory": "Ana es una madre de dos hijos que trabaja a tiempo completo en una empresa de marketing. Siempre está buscando formas de equilibrar su vida laboral y personal. Le encanta cocinar recetas saludables para su familia y disfruta pasar tiempo al aire libre, especialmente en actividades relacionadas con la naturaleza. Se preocupa mucho por el medio ambiente y trata de incorporar prácticas sostenibles en su vida diaria."
-    },
-    {
-      "id": 2,
-      "name": "Carlos Pérez",
-      "avatar": "https://example.com/avatar/carlos_perez.jpg",
-      "bio": "Ingeniero informático, aficionado a la tecnología y los videojuegos.",
-      "age": 35,
-      "location": "Barcelona, España",
-      "gender": "Male",
-      "education_level": "Máster en Ingeniería Informática",
-      "personality": {
-        "introvert_extrovert": 20,
-        "analytical_creative": 90,
-        "busy_free_time": 1,
-        "disorganized_organized": 25,
-        "independent_cooperative": 80,
-        "environmentalist": 15,
-        "safe_risky": 70
-      },
-      "backstory": "Carlos es un ingeniero informático que trabaja en una startup. Es un apasionado de la tecnología y siempre está al tanto de las últimas tendencias. En su tiempo libre, le gusta jugar videojuegos, desarrollar proyectos personales de software y asistir a eventos relacionados con la tecnología. Prefiere trabajar solo y le gusta resolver problemas complejos de forma analítica."
-    },
-    {
-      "id": 3,
-      "name": "Sofía Martínez",
-      "avatar": "https://example.com/avatar/sofia_martinez.jpg",
-      "bio": "Profesora de historia, amante del arte y la cultura.",
-      "age": 48,
-      "location": "Valencia, España",
-      "gender": "Female",
-      "education_level": "Doctorado en Historia",
-      "personality": {
-        "introvert_extrovert": 40,
-        "analytical_creative": 75,
-        "busy_free_time": 0,
-        "disorganized_organized": 60,
-        "independent_cooperative": 50,
-        "environmentalist": 60,
-        "safe_risky": 40
-      },
-      "backstory": "Sofía es una profesora de historia en un instituto. Es una apasionada del arte y la cultura, y disfruta visitar museos y galerías de arte. En su tiempo libre, le gusta leer, escribir y participar en grupos de debate sobre temas históricos y culturales. Valora la precisión y el rigor académico en su trabajo, pero también aprecia la creatividad y la expresión artística."
-    },
-    {
-      "id": 4,
-      "name": "Javier López",
-      "avatar": "https://example.com/avatar/javier_lopez.jpg",
-      "bio": "Empresario, enfocado en el crecimiento de su negocio y el desarrollo personal.",
-      "age": 38,
-      "location": "Sevilla, España",
-      "gender": "Male",
-      "education_level": "MBA",
-      "personality": {
-        "introvert_extrovert": 85,
-        "analytical_creative": 55,
-        "busy_free_time": 3,
-        "disorganized_organized": 80,
-        "independent_cooperative": 20,
-        "environmentalist": 50,
-        "safe_risky": 85
-      },
-      "backstory": "Javier es un empresario que dirige una pequeña empresa de consultoría. Está muy enfocado en el crecimiento de su negocio y el desarrollo personal. Invierte gran parte de su tiempo en el trabajo, pero también trata de encontrar tiempo para hacer ejercicio y pasar tiempo con su familia. Es extrovertido y disfruta conociendo gente nueva y estableciendo contactos profesionales."
-    },
-    {
-      "id": 5,
-      "name": "Elena Ruiz",
-      "avatar": "https://example.com/avatar/elena_ruiz.jpg",
-      "bio": "Diseñadora gráfica freelance, creativa y apasionada por el diseño sostenible.",
+      "name": "Sofía Ramírez",
+      "avatar": "https://example.com/avatars/sofia_ramirez.jpg",
+      "bio": "Diseñadora gráfica freelance apasionada por la sostenibilidad y el arte digital.",
       "age": 32,
-      "location": "Bilbao, España",
+      "location": "Barcelona, España",
       "gender": "Female",
       "education_level": "Grado en Diseño Gráfico",
       "personality": {
-        "introvert_extrovert": 50,
-        "analytical_creative": 95,
-        "busy_free_time": 1,
-        "disorganized_organized": 30,
+        "introvert_extrovert": 60,
+        "analytical_creative": 85,
+        "busy_free_time": 70,
+        "disorganized_organized": 40,
         "independent_cooperative": 75,
         "environmentalist": 90,
-        "safe_risky": 30
+        "safe_risky": 50
       },
-      "backstory": "Elena es una diseñadora gráfica freelance que trabaja desde casa. Es una persona muy creativa y apasionada por su trabajo. Le interesa especialmente el diseño sostenible y busca incorporar prácticas respetuosas con el medio ambiente en sus proyectos. Disfruta de la flexibilidad de trabajar por cuenta propia y le gusta colaborar con otros diseñadores en proyectos interesantes."
+      "backstory": "Sofía trabajó durante varios años en una agencia de publicidad, pero se cansó del ritmo frenético y la falta de propósito. Ahora trabaja por su cuenta, colaborando con pequeñas empresas y organizaciones sin ánimo de lucro que comparten sus valores. Le encanta experimentar con nuevas técnicas de diseño y pasar tiempo al aire libre."
+    },
+    {
+      "id": 2,
+      "name": "Javier Pérez",
+      "avatar": "https://example.com/avatars/javier_perez.jpg",
+      "bio": "Ingeniero de software y entusiasta de la tecnología blockchain. Siempre buscando la próxima gran innovación.",
+      "age": 38,
+      "location": "Madrid, España",
+      "gender": "Male",
+      "education_level": "Máster en Ingeniería Informática",
+      "personality": {
+        "introvert_extrovert": 30,
+        "analytical_creative": 95,
+        "busy_free_time": 85,
+        "disorganized_organized": 60,
+        "independent_cooperative": 80,
+        "environmentalist": 30,
+        "safe_risky": 70
+      },
+      "backstory": "Javier siempre ha sido un apasionado de la informática. Después de trabajar en varias empresas tecnológicas, decidió crear su propia startup, centrada en el desarrollo de soluciones blockchain para la gestión de la cadena de suministro. Es un workaholic, pero intenta encontrar tiempo para practicar deporte y pasar tiempo con su familia."
+    },
+    {
+      "id": 3,
+      "name": "Elena García",
+      "avatar": "https://example.com/avatars/elena_garcia.jpg",
+      "bio": "Profesora de historia del arte y amante de los viajes. Siempre en busca de nuevas culturas e inspiraciones.",
+      "age": 42,
+      "location": "Sevilla, España",
+      "gender": "Female",
+      "education_level": "Doctorado en Historia del Arte",
+      "personality": {
+        "introvert_extrovert": 70,
+        "analytical_creative": 70,
+        "busy_free_time": 50,
+        "disorganized_organized": 70,
+        "independent_cooperative": 60,
+        "environmentalist": 70,
+        "safe_risky": 60
+      },
+      "backstory": "Elena ha dedicado su vida al estudio del arte. Después de obtener su doctorado, comenzó a dar clases en la universidad. Le encanta transmitir su pasión por la historia a sus alumnos y organizar viajes culturales para que puedan experimentar el arte de primera mano. En su tiempo libre, le gusta leer, ir al cine y pasar tiempo con sus amigos."
+    },
+    {
+      "id": 4,
+      "name": "Carlos López",
+      "avatar": "https://example.com/avatars/carlos_lopez.jpg",
+      "bio": "Emprendedor y propietario de un pequeño negocio local. Apasionado por el comercio justo y la economía circular.",
+      "age": 35,
+      "location": "Valencia, España",
+      "gender": "Male",
+      "education_level": "Ciclo Formativo de Grado Superior en Administración y Finanzas",
+      "personality": {
+        "introvert_extrovert": 50,
+        "analytical_creative": 60,
+        "busy_free_time": 90,
+        "disorganized_organized": 80,
+        "independent_cooperative": 90,
+        "environmentalist": 80,
+        "safe_risky": 40
+      },
+      "backstory": "Carlos proviene de una familia de comerciantes. Después de trabajar en varios empleos, decidió abrir su propia tienda de productos ecológicos y de comercio justo. Le apasiona ofrecer alternativas sostenibles a sus clientes y apoyar a los productores locales. Trabaja duro para que su negocio tenga éxito, pero también se preocupa por el impacto social y ambiental de sus actividades."
+    },
+    {
+      "id": 5,
+      "name": "Marta Sánchez",
+      "avatar": "https://example.com/avatars/marta_sanchez.jpg",
+      "bio": "Consultora de marketing digital. Adicta a las redes sociales y las últimas tendencias online.",
+      "age": 28,
+      "location": "Bilbao, España",
+      "gender": "Female",
+      "education_level": "Grado en Marketing",
+      "personality": {
+        "introvert_extrovert": 90,
+        "analytical_creative": 75,
+        "busy_free_time": 75,
+        "disorganized_organized": 50,
+        "independent_cooperative": 40,
+        "environmentalist": 60,
+        "safe_risky": 75
+      },
+      "backstory": "Marta es una experta en marketing digital. Después de graduarse, trabajó en varias agencias de publicidad antes de independizarse como consultora. Le encanta ayudar a las empresas a mejorar su presencia online y conectar con sus clientes. Es una persona muy sociable y activa en las redes sociales, donde comparte sus conocimientos y experiencias."
     },
     {
       "id": 6,
-      "name": "Manuel Sánchez",
-      "avatar": "https://example.com/avatar/manuel_sanchez.jpg",
-      "bio": "Médico, dedicado a la salud pública y el bienestar comunitario.",
+      "name": "David Ruiz",
+      "avatar": "https://example.com/avatars/david_ruiz.jpg",
+      "bio": "Médico especialista en cardiología. Comprometido con la salud y el bienestar de sus pacientes.",
       "age": 45,
       "location": "Murcia, España",
       "gender": "Male",
       "education_level": "Doctorado en Medicina",
       "personality": {
-        "introvert_extrovert": 70,
-        "analytical_creative": 45,
-        "busy_free_time": 2,
-        "disorganized_organized": 50,
-        "independent_cooperative": 40,
-        "environmentalist": 70,
-        "safe_risky": 50
+        "introvert_extrovert": 40,
+        "analytical_creative": 50,
+        "busy_free_time": 95,
+        "disorganized_organized": 30,
+        "independent_cooperative": 65,
+        "environmentalist": 40,
+        "safe_risky": 90
       },
-      "backstory": "Manuel es un médico que trabaja en un centro de salud comunitario. Está dedicado a la salud pública y el bienestar de la comunidad. Le gusta trabajar en equipo y colaborar con otros profesionales de la salud. En su tiempo libre, disfruta practicar deportes al aire libre y pasar tiempo con su familia. Se preocupa por la salud del planeta y trata de llevar un estilo de vida sostenible."
+      "backstory": "David es un cardiólogo con una larga trayectoria profesional. Trabaja en un hospital público y se dedica a cuidar de sus pacientes. Le preocupa el aumento de las enfermedades cardiovasculares y promueve hábitos de vida saludables. A pesar de su exigente trabajo, intenta encontrar tiempo para practicar deporte y pasar tiempo con su familia."
     },
     {
       "id": 7,
-      "name": "Isabel Torres",
-      "avatar": "https://example.com/avatar/isabel_torres.jpg",
-      "bio": "Abogada, defensora de los derechos humanos y la justicia social.",
-      "age": 39,
-      "location": "Zaragoza, España",
+      "name": "Lucía Fernández",
+      "avatar": "https://example.com/avatars/lucia_fernandez.jpg",
+      "bio": "Abogada especializada en derecho laboral. Defensora de los derechos de los trabajadores.",
+      "age": 30,
+      "location": "A Coruña, España",
       "gender": "Female",
-      "education_level": "Máster en Derecho Internacional",
+      "education_level": "Máster en Derecho Laboral",
       "personality": {
-        "introvert_extrovert": 35,
-        "analytical_creative": 60,
-        "busy_free_time": 1,
-        "disorganized_organized": 70,
-        "independent_cooperative": 65,
-        "environmentalist": 80,
-        "safe_risky": 20
+        "introvert_extrovert": 80,
+        "analytical_creative": 65,
+        "busy_free_time": 60,
+        "disorganized_organized": 65,
+        "independent_cooperative": 50,
+        "environmentalist": 50,
+        "safe_risky": 80
       },
-      "backstory": "Isabel es una abogada que trabaja en una organización no gubernamental que defiende los derechos humanos. Es una apasionada de la justicia social y lucha por la igualdad y la equidad. Le gusta investigar y analizar problemas sociales complejos, y busca soluciones innovadoras y creativas. Es una persona independiente y valora la libertad y la autonomía."
+      "backstory": "Lucía siempre ha tenido un fuerte sentido de la justicia. Después de estudiar derecho, decidió especializarse en derecho laboral para poder ayudar a los trabajadores a defender sus derechos. Trabaja en un bufete de abogados y está comprometida con la defensa de los más vulnerables. En su tiempo libre, le gusta leer y participar en actividades sociales."
     },
     {
       "id": 8,
-      "name": "Ricardo Fernández",
-      "avatar": "https://example.com/avatar/ricardo_fernandez.jpg",
-      "bio": "Consultor financiero, enfocado en inversiones sostenibles y responsables.",
-      "age": 41,
-      "location": "A Coruña, España",
+      "name": "Manuel González",
+      "avatar": "https://example.com/avatars/manuel_gonzalez.jpg",
+      "bio": "Jubilado y aficionado a la jardinería y la pesca. Disfrutando de la tranquilidad de la vida después del trabajo.",
+      "age": 68,
+      "location": "Málaga, España",
       "gender": "Male",
-      "education_level": "Grado en Economía",
+      "education_level": "Formación Profesional en Electrónica",
       "personality": {
-        "introvert_extrovert": 55,
-        "analytical_creative": 35,
-        "busy_free_time": 2,
-        "disorganized_organized": 45,
-        "independent_cooperative": 55,
+        "introvert_extrovert": 20,
+        "analytical_creative": 30,
+        "busy_free_time": 30,
+        "disorganized_organized": 20,
+        "independent_cooperative": 70,
         "environmentalist": 95,
-        "safe_risky": 60
+        "safe_risky": 10
       },
-      "backstory": "Ricardo es un consultor financiero que se especializa en inversiones sostenibles y responsables. Cree que las inversiones pueden ser una herramienta para generar un impacto positivo en el mundo. Le gusta analizar datos y tendencias del mercado, y busca oportunidades de inversión que sean rentables y a la vez respetuosas con el medio ambiente y la sociedad. Es una persona organizada y responsable, y valora la transparencia y la ética en los negocios."
+      "backstory": "Manuel trabajó toda su vida como electricista. Después de jubilarse, se mudó a Málaga para disfrutar del buen clima y la tranquilidad. Ahora dedica su tiempo a cuidar de su jardín, ir de pesca y pasar tiempo con sus nietos. Le preocupa el medio ambiente y trata de llevar un estilo de vida sostenible."
     }
   ]
 }

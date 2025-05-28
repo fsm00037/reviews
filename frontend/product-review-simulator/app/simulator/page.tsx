@@ -265,8 +265,25 @@ export default function SimulatorPage() {
     setError(null)
 
     try {
-      // Ejecutar fase 3 para generar reseñas (solo inicia el proceso)
-      await ReviewService.generateReviews();
+      // Verificar que tenemos los datos necesarios
+      if (!product || Object.keys(product).length === 0) {
+        throw {
+          status: 400,
+          message: 'Información del producto no disponible',
+          details: 'Se requiere la información del producto para generar reseñas'
+        };
+      }
+
+      if (!bots || bots.length === 0) {
+        throw {
+          status: 400,
+          message: 'Perfiles de usuario no disponibles',
+          details: 'Se requieren los perfiles de usuario para generar reseñas'
+        };
+      }
+
+      // Ejecutar fase 3 para generar reseñas pasando los datos como parámetros
+      await ReviewService.generateReviews(product, bots);
       
       // Implementar un sistema de polling para verificar cuando las reseñas estén listas
       let attemptCount = 0;

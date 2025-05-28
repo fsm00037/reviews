@@ -1,5 +1,6 @@
 from flask import Blueprint, jsonify, request
 import time
+import json
 from api.services.crew_service import (
     execute_phase1,
     execute_phase2,
@@ -90,22 +91,27 @@ def phase3_generate_reviews():
     Fase 3: Generar reseñas
     
     Espera un JSON con:
+    - product_info: información del producto
+    - user_profiles: perfiles de usuario
     - model_name: (opcional) nombre del modelo a utilizar
     """
     data = request.json
-    model_name = data.get('model_name', None) if data else None
+    
+    if not data:
+        return jsonify({"error": "Se requiere un cuerpo JSON válido"}), 400
+    
+    # Obtener datos del cuerpo JSON
+    product_info = data.get('product_info')
+    user_profiles = data.get('user_profiles')
+    model_name = data.get('model_name', None)
+    
+    if not product_info:
+        return jsonify({"error": "Se requiere product_info en el cuerpo de la petición"}), 400
+    
+    if not user_profiles:
+        return jsonify({"error": "Se requiere user_profiles en el cuerpo de la petición"}), 400
     
     try:
-        # Obtener datos de fases anteriores
-        product_info = get_product_info()
-        user_profiles = get_reviewer_profiles()
-        
-        if not product_info:
-            return jsonify({"error": "No se ha ejecutado la fase 1 o no hay información del producto"}), 400
-        
-        if not user_profiles:
-            return jsonify({"error": "No se ha ejecutado la fase 2 o no hay perfiles de usuario"}), 400
-        
         results = execute_phase3(product_info, user_profiles, model_name)
         return jsonify(results)
     except Exception as e:
