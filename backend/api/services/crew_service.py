@@ -128,12 +128,13 @@ def execute_phase1(product_url: str, model_name: str = None) -> Dict[str, Any]:
         print(f"Error durante la fase 1: {str(e)}")
         raise
 
-def execute_phase2(num_reviewers: int, model_name: str = None) -> Dict[str, Any]:
+def execute_phase2(num_reviewers: int, profile_parameters: Dict[str, Any], model_name: str = None) -> Dict[str, Any]:
     """
     Fase 2: Crea perfiles de usuario.
     
     Args:
         num_reviewers: Número de perfiles de reseñadores a generar
+        profile_parameters: Parámetros de los perfiles de usuario
         model_name: Nombre del modelo LLM a utilizar (opcional)
         
     Returns:
@@ -141,7 +142,7 @@ def execute_phase2(num_reviewers: int, model_name: str = None) -> Dict[str, Any]
     """
     try:
         print("Ejecutando fase 2: Creación de perfiles de usuario...")
-        phase2_results = run_phase2(num_reviewers, model_name)
+        phase2_results = run_phase2(num_reviewers, profile_parameters, model_name)
         return phase2_results.to_dict()
     except Exception as e:
         print(f"Error durante la fase 2: {str(e)}")

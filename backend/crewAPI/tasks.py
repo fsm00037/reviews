@@ -31,22 +31,23 @@ def create_product_info_task(product_url: str, agent: Agent):
         output_json=Product
     )
 
-def create_user_profiles_task(num_reviewers: int, agent: Agent):
+def create_user_profiles_task(num_reviewers: int, profile_parameters: Dict[str, Any], agent: Agent):
     """Create and return the user profiles creation task"""
    
     
     return Task(
         description=f"""
         1. Genera {num_reviewers} perfiles de usuario diferentes para evaluar el producto
-        2. Cada perfil debe estar en formato JSON e incluir:
+        2. La población de perfiles será creada con estos rangos: {json.dumps(profile_parameters, ensure_ascii=False)}
+        4. Cada perfil debe estar en formato JSON e incluir:
            - id: un número único
            - name: nombre completo
            - avatar: una URL de imagen de perfil (ficticia)
            - bio: una biografía breve
            - age: edad
            - location: ubicación
-           - gender: género (Male/Female/Other)
-           - education_level: nivel educativo
+           - gender: género
+           - education_level: nivel educativo (Doctorado, instituto, carrera, universidad... ejemplos realistas)
            - personality: un objeto con rasgos de personalidad (valores de 0 a 100):
              * introvert_extrovert
              * analytical_creative
@@ -56,7 +57,7 @@ def create_user_profiles_task(num_reviewers: int, agent: Agent):
              * environmentalist
              * safe_risky
            - backstory: historia detallada del usuario con su experiencia, intereses y motivaciones
-        3. Los perfiles deben ser diversos y representativos de diferentes segmentos de mercado
+        4. Los perfiles deben ser diversos y representativos de diferentes segmentos de mercado
         """,
         agent=agent,
         expected_output=f"Una lista con {num_reviewers} perfiles de usuario en formato JSON en español",

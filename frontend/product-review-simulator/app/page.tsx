@@ -136,17 +136,17 @@ export default function Home() {
                   className="inline-block bg-gradient-to-r from-indigo-500 via-purple-500 to-pink-500 p-1 rounded-lg mb-4"
                 >
                   <span className="bg-white dark:bg-gray-950 rounded-md px-3 py-1 text-sm font-medium block">
-                    Next-Gen Review Simulation
+                    Simulación de Reseñas de Próxima Generación
                   </span>
                 </motion.div>
                 <motion.h1
                   variants={item}
                   className="text-4xl font-bold tracking-tighter sm:text-5xl md:text-6xl bg-clip-text text-transparent bg-gradient-to-r from-indigo-500 via-purple-500 to-pink-500"
                 >
-                  Product Review Simulator
+                  Simulador de Reseñas de Productos
                 </motion.h1>
                 <motion.p variants={item} className="mx-auto max-w-[700px] text-gray-600 dark:text-gray-300 md:text-xl">
-                  Generate hyper-realistic product reviews with AI-powered bot profiles and comprehensive analysis
+                  Genera reseñas de productos con perfiles de bots impulsados por IA
                 </motion.p>
               </motion.div>
               <motion.div variants={item} className="w-full max-w-sm space-y-2">
@@ -209,53 +209,53 @@ export default function Home() {
               <div className="space-y-4">
                 <div className="inline-block bg-gradient-to-r from-indigo-500 via-purple-500 to-pink-500 p-1 rounded-lg">
                   <span className="bg-white dark:bg-gray-950 rounded-md px-3 py-1 text-sm font-medium block">
-                    How it works
+                    Cómo funciona
                   </span>
                 </div>
                 <h2 className="text-3xl font-bold tracking-tighter sm:text-4xl bg-clip-text text-transparent bg-gradient-to-r from-indigo-500 via-purple-500 to-pink-500">
-                  Simulate product reviews in five simple steps
+                  Simula reseñas de productos en cinco simples pasos
                 </h2>
                 <p className="max-w-[600px] text-gray-600 dark:text-gray-300 md:text-xl/relaxed lg:text-base/relaxed xl:text-xl/relaxed">
-                  Our platform allows you to generate realistic product reviews with customizable bot profiles and
-                  provides comprehensive analysis to improve your product.
+                  Nuestra plataforma te permite generar reseñas realistas de productos con perfiles de bots personalizables y
+                  proporciona un análisis integral para mejorar tu producto.
                 </p>
               </div>
               <div className="grid gap-4">
                 {[
                   {
                     icon: <Sparkles className="h-5 w-5 text-indigo-500" />,
-                    title: "1. Product Information",
-                    description: "Enter a product URL or create a new product simulation",
+                    title: "1. Información del Producto",
+                    description: "Ingresa una URL de producto o crea una nueva simulación de producto",
                     content:
-                      "Our system will display detailed product information including images, descriptions, and specifications.",
+                      "Nuestro sistema mostrará información detallada del producto incluyendo imágenes, descripciones y especificaciones.",
                   },
                   {
                     icon: <UserCircle2 className="h-5 w-5 text-purple-500" />,
-                    title: "2. Configure Bot Population",
-                    description: "Adjust parameters to generate a population of realistic bot users",
+                    title: "2. Configurar Población de Bots",
+                    description: "Ajusta los parámetros para generar una población de usuarios bot realistas",
                     content:
-                      "Customize the number of bots, demographic distribution, and personality traits to create a diverse set of reviewers.",
+                      "Personaliza el número de bots, distribución demográfica y rasgos de personalidad para crear un conjunto diverso de reseñadores.",
                   },
                   {
                     icon: <UserCircle2 className="h-5 w-5 text-pink-500" />,
-                    title: "3. Review Bot Profiles",
-                    description: "Examine the generated bot profiles before creating reviews",
+                    title: "3. Revisar Perfiles de Bots",
+                    description: "Examina los perfiles de bots generados antes de crear reseñas",
                     content:
-                      "Review the demographic and personality traits of each bot to ensure they match your target audience before generating reviews.",
+                      "Revisa los rasgos demográficos y de personalidad de cada bot para asegurarte de que coincidan con tu público objetivo antes de generar reseñas.",
                   },
                   {
                     icon: <MessageSquare className="h-5 w-5 text-indigo-500" />,
-                    title: "4. Generate Reviews",
-                    description: "Each bot will generate an Amazon-style review based on their profile",
+                    title: "4. Generar Reseñas",
+                    description: "Cada bot generará una reseña al estilo de Amazon basada en su perfil",
                     content:
-                      "Reviews will reflect the bot's personality, writing style, and opinion of the product, creating a realistic simulation.",
+                      "Las reseñas reflejarán la personalidad, estilo de escritura y opinión del bot sobre el producto, creando una simulación realista.",
                   },
                   {
                     icon: <BarChart3 className="h-5 w-5 text-purple-500" />,
-                    title: "5. Analysis Dashboard",
-                    description: "Get comprehensive insights from the generated reviews",
+                    title: "5. Panel de Análisis",
+                    description: "Obtén información integral de las reseñas generadas",
                     content:
-                      "View detailed analytics, sentiment analysis, key strengths and areas for improvement based on the simulated customer feedback.",
+                      "Visualiza análisis detallados, análisis de sentimientos, fortalezas clave y áreas de mejora basadas en la retroalimentación simulada de los clientes.",
                   },
                 ].map((item, index) => (
                   <motion.div
@@ -286,19 +286,19 @@ export default function Home() {
       </main>
       <footer className="bg-white/80 dark:bg-gray-950/80 backdrop-blur-md border-t border-purple-100 dark:border-gray-800 relative z-10">
         <div className="container flex flex-col gap-2 sm:flex-row py-6 px-4 md:px-6">
-          <p className="text-xs text-gray-500 dark:text-gray-400">© 2025 ReviewSim. All rights reserved.</p>
+          <p className="text-xs text-gray-500 dark:text-gray-400">© 2025 ReviewSim. Todos los derechos reservados.</p>
           <nav className="sm:ml-auto flex gap-4 sm:gap-6">
             <Link
               className="text-xs text-gray-500 hover:text-purple-600 dark:text-gray-400 dark:hover:text-purple-400 transition-colors"
               href="#"
             >
-              Terms of Service
+              Términos de Servicio
             </Link>
             <Link
               className="text-xs text-gray-500 hover:text-purple-600 dark:text-gray-400 dark:hover:text-purple-400 transition-colors"
               href="#"
             >
-              Privacy
+              Privacidad
             </Link>
           </nav>
         </div>

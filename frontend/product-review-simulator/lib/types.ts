@@ -21,8 +21,8 @@ export interface Product {
 // Tipos para configuración demográfica
 export interface DemographicConfig {
   age_range: [number, number];
-  education_range: [number, number];
-  gender_ratio: number; // 0-100, porcentaje de hombres
+  education_level: string; // 'Low', 'Medium', 'High' o 'Mixed'
+  gender_ratio: string; // 'Male', 'Female' o 'Male&Female'
 }
 
 // Tipos para configuración de personalidad

@@ -34,7 +34,7 @@ class BotProfile(BaseModel):
     bio: str = Field(..., description="Biografía breve del bot")
     age: int = Field(..., description="Edad del bot")
     location: str = Field(..., description="Ubicación del bot")
-    gender: str = Field(..., description="Género del bot (Male/Female/Other)")
+    gender: Literal["Male", "Female", "Other"] = Field(..., description="Género del bot")
     education_level: str = Field(..., description="Nivel educativo del bot")
     personality: BotPersonality = Field(..., description="Rasgos de personalidad del bot")
     backstory: str = Field(..., description="Historia detallada del bot")

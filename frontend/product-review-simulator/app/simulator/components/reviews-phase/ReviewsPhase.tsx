@@ -38,16 +38,8 @@ export const ReviewsPhase: React.FC<ReviewsPhaseProps> = ({
       </CardHeader>
       <CardContent className="p-6">
         <div className="flex flex-col md:flex-row gap-6 mb-6 pb-6 border-b border-purple-100 dark:border-gray-800">
-          <div className="flex-shrink-0">
-            <motion.img
-              src={product.image || "/placeholder.svg"}
-              alt={product.name}
-              className="h-32 w-32 object-contain rounded-md"
-              initial={{ scale: 0.9, opacity: 0 }}
-              animate={{ scale: 1, opacity: 1 }}
-              transition={{ type: "spring", stiffness: 260, damping: 20 }}
-            />
-          </div>
+          
+          
           <div>
             <h3 className="text-xl font-bold mb-1">{product.name}</h3>
             <p className="text-sm text-gray-600 dark:text-gray-300 mb-2">{product.description}</p>

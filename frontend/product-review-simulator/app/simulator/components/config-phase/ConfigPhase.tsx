@@ -87,39 +87,94 @@ export const ConfigPhase: React.FC<ConfigPhaseProps> = ({
 
               <div className="mb-6">
                 <h4 className="text-lg font-semibold mb-2">Nivel educativo</h4>
-                <CustomRangeSlider
-                  label=""
-                  minLabel="min"
-                  maxLabel="max"
-                  minValue={demographics.education_range[0]}
-                  maxValue={demographics.education_range[1]}
-                  absoluteMin={8}
-                  absoluteMax={22}
-                  onChange={(min, max) => setDemographics({ ...demographics, education_range: [min, max] })}
-                />
+                <div className="flex flex-col space-y-2">
+                  <div className="flex items-center space-x-4">
+                    <div className="flex items-center">
+                      <input
+                        type="radio"
+                        id="educationLow"
+                        name="educationLevel"
+                        checked={demographics.education_level === "Low"}
+                        onChange={() => setDemographics({...demographics, education_level: "Low"})}
+                        className="mr-2"
+                      />
+                      <label htmlFor="educationLow">Bajo</label>
+                    </div>
+                    <div className="flex items-center">
+                      <input
+                        type="radio"
+                        id="educationMedium"
+                        name="educationLevel"
+                        checked={demographics.education_level === "Medium"}
+                        onChange={() => setDemographics({...demographics, education_level: "Medium"})}
+                        className="mr-2"
+                      />
+                      <label htmlFor="educationMedium">Medio</label>
+                    </div>
+                    <div className="flex items-center">
+                      <input
+                        type="radio"
+                        id="educationHigh"
+                        name="educationLevel"
+                        checked={demographics.education_level === "High"}
+                        onChange={() => setDemographics({...demographics, education_level: "High"})}
+                        className="mr-2"
+                      />
+                      <label htmlFor="educationHigh">Alto</label>
+                    </div>
+                    <div className="flex items-center">
+                      <input
+                        type="radio"
+                        id="educationMixed"
+                        name="educationLevel"
+                        checked={demographics.education_level === "Mixed"}
+                        onChange={() => setDemographics({...demographics, education_level: "Mixed"})}
+                        className="mr-2"
+                      />
+                      <label htmlFor="educationMixed">Mixto</label>
+                    </div>
+                  </div>
+                </div>
               </div>
 
               <div className="mb-6">
                 <h4 className="text-lg font-semibold mb-2">Género</h4>
-                <div className="flex gap-4 mt-4">
-                  <Button
-                    onClick={() => setDemographics({ ...demographics, gender_ratio: 100 })}
-                    className={`flex-1 ${demographics.gender_ratio === 100 ? "bg-green-500 hover:bg-green-600" : "bg-gray-200 hover:bg-gray-300 text-gray-800"}`}
-                  >
-                    M
-                  </Button>
-                  <Button
-                    onClick={() => setDemographics({ ...demographics, gender_ratio: 50 })}
-                    className={`flex-1 ${demographics.gender_ratio === 50 ? "bg-gradient-to-r from-green-500 to-orange-500 text-white" : "bg-gray-200 hover:bg-gray-300 text-gray-800"}`}
-                  >
-                    M/F
-                  </Button>
-                  <Button
-                    onClick={() => setDemographics({ ...demographics, gender_ratio: 0 })}
-                    className={`flex-1 ${demographics.gender_ratio === 0 ? "bg-orange-500 hover:bg-orange-600" : "bg-gray-200 hover:bg-gray-300 text-gray-800"}`}
-                  >
-                    F
-                  </Button>
+                <div className="flex flex-col space-y-2">
+                  <div className="flex items-center space-x-4">
+                    <div className="flex items-center">
+                      <input
+                        type="radio"
+                        id="genderMale"
+                        name="genderRatio"
+                        checked={demographics.gender_ratio === "Male"}
+                        onChange={() => setDemographics({...demographics, gender_ratio: "Male"})}
+                        className="mr-2"
+                      />
+                      <label htmlFor="genderMale">Masculino</label>
+                    </div>
+                    <div className="flex items-center">
+                      <input
+                        type="radio"
+                        id="genderFemale"
+                        name="genderRatio"
+                        checked={demographics.gender_ratio === "Female"}
+                        onChange={() => setDemographics({...demographics, gender_ratio: "Female"})}
+                        className="mr-2"
+                      />
+                      <label htmlFor="genderFemale">Femenino</label>
+                    </div>
+                    <div className="flex items-center">
+                      <input
+                        type="radio"
+                        id="genderBoth"
+                        name="genderRatio"
+                        checked={demographics.gender_ratio === "Male&Female"}
+                        onChange={() => setDemographics({...demographics, gender_ratio: "Male&Female"})}
+                        className="mr-2"
+                      />
+                      <label htmlFor="genderBoth">Mixto</label>
+                    </div>
+                  </div>
                 </div>
               </div>
             </div>

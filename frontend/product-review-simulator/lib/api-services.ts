@@ -3,7 +3,9 @@ import {
   BotProfile, 
   Review, 
   AnalysisResult,
-  APIError
+  APIError,
+  DemographicConfig,
+  PersonalityConfig
 } from './types';
 
 // URL base de la API
@@ -166,14 +168,40 @@ export const ProductService = {
 // Servicios para Bots
 export const BotService = {
   // Generar perfiles de bots
-  generateBots: (numReviewers: number, modelName?: string) => 
-    fetchAPI<{profiles: BotProfile[]}>('/phase2', {
+  generateBots: (
+    numReviewers: number, 
+    populationRange: [number, number],
+    positivityBias: [number, number],
+    verbosity: [number, number],
+    detailLevel: [number, number],
+    demographics: DemographicConfig,
+    personality: PersonalityConfig,
+    modelName?: string
+  ) => {
+    // Crear una copia de demographics para asegurar que se envían correctamente los valores
+    const formattedDemographics = {
+      ...demographics,
+      // Asegurar que los valores se envían en el formato esperado
+      gender_ratio: demographics.gender_ratio,
+      education_level: demographics.education_level
+    };
+    
+    return fetchAPI<{profiles: BotProfile[]}>('/phase2', {
       method: 'POST',
       body: JSON.stringify({
         num_reviewers: numReviewers,
+        profile_parameters: {
+          population_range: populationRange,
+          positivity_bias: positivityBias,
+          verbosity: verbosity,
+          detail_level: detailLevel,
+          demographics: formattedDemographics,
+          personality: personality
+        },
         model_name: modelName
       }),
-    }),
+    });
+  },
   
   // Obtener perfiles actuales
   getReviewerProfiles: () => fetchAPI<BotProfile[]>('/reviewers')
