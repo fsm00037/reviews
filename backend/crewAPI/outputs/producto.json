@@ -1,39 +1,43 @@
 {
-  "name": "piraemide Dorogeria Sal Nero (Chipre productoras de sal marina carboen vegetal) 415g",
-  "description": "Sal negra Sumishio Sal negra 415g Producción de sal marina de Chipre DROGHERIA & ALIMENTARI Tipo de producto: SAL CULINARIA Marca: La Drogheria 1880",
-  "price": "15,00 €",
-  "image": "https://m.media-amazon.com/images/I/31M04LKGKjL._SR300,300_.jpg",
-  "category": "Alimentación y bebidas › Cervezas, vinos y licores › Vinos › Vinos tintos",
+  "name": "CONDUCTOR DE AUTOBUSES",
+  "description": "SELECCIONAMOS DOS CONDUCTORES RESIDENCIA EN SEVILA O ALREDEDORES\nSe precisa para incorporacion immediata a conductores de autobus con experiencia, para trabajar en nuestra Empresa.\n\nEl puesto de trabajo requiere disponibilidad immediata, disponer del carné D, el carné CAP y el tacografo digital.\n\nTipo de puesto: Jornada completa\n12 pagas \nSalario: 1.800,00€-2.000,00€ al mes, según experiencia\nContrato fijo\nHorario: semanal \nDisponibilidad fin de semana\nTurno rotativo\n\nLicencias: Carnet de conducir D \nCAP \nUbicación del trabajo: Sevilla\n\nSOLO SE ATIENDEN CV, QUE DETALLEN TODOS LOS DATOS SOBRE TODO LOS DE EXPERIENCIA\nmandar CV, a seleccionalsur@gmail.com",
+  "price": "1.800,00€-2.000,00€ al mes",
+  "image": "null",
+  "category": "Transportistas",
   "main_features": [
     {
-      "feature": "Marca",
-      "value": "La Drogheria 1880"
+      "feature": "Tipo de puesto",
+      "value": "Jornada completa"
     },
     {
-      "feature": "Peso del producto",
-      "value": "415 Gramos"
+      "feature": "Contrato",
+      "value": "fijo"
     },
     {
-      "feature": "Número de unidades",
-      "value": "415 gramo"
+      "feature": "Horario",
+      "value": "semanal"
     },
     {
-      "feature": "Forma del producto",
-      "value": "Copo"
+      "feature": "Disponibilidad",
+      "value": "fin de semana"
     },
     {
-      "feature": "Tipo de dieta",
-      "value": "Vegano"
+      "feature": "Turno",
+      "value": "rotativo"
     }
   ],
   "technical_specs": [
     {
-      "spec": "Dimensiones del producto",
-      "value": "7 x 8,5 x 17 cm; 415 g"
+      "spec": "Carnet de conducir",
+      "value": "D"
     },
     {
-      "spec": "Peso",
-      "value": "415 Gramos"
+      "spec": "CAP",
+      "value": "Sí"
+    },
+    {
+      "spec": "Tacógrafo digital",
+      "value": "Sí"
     }
   ]
 }
