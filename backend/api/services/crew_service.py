@@ -2,50 +2,12 @@ import os
 import json
 import shutil
 from typing import Dict, Any, List
-import importlib.util
-import sys
 
-# Definir la ruta base para los módulos crewAPI
-crewapi_base_path = os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(__file__))), "crewAPI")
-
-# Importar config.py
-config_spec = importlib.util.spec_from_file_location("config", os.path.join(crewapi_base_path, "config.py"))
-config_module = importlib.util.module_from_spec(config_spec)
-sys.modules["config"] = config_module
-config_spec.loader.exec_module(config_module)
-
-# Importar models.py
-models_spec = importlib.util.spec_from_file_location("models", os.path.join(crewapi_base_path, "models.py"))
-models_module = importlib.util.module_from_spec(models_spec)
-sys.modules["models"] = models_module
-models_spec.loader.exec_module(models_module)
-
-# Importar agents.py
-agents_spec = importlib.util.spec_from_file_location("agents", os.path.join(crewapi_base_path, "agents.py"))
-agents_module = importlib.util.module_from_spec(agents_spec)
-sys.modules["agents"] = agents_module
-agents_spec.loader.exec_module(agents_module)
-
-# Importar tasks.py
-tasks_spec = importlib.util.spec_from_file_location("tasks", os.path.join(crewapi_base_path, "tasks.py"))
-tasks_module = importlib.util.module_from_spec(tasks_spec)
-sys.modules["tasks"] = tasks_module
-tasks_spec.loader.exec_module(tasks_module)
-
-# Finalmente, importar crew.py
-crew_spec = importlib.util.spec_from_file_location("crewAPI.crew", os.path.join(crewapi_base_path, "crew.py"))
-crew_module = importlib.util.module_from_spec(crew_spec)
-sys.modules["crewAPI.crew"] = crew_module
-crew_spec.loader.exec_module(crew_module)
-
-# Importar las funciones que necesitamos
-run_phase1 = crew_module.run_phase1
-run_phase2 = crew_module.run_phase2
-run_phase3 = crew_module.run_phase3
-run_phase4 = crew_module.run_phase4
+# Importación directa simple del módulo crewAPI
+from crewAPI import run_phase1, run_phase2, run_phase3, run_phase4
 
 # Definir la ruta de la carpeta outputs
-outputs_dir = os.path.join(crewapi_base_path, "outputs")
+outputs_dir = os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(__file__))), "crewAPI", "outputs")
 
 def clean_outputs():
     """
