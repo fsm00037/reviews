@@ -1,59 +1,67 @@
 {
-  "name": "Amazon Fire TV Stick HD (Última generación), con TV en directo gratuita, mando por voz Alexa, controles de Hogar digital y reproducción en streaming HD",
-  "description": "Disfruta de contenido en streaming en Full HD y usa el mando por voz Alexa para controlar la reproducción. Ideal para iniciarse en el mundo de Fire TV: acceder a contenido en streaming nunca había sido tan fácil, con miles de horas de películas y capítulos de series gratis gracias a las apps de streaming con anuncios, como Pluto TV y más. Pulsa el botón de voz y pídeselo a Alexa: usa la voz para buscar contenido e iniciar la reproducción en múltiples apps. Entretenimiento sin límites: ve miles de películas y series con Netflix, Prime Video, Disney+, Apple TV+ y más, y escucha millones de canciones. Pueden aplicarse cargos de suscripción. Los botones de app podrían variar. Llévalo contigo: conéctalo al puerto HDMI de cualquier televisor para acceder a tus apps de entretenimiento y disfruta de tu contenido favorito allá donde vayas. Televisión en directo: ve TV en directo, noticias y deportes con suscripciones a DAZN, Movistar Plus+ y más. Pon tus canciones favoritas: escucha música en streaming con Amazon Music, Spotify y más. Pueden aplicarse cargos de suscripción. Controla tus dispositivos de Hogar digital compatibles: pídele a Alexa que consulte la información del tiempo, atenúe las luces, te muestre el vídeo en directo de tus cámaras, reproduzca música en streaming y más.",
-  "price": "28,99 €",
-  "image": "https://m.media-amazon.com/images/I/41jBfW0VJGL._AC_UF400,400_QL80_.jpg",
-  "category": "Electrónica",
+  "name": "STECEi Auriculares Inalámbricos Deportivos, Auriculares Bluetooth 5.4 con HD Micrófono, 75H de Reproducción con Cancelacion Ruido ENC, IPX7 Impermeable Cascos Inalambricos Running con Pantalla LED",
+  "description": "Auriculares inalambricos bluetooth utilizan la última tecnología Bluetooth 5.4, que aumenta la velocidad de transmisión de datos de audio hasta en un 75% y ofrece una experiencia de escucha de baja latencia. El auricular bluetooth es compatible con casi todos los dispositivos Bluetooth del mercado. Con la función Hall, simplemente abra la caja de carga y el último dispositivo conectado se puede conectar automáticamente, lo cual es conveniente y rápido. Los cascos inalambricos bluetooth cuentan con un altavoz de 13 mm y una membrana compuesta de tres capas. Cada parte del controlador trabaja para producir un sonido que va desde graves profundos y ricos hasta medios precisos y agudos limpios. Los auriculares deportivos están equipados con un micrófono ENC de alta calidad con cancelación de ruido y tecnología de renderizado HD sin pérdidas que filtra eficazmente el ruido exterior. Los auriculares deportivos bluetooth están equipados con tres tamaños diferentes de tapones (S/M/L). Los auriculares para correr están diseñados con ganchos suaves y flexibles que se adaptan perfectamente a las orejas y no se caen, ni siquiera durante el ejercicio intenso. La función impermeable IPX7 protege fácilmente los auriculares running de las gotas de lluvia o el sudor ligeros, lo que los hace ideales para correr, ir al gimnasio y viajar. El cascos bluetooth utiliza tecnología de pantalla LED para mostrar con precisión la energía restante del auricular inalámbrico Bluetooth y la caja de carga. Con la tecnología de carga rápida USB-C, le ofrece una carga más rápida y estable. Cada auriculares para correr puede jugar durante 15 horas con una sola carga, y la funda de carga proporciona 3 cargas adicionales, lo que hace que los cascos running tengan un tiempo de reproducción total de 75 horas. Los auriculares inalambricos bluetooth deportivos utilizan un chip táctil de alta precisión para brindarle control táctil, puede responder llamadas, colgar llamadas, reproducir/pausar música, ajustar el volumen y activar asistentes de voz, etc, con solo tocar los audifonos inalambricos. los cascos inalámbricos son compatibles con casi todos los dispositivos bluetooth del mercado. Por ejemplo IOS/Android.",
+  "price": "25,99€",
+  "image": "https://m.media-amazon.com/images/I/61dJe+Y-HDL._AC_UL320_.jpg",
+  "category": "Auriculares de oído abierto",
   "main_features": [
     {
-      "feature": "Reproducción en streaming",
-      "value": "HD"
+      "feature": "Bluetooth",
+      "value": "5.4"
     },
     {
-      "feature": "Mando",
-      "value": "Mando por voz Alexa"
+      "feature": "Reproducción",
+      "value": "75H"
     },
     {
-      "feature": "TV en directo",
-      "value": "Gratuita"
+      "feature": "Cancelación de ruido",
+      "value": "ENC"
     },
     {
-      "feature": "Entretenimiento",
-      "value": "Miles de películas y series"
+      "feature": "Impermeable",
+      "value": "IPX7"
+    },
+    {
+      "feature": "Pantalla",
+      "value": "LED"
     }
   ],
   "technical_specs": [
     {
-      "spec": "Dimensiones",
-      "value": "86 x 30 x 13 mm"
+      "spec": "Marca",
+      "value": "STECEi"
     },
     {
-      "spec": "Peso",
-      "value": "32 g"
+      "spec": "Color",
+      "value": "Negro"
     },
     {
-      "spec": "Procesador",
-      "value": "Quad-Core de 1,7 GHz"
+      "spec": "Colocación en las orejas",
+      "value": "Over Ear"
     },
     {
-      "spec": "Almacenamiento",
-      "value": "8 GB de almacenamiento interno"
+      "spec": "Factor de forma",
+      "value": "Intraurales"
     },
     {
-      "spec": "Wifi",
-      "value": "Wifi de doble banda"
+      "spec": "Impedancia",
+      "value": "32 Ohmio"
     },
     {
-      "spec": "Bluetooth",
-      "value": "Bluetooth 5.0"
+      "spec": "Control de ruido",
+      "value": "Cancelación de ruido pasiva, Aislamiento acústico"
     },
     {
-      "spec": "Formatos de vídeo compatibles",
-      "value": "HDR 10, HDR10+, HLG, H.265, H.264 y Vp9"
+      "spec": "Nombre del modelo",
+      "value": "HD65"
     },
     {
-      "spec": "Resolución de salida compatible",
-      "value": "1080p y 720p hasta un máximo de 60 fps"
+      "spec": "Tecnología de conectividad",
+      "value": "Inalámbrico"
+    },
+    {
+      "spec": "Tecnología de comunicación inalámbrica",
+      "value": "Bluetooth"
     }
   ]
 }

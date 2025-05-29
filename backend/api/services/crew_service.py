@@ -123,7 +123,7 @@ def execute_phase1(product_url: str, model_name: str = None) -> Dict[str, Any]:
     try:
         print("Ejecutando fase 1: Extracción de información del producto...")
         phase1_results = run_phase1(product_url, model_name)
-        return phase1_results.raw
+        return phase1_results.json_dict
     except Exception as e:
         print(f"Error durante la fase 1: {str(e)}")
         raise
