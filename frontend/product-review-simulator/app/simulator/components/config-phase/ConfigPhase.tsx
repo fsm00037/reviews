@@ -9,12 +9,6 @@ import { DemographicConfig, PersonalityConfig } from "@/lib/types";
 interface ConfigPhaseProps {
   populationRange: [number, number];
   setPopulationRange: (range: [number, number]) => void;
-  positivityBias: [number, number];
-  setPositivityBias: (range: [number, number]) => void;
-  verbosity: [number, number];
-  setVerbosity: (range: [number, number]) => void;
-  detailLevel: [number, number];
-  setDetailLevel: (range: [number, number]) => void;
   demographics: DemographicConfig;
   setDemographics: (config: DemographicConfig) => void;
   personality: PersonalityConfig;
@@ -27,12 +21,6 @@ interface ConfigPhaseProps {
 export const ConfigPhase: React.FC<ConfigPhaseProps> = ({
   populationRange,
   setPopulationRange,
-  positivityBias,
-  setPositivityBias,
-  verbosity,
-  setVerbosity,
-  detailLevel,
-  setDetailLevel,
   demographics,
   setDemographics,
   personality,
@@ -52,7 +40,7 @@ export const ConfigPhase: React.FC<ConfigPhaseProps> = ({
       </CardHeader>
       <CardContent className="p-6">
         <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-          {/* Left Column - Demographics */}
+          {/* Left Column - Population & Demographics */}
           <div>
             <div className="mb-8">
               <h3 className="text-xl font-bold mb-4">Tamaño de la población</h3>
@@ -87,52 +75,50 @@ export const ConfigPhase: React.FC<ConfigPhaseProps> = ({
 
               <div className="mb-6">
                 <h4 className="text-lg font-semibold mb-2">Nivel educativo</h4>
-                <div className="flex flex-col space-y-2">
-                  <div className="flex items-center space-x-4">
-                    <div className="flex items-center">
-                      <input
-                        type="radio"
-                        id="educationLow"
-                        name="educationLevel"
-                        checked={demographics.education_level === "Low"}
-                        onChange={() => setDemographics({...demographics, education_level: "Low"})}
-                        className="mr-2"
-                      />
-                      <label htmlFor="educationLow">Bajo</label>
-                    </div>
-                    <div className="flex items-center">
-                      <input
-                        type="radio"
-                        id="educationMedium"
-                        name="educationLevel"
-                        checked={demographics.education_level === "Medium"}
-                        onChange={() => setDemographics({...demographics, education_level: "Medium"})}
-                        className="mr-2"
-                      />
-                      <label htmlFor="educationMedium">Medio</label>
-                    </div>
-                    <div className="flex items-center">
-                      <input
-                        type="radio"
-                        id="educationHigh"
-                        name="educationLevel"
-                        checked={demographics.education_level === "High"}
-                        onChange={() => setDemographics({...demographics, education_level: "High"})}
-                        className="mr-2"
-                      />
-                      <label htmlFor="educationHigh">Alto</label>
-                    </div>
-                    <div className="flex items-center">
-                      <input
-                        type="radio"
-                        id="educationMixed"
-                        name="educationLevel"
-                        checked={demographics.education_level === "Mixed"}
-                        onChange={() => setDemographics({...demographics, education_level: "Mixed"})}
-                        className="mr-2"
-                      />
-                      <label htmlFor="educationMixed">Mixto</label>
-                    </div>
+                <div className="flex items-center space-x-4 flex-wrap">
+                  <div className="flex items-center">
+                    <input
+                      type="radio"
+                      id="educationLow"
+                      name="educationLevel"
+                      checked={demographics.education_level === "Low"}
+                      onChange={() => setDemographics({...demographics, education_level: "Low"})}
+                      className="mr-2"
+                    />
+                    <label htmlFor="educationLow">Bajo</label>
+                  </div>
+                  <div className="flex items-center">
+                    <input
+                      type="radio"
+                      id="educationMedium"
+                      name="educationLevel"
+                      checked={demographics.education_level === "Medium"}
+                      onChange={() => setDemographics({...demographics, education_level: "Medium"})}
+                      className="mr-2"
+                    />
+                    <label htmlFor="educationMedium">Medio</label>
+                  </div>
+                  <div className="flex items-center">
+                    <input
+                      type="radio"
+                      id="educationHigh"
+                      name="educationLevel"
+                      checked={demographics.education_level === "High"}
+                      onChange={() => setDemographics({...demographics, education_level: "High"})}
+                      className="mr-2"
+                    />
+                    <label htmlFor="educationHigh">Alto</label>
+                  </div>
+                  <div className="flex items-center">
+                    <input
+                      type="radio"
+                      id="educationMixed"
+                      name="educationLevel"
+                      checked={demographics.education_level === "Mixed"}
+                      onChange={() => setDemographics({...demographics, education_level: "Mixed"})}
+                      className="mr-2"
+                    />
+                    <label htmlFor="educationMixed">Mixto</label>
                   </div>
                 </div>
               </div>
@@ -180,172 +166,122 @@ export const ConfigPhase: React.FC<ConfigPhaseProps> = ({
             </div>
           </div>
 
-          {/* Right Column - Review Settings */}
-          <div>
-            <div className="space-y-4">
-              <h3 className="text-lg font-semibold mb-4">Configuración de reseñas</h3>
-              
-              <div className="mb-6">
-                <h4 className="text-lg font-semibold mb-2">Sesgo de positividad</h4>
-                <CustomRangeSlider
-                  label=""
-                  minValue={positivityBias[0]}
-                  maxValue={positivityBias[1]}
-                  absoluteMin={0}
-                  absoluteMax={100}
-                  onChange={(min, max) => setPositivityBias([min, max])}
-                />
-                <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">
-                  Valores más altos generan reseñas más positivas
-                </p>
-              </div>
+          {/* Right Column - Personality */}
+          <div className="bg-amber-50 dark:bg-amber-950/30 p-6 rounded-xl">
+            <h3 className="text-xl font-bold mb-6">Personalidad</h3>
 
-              <div className="mb-6">
-                <h4 className="text-lg font-semibold mb-2">Verbosidad</h4>
-                <CustomRangeSlider
-                  label=""
-                  minValue={verbosity[0]}
-                  maxValue={verbosity[1]}
-                  absoluteMin={0}
-                  absoluteMax={100}
-                  onChange={(min, max) => setVerbosity([min, max])}
-                />
-                <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">
-                  Controla la longitud y detalle de las reseñas
-                </p>
-              </div>
-
-              <div className="mb-6">
-                <h4 className="text-lg font-semibold mb-2">Nivel de detalle del producto</h4>
-                <CustomRangeSlider
-                  label=""
-                  minValue={detailLevel[0]}
-                  maxValue={detailLevel[1]}
-                  absoluteMin={0}
-                  absoluteMax={100}
-                  onChange={(min, max) => setDetailLevel([min, max])}
-                />
-                <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">
-                  Cuánta información específica del producto incluir en las reseñas
-                </p>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        {/* Sección de personalidad */}
-        <div className="mt-8 bg-amber-50 dark:bg-amber-950/30 p-6 rounded-xl">
-          <h3 className="text-xl font-bold mb-6">Personalidad</h3>
-
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            <div>
-              <div className="mb-6">
-                <div className="flex justify-between mb-1">
-                  <span className="text-sm font-medium text-gray-600 dark:text-gray-400">Introvertido</span>
-                  <span className="text-sm font-medium text-gray-600 dark:text-gray-400">Extrovertido</span>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
+              {/* Left sub-column */}
+              <div className="space-y-6">
+                <div>
+                  <div className="flex justify-between mb-2">
+                    <span className="text-sm font-medium text-gray-600 dark:text-gray-400">Introvertido</span>
+                    <span className="text-sm font-medium text-gray-600 dark:text-gray-400">Extrovertido</span>
+                  </div>
+                  <CustomRangeSlider
+                    label=""
+                    minValue={personality.introvert_extrovert[0]}
+                    maxValue={personality.introvert_extrovert[1]}
+                    absoluteMin={0}
+                    absoluteMax={100}
+                    onChange={(min, max) => setPersonality({ ...personality, introvert_extrovert: [min, max] })}
+                  />
                 </div>
-                <CustomRangeSlider
-                  label=""
-                  minValue={personality.introvert_extrovert[0]}
-                  maxValue={personality.introvert_extrovert[1]}
-                  absoluteMin={0}
-                  absoluteMax={100}
-                  onChange={(min, max) => setPersonality({ ...personality, introvert_extrovert: [min, max] })}
-                />
+
+                <div>
+                  <div className="flex justify-between mb-2">
+                    <span className="text-sm font-medium text-gray-600 dark:text-gray-400">Analítico</span>
+                    <span className="text-sm font-medium text-gray-600 dark:text-gray-400">Creativo</span>
+                  </div>
+                  <CustomRangeSlider
+                    label=""
+                    minValue={personality.analytical_creative[0]}
+                    maxValue={personality.analytical_creative[1]}
+                    absoluteMin={0}
+                    absoluteMax={100}
+                    onChange={(min, max) => setPersonality({ ...personality, analytical_creative: [min, max] })}
+                  />
+                </div>
+
+                <div>
+                  <div className="flex justify-between mb-2">
+                    <span className="text-sm font-medium text-gray-600 dark:text-gray-400">Ocupado</span>
+                    <span className="text-sm font-medium text-gray-600 dark:text-gray-400">Tiempo libre</span>
+                  </div>
+                  <CustomRangeSlider
+                    label=""
+                    minValue={personality.busy_free_time[0]}
+                    maxValue={personality.busy_free_time[1]}
+                    absoluteMin={0}
+                    absoluteMax={100}
+                    onChange={(min, max) => setPersonality({ ...personality, busy_free_time: [min, max] })}
+                  />
+                </div>
+
+                <div>
+                  <div className="flex justify-between mb-2">
+                    <span className="text-sm font-medium text-gray-600 dark:text-gray-400">Desorganizado</span>
+                    <span className="text-sm font-medium text-gray-600 dark:text-gray-400">Organizado</span>
+                  </div>
+                  <CustomRangeSlider
+                    label=""
+                    minValue={personality.disorganized_organized[0]}
+                    maxValue={personality.disorganized_organized[1]}
+                    absoluteMin={0}
+                    absoluteMax={100}
+                    onChange={(min, max) => setPersonality({ ...personality, disorganized_organized: [min, max] })}
+                  />
+                </div>
               </div>
 
-              <div className="mb-6">
-                <div className="flex justify-between mb-1">
-                  <span className="text-sm font-medium text-gray-600 dark:text-gray-400">Analítico</span>
-                  <span className="text-sm font-medium text-gray-600 dark:text-gray-400">Creativo</span>
+              {/* Right sub-column */}
+              <div className="space-y-6">
+                <div>
+                  <div className="flex justify-between mb-2">
+                    <span className="text-sm font-medium text-gray-600 dark:text-gray-400">Independiente</span>
+                    <span className="text-sm font-medium text-gray-600 dark:text-gray-400">Cooperativo</span>
+                  </div>
+                  <CustomRangeSlider
+                    label=""
+                    minValue={personality.independent_cooperative[0]}
+                    maxValue={personality.independent_cooperative[1]}
+                    absoluteMin={0}
+                    absoluteMax={100}
+                    onChange={(min, max) =>
+                      setPersonality({ ...personality, independent_cooperative: [min, max] })
+                    }
+                  />
                 </div>
-                <CustomRangeSlider
-                  label=""
-                  minValue={personality.analytical_creative[0]}
-                  maxValue={personality.analytical_creative[1]}
-                  absoluteMin={0}
-                  absoluteMax={100}
-                  onChange={(min, max) => setPersonality({ ...personality, analytical_creative: [min, max] })}
-                />
-              </div>
 
-              <div className="mb-6">
-                <div className="flex justify-between mb-1">
-                  <span className="text-sm font-medium text-gray-600 dark:text-gray-400">Ocupado</span>
-                  <span className="text-sm font-medium text-gray-600 dark:text-gray-400">Tiempo libre</span>
+                <div>
+                  <div className="flex justify-between mb-2">
+                    <span className="text-sm font-medium text-gray-600 dark:text-gray-400">Ecologista</span>
+                    <span className="text-sm font-medium text-gray-600 dark:text-gray-400">No ecologista</span>
+                  </div>
+                  <CustomRangeSlider
+                    label=""
+                    minValue={personality.environmentalist[0]}
+                    maxValue={personality.environmentalist[1]}
+                    absoluteMin={0}
+                    absoluteMax={100}
+                    onChange={(min, max) => setPersonality({ ...personality, environmentalist: [min, max] })}
+                  />
                 </div>
-                <CustomRangeSlider
-                  label=""
-                  minValue={personality.busy_free_time[0]}
-                  maxValue={personality.busy_free_time[1]}
-                  absoluteMin={0}
-                  absoluteMax={100}
-                  onChange={(min, max) => setPersonality({ ...personality, busy_free_time: [min, max] })}
-                />
-              </div>
 
-              <div className="mb-6 md:mb-0">
-                <div className="flex justify-between mb-1">
-                  <span className="text-sm font-medium text-gray-600 dark:text-gray-400">Desorganizado</span>
-                  <span className="text-sm font-medium text-gray-600 dark:text-gray-400">Organizado</span>
+                <div>
+                  <div className="flex justify-between mb-2">
+                    <span className="text-sm font-medium text-gray-600 dark:text-gray-400">Seguro</span>
+                    <span className="text-sm font-medium text-gray-600 dark:text-gray-400">Arriesgado</span>
+                  </div>
+                  <CustomRangeSlider
+                    label=""
+                    minValue={personality.safe_risky[0]}
+                    maxValue={personality.safe_risky[1]}
+                    absoluteMin={0}
+                    absoluteMax={100}
+                    onChange={(min, max) => setPersonality({ ...personality, safe_risky: [min, max] })}
+                  />
                 </div>
-                <CustomRangeSlider
-                  label=""
-                  minValue={personality.disorganized_organized[0]}
-                  maxValue={personality.disorganized_organized[1]}
-                  absoluteMin={0}
-                  absoluteMax={100}
-                  onChange={(min, max) => setPersonality({ ...personality, disorganized_organized: [min, max] })}
-                />
-              </div>
-            </div>
-
-            <div>
-              <div className="mb-6">
-                <div className="flex justify-between mb-1">
-                  <span className="text-sm font-medium text-gray-600 dark:text-gray-400">Independiente</span>
-                  <span className="text-sm font-medium text-gray-600 dark:text-gray-400">Cooperativo</span>
-                </div>
-                <CustomRangeSlider
-                  label=""
-                  minValue={personality.independent_cooperative[0]}
-                  maxValue={personality.independent_cooperative[1]}
-                  absoluteMin={0}
-                  absoluteMax={100}
-                  onChange={(min, max) =>
-                    setPersonality({ ...personality, independent_cooperative: [min, max] })
-                  }
-                />
-              </div>
-
-              <div className="mb-6">
-                <div className="flex justify-between mb-1">
-                  <span className="text-sm font-medium text-gray-600 dark:text-gray-400">Ecologista</span>
-                  <span className="text-sm font-medium text-gray-600 dark:text-gray-400">No ecologista</span>
-                </div>
-                <CustomRangeSlider
-                  label=""
-                  minValue={personality.environmentalist[0]}
-                  maxValue={personality.environmentalist[1]}
-                  absoluteMin={0}
-                  absoluteMax={100}
-                  onChange={(min, max) => setPersonality({ ...personality, environmentalist: [min, max] })}
-                />
-              </div>
-
-              <div className="mb-6">
-                <div className="flex justify-between mb-1">
-                  <span className="text-sm font-medium text-gray-600 dark:text-gray-400">Seguro</span>
-                  <span className="text-sm font-medium text-gray-600 dark:text-gray-400">Arriesgado</span>
-                </div>
-                <CustomRangeSlider
-                  label=""
-                  minValue={personality.safe_risky[0]}
-                  maxValue={personality.safe_risky[1]}
-                  absoluteMin={0}
-                  absoluteMax={100}
-                  onChange={(min, max) => setPersonality({ ...personality, safe_risky: [min, max] })}
-                />
               </div>
             </div>
           </div>
