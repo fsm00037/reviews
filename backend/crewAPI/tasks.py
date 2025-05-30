@@ -38,7 +38,7 @@ def create_user_profiles_task(num_reviewers: int, profile_parameters: Dict[str, 
     return Task(
         description=f"""
         1. Genera {num_reviewers} perfiles de usuario diferentes para evaluar el producto
-        2. La población de perfiles será creada con estos rangos: {json.dumps(profile_parameters, ensure_ascii=False)}
+        2. La población de perfiles será creada con estos rangos entre 0 y 100: {json.dumps(profile_parameters, ensure_ascii=False)}
         4. Cada perfil debe estar en formato JSON e incluir:
            - id: un número único
            - name: nombre completo

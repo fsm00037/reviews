@@ -210,10 +210,12 @@ export const BotService = {
 // Servicios para Reviews
 export const ReviewService = {
   // Generar reseñas usando la fase 3
-  generateReviews: (modelName?: string) => {
+  generateReviews: (productInfo: Product, userProfiles: BotProfile[], modelName?: string) => {
     return fetchAPI<any>('/phase3', {
       method: 'POST',
       body: JSON.stringify({
+        product_info: productInfo,
+        user_profiles: userProfiles,
         model_name: modelName
       }),
     }).then(response => {

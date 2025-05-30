@@ -1,5 +1,6 @@
 from flask import Blueprint, jsonify, request
 import time
+import json
 from api.services.crew_service import (
     execute_phase1,
     execute_phase2,
@@ -27,8 +28,8 @@ def health_check():
 def clean_outputs_endpoint():
     """Limpia la carpeta de outputs antes de iniciar un nuevo análisis"""
     try:
-        result = clean_outputs()
-        return jsonify(result)
+        clean_outputs()
+        return jsonify({"status": "success", "message": "Outputs limpiados correctamente"}), 200
     except Exception as e:
         return jsonify({"error": str(e)}), 500
 
@@ -52,10 +53,9 @@ def phase1_product_info():
     try:
         # Primero limpiar la carpeta de outputs
         clean_outputs()
-        
         # Ejecutar fase 1
-        results = execute_phase1(product_url, model_name)
-        return jsonify(results)
+        execute_phase1(product_url, model_name)
+        return jsonify({"status": "success", "message": "Fase 1 completada correctamente"}), 200
     except Exception as e:
         return jsonify({"error": str(e)}), 500
 
@@ -79,8 +79,8 @@ def phase2_create_reviewers():
     model_name = data.get('model_name', None)
     
     try:
-        results = execute_phase2(num_reviewers, profile_parameters, model_name)
-        return jsonify(results)
+        execute_phase2(num_reviewers, profile_parameters, model_name)
+        return jsonify({"status": "success", "message": "Fase 2 completada correctamente"}), 200
     except Exception as e:
         return jsonify({"error": str(e)}), 500
 
@@ -90,24 +90,29 @@ def phase3_generate_reviews():
     Fase 3: Generar reseñas
     
     Espera un JSON con:
+    - product_info: información del producto
+    - user_profiles: perfiles de usuario
     - model_name: (opcional) nombre del modelo a utilizar
     """
     data = request.json
-    model_name = data.get('model_name', None) if data else None
+    
+    if not data:
+        return jsonify({"error": "Se requiere un cuerpo JSON válido"}), 400
+    
+    # Obtener datos del cuerpo JSON
+    product_info = data.get('product_info')
+    user_profiles = data.get('user_profiles')
+    model_name = data.get('model_name', None)
+    
+    if not product_info:
+        return jsonify({"error": "Se requiere product_info en el cuerpo de la petición"}), 400
+    
+    if not user_profiles:
+        return jsonify({"error": "Se requiere user_profiles en el cuerpo de la petición"}), 400
     
     try:
-        # Obtener datos de fases anteriores
-        product_info = get_product_info()
-        user_profiles = get_reviewer_profiles()
-        
-        if not product_info:
-            return jsonify({"error": "No se ha ejecutado la fase 1 o no hay información del producto"}), 400
-        
-        if not user_profiles:
-            return jsonify({"error": "No se ha ejecutado la fase 2 o no hay perfiles de usuario"}), 400
-        
-        results = execute_phase3(product_info, user_profiles, model_name)
-        return jsonify(results)
+        execute_phase3(product_info, user_profiles, model_name)
+        return jsonify({"status": "success", "message": "Fase 3 completada correctamente"}), 200
     except Exception as e:
         return jsonify({"error": str(e)}), 500
 
@@ -129,8 +134,8 @@ def phase4_analyze_reviews():
         if not reviews:
             return jsonify({"error": "No se ha ejecutado la fase 3 o no hay reseñas generadas"}), 400
         
-        results = execute_phase4(model_name)
-        return jsonify(results)
+        execute_phase4(model_name)
+        return jsonify({"status": "success", "message": "Fase 4 completada correctamente"}), 200
     
     except Exception as e:
         return jsonify({"error": str(e)}), 500
@@ -159,26 +164,18 @@ def analyze_product_all_phases():
         clean_outputs()
         
         # Ejecutar fase 1
-        phase1_results = execute_phase1(product_url, model_name)
+        execute_phase1(product_url, model_name)
         
         # Ejecutar fase 2
         phase2_results = execute_phase2(num_reviewers, model_name)
         
         # Ejecutar fase 3
-        phase3_results = execute_phase3(phase1_results, phase2_results["profiles"], model_name)
+        phase3_results = execute_phase3(get_product_info(), get_reviewer_profiles(), model_name)
         
         # Ejecutar fase 4
-        phase4_results = execute_phase4(model_name)
+        execute_phase4(model_name)
         
-        # Construir respuesta completa
-        full_results = {
-            "product": phase1_results,
-            "reviewers": phase2_results["profiles"],
-            "reviews": phase3_results,
-            "analysis": phase4_results
-        }
-        
-        return jsonify(full_results)
+        return jsonify({"status": "success", "message": "Análisis completo finalizado correctamente"}), 200
     except Exception as e:
         return jsonify({"error": str(e)}), 500
 

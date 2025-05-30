@@ -21,6 +21,8 @@ python run.py
 
 > **Nota importante**: Es necesario ejecutar el script desde la carpeta `backend/api` para que las importaciones funcionen correctamente.
 
+La API se ejecutará en `http://localhost:5000` por defecto.
+
 ## Endpoints
 
 La API ofrece los siguientes endpoints:
@@ -32,6 +34,29 @@ GET /api/health
 ```
 
 Verifica que la API está funcionando correctamente.
+
+**Respuesta:**
+```json
+{
+  "status": "ok",
+  "timestamp": 1234567890.123
+}
+```
+
+### Limpiar Outputs
+
+```
+POST /api/clean-outputs
+```
+
+Limpia la carpeta de outputs antes de iniciar un nuevo análisis. Útil para empezar un análisis completamente nuevo.
+
+**Respuesta:**
+```json
+{
+  "message": "Outputs limpiados correctamente"
+}
+```
 
 ### Fase 1: Extraer información del producto
 
@@ -66,6 +91,11 @@ Ejecuta solo la fase 2 del análisis: crear perfiles de usuario para generar res
 ```json
 {
   "num_reviewers": 3,
+  "profile_parameters": {
+    "age_range": [25, 45],
+    "locations": ["Madrid", "Barcelona", "Valencia"],
+    "education_levels": ["Universitario", "Secundario", "Postgrado"]
+  },
   "model_name": "gemini/gemini-2.0-flash"
 }
 ```
@@ -73,6 +103,7 @@ Ejecuta solo la fase 2 del análisis: crear perfiles de usuario para generar res
 | Parámetro | Tipo | Requerido | Descripción |
 |-----------|------|-----------|-------------|
 | num_reviewers | integer | Sí | Número de reseñadores a crear |
+| profile_parameters | object | Sí | Parámetros para la generación de perfiles |
 | model_name | string | No | Nombre del modelo LLM a utilizar |
 
 ### Fase 3: Generar reseñas
@@ -82,17 +113,31 @@ POST /api/phase3
 ```
 
 Ejecuta solo la fase 3 del análisis: generar reseñas basadas en la información del producto y los perfiles de usuario.
-Requiere que las fases 1 y 2 ya se hayan ejecutado.
 
 **Cuerpo de la petición (JSON):**
 ```json
 {
+  "product_info": {
+    "name": "Producto ejemplo",
+    "description": "Descripción del producto",
+    "price": "99.99€"
+  },
+  "user_profiles": [
+    {
+      "id": 1,
+      "name": "Usuario 1",
+      "age": 30,
+      "personality": {...}
+    }
+  ],
   "model_name": "gemini/gemini-2.0-flash"
 }
 ```
 
 | Parámetro | Tipo | Requerido | Descripción |
 |-----------|------|-----------|-------------|
+| product_info | object | Sí | Información del producto obtenida de la fase 1 |
+| user_profiles | array | Sí | Perfiles de usuario obtenidos de la fase 2 |
 | model_name | string | No | Nombre del modelo LLM a utilizar |
 
 ### Fase 4: Compilar reseñas y generar informe
@@ -182,12 +227,35 @@ Devuelve el análisis final de las reseñas.
 
 Para ejecutar el proceso completo paso a paso:
 
-1. Primero ejecutar la fase 1 para extraer información del producto
-2. Luego ejecutar la fase 2 para generar perfiles de usuario
-3. Después ejecutar la fase 3 para generar las reseñas
-4. Finalmente ejecutar la fase 4 para compilar y analizar las reseñas
+1. **Limpiar outputs** (opcional): `POST /api/clean-outputs`
+2. **Fase 1**: Extraer información del producto con `POST /api/phase1`
+3. **Fase 2**: Generar perfiles de usuario con `POST /api/phase2`
+4. **Fase 3**: Generar las reseñas con `POST /api/phase3`
+5. **Fase 4**: Compilar y analizar las reseñas con `POST /api/phase4`
 
 Este enfoque permite un mayor control sobre el proceso y la posibilidad de revisar los resultados de cada fase antes de continuar.
+
+## Configuración del Servidor
+
+La API se ejecuta con las siguientes configuraciones por defecto:
+
+- **Host**: `0.0.0.0` (accesible desde cualquier interfaz de red)
+- **Puerto**: `5000`
+- **Modo Debug**: Activado en desarrollo
+- **CORS**: Habilitado para todas las rutas
+
+## Dependencias
+
+Las principales dependencias del proyecto son:
+
+- **Flask 2.3.3**: Framework web
+- **Flask-CORS 4.0.0**: Soporte para CORS
+- **CrewAI**: Framework para agentes de IA
+- **LangChain 0.1.5**: Framework para aplicaciones con LLM
+- **Pydantic 2.6.1**: Validación de datos
+- **Requests 2.31.0**: Cliente HTTP
+- **Pandas 2.2.0**: Manipulación de datos
+- **NumPy 1.26.3**: Computación numérica
 
 ## Solución de Problemas
 
@@ -208,14 +276,24 @@ Si encuentras errores relacionados con las importaciones de módulos:
    - Asegúrate de que has instalado todas las dependencias con `pip install -r ../requirements.txt`
    - Verifica que existen archivos `__init__.py` en todas las carpetas del paquete
 
+### Errores de Conexión
+
+1. **Error de conexión al servidor**:
+   - Verifica que la API está ejecutándose en `http://localhost:5000`
+   - Comprueba que no hay otros procesos usando el puerto 5000
+
+2. **Errores CORS**:
+   - La API tiene CORS habilitado por defecto
+   - Si persisten los problemas, verifica la configuración del cliente
+
 ### Estructura de carpetas esperada
 
 ```
 backend/
 ├── __init__.py
+├── requirements.txt
 ├── api/
 │   ├── __init__.py
-│   ├── app.py
 │   ├── run.py (ejecutar este archivo)
 │   ├── models/
 │   │   ├── __init__.py
@@ -333,4 +411,53 @@ backend/
     "Insight demográfico 2"
   ]
 }
+```
+
+## Ejemplos de Uso
+
+### Análisis Completo
+
+```bash
+curl -X POST http://localhost:5000/api/analyze-all \
+  -H "Content-Type: application/json" \
+  -d '{
+    "product_url": "https://www.amazon.es/producto-ejemplo",
+    "num_reviewers": 5,
+    "model_name": "gemini/gemini-2.0-flash"
+  }'
+```
+
+### Análisis por Fases
+
+```bash
+# Fase 1: Extraer información del producto
+curl -X POST http://localhost:5000/api/phase1 \
+  -H "Content-Type: application/json" \
+  -d '{
+    "product_url": "https://www.amazon.es/producto-ejemplo"
+  }'
+
+# Fase 2: Crear perfiles de usuario
+curl -X POST http://localhost:5000/api/phase2 \
+  -H "Content-Type: application/json" \
+  -d '{
+    "num_reviewers": 3,
+    "profile_parameters": {
+      "age_range": [25, 45],
+      "locations": ["Madrid", "Barcelona"]
+    }
+  }'
+```
+
+### Obtener Resultados
+
+```bash
+# Obtener todos los resultados
+curl http://localhost:5000/api/results
+
+# Obtener solo las reseñas
+curl http://localhost:5000/api/reviews
+
+# Obtener solo el análisis
+curl http://localhost:5000/api/analysis
 ``` 

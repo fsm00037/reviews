@@ -119,6 +119,42 @@ export const BotProfilesPhase: React.FC<BotProfilesPhaseProps> = ({
                           />
                         </div>
                       </div>
+                      <div>
+                        <div className="flex justify-between">
+                          <span>Independiente</span>
+                          <span>Cooperativo</span>
+                        </div>
+                        <div className="w-full bg-gray-200 dark:bg-gray-700 h-1.5 rounded-full mt-1">
+                          <div
+                            className="bg-gradient-to-r from-indigo-500 to-purple-500 h-1.5 rounded-full"
+                            style={{ width: `${Math.round(bot.personality.independent_cooperative)}%` }}
+                          />
+                        </div>
+                      </div>
+                      <div>
+                        <div className="flex justify-between">
+                          <span>No ecologista</span>
+                          <span>Ecologista</span>
+                        </div>
+                        <div className="w-full bg-gray-200 dark:bg-gray-700 h-1.5 rounded-full mt-1">
+                          <div
+                            className="bg-gradient-to-r from-indigo-500 to-purple-500 h-1.5 rounded-full"
+                            style={{ width: `${Math.round(bot.personality.environmentalist)}%` }}
+                          />
+                        </div>
+                      </div>
+                      <div>
+                        <div className="flex justify-between">
+                          <span>Seguro</span>
+                          <span>Arriesgado</span>
+                        </div>
+                        <div className="w-full bg-gray-200 dark:bg-gray-700 h-1.5 rounded-full mt-1">
+                          <div
+                            className="bg-gradient-to-r from-indigo-500 to-purple-500 h-1.5 rounded-full"
+                            style={{ width: `${Math.round(bot.personality.safe_risky)}%` }}
+                          />
+                        </div>
+                      </div>
                     </div>
                   </div>
                 </CardContent>
