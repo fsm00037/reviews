@@ -2,13 +2,14 @@ import React from "react";
 import { motion } from "framer-motion";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Slider } from "@/components/ui/slider";
 import { ArrowLeft, ArrowRight, Users, UserCircle2, Zap } from "lucide-react";
 import { CustomRangeSlider } from "@/components/custom-range-slider";
 import { DemographicConfig, PersonalityConfig } from "@/lib/types";
 
 interface ConfigPhaseProps {
-  populationRange: [number, number];
-  setPopulationRange: (range: [number, number]) => void;
+  populationSize: number;
+  setPopulationSize: (size: number) => void;
   demographics: DemographicConfig;
   setDemographics: (config: DemographicConfig) => void;
   personality: PersonalityConfig;
@@ -19,8 +20,8 @@ interface ConfigPhaseProps {
 }
 
 export const ConfigPhase: React.FC<ConfigPhaseProps> = ({
-  populationRange,
-  setPopulationRange,
+  populationSize,
+  setPopulationSize,
   demographics,
   setDemographics,
   personality,
@@ -44,16 +45,72 @@ export const ConfigPhase: React.FC<ConfigPhaseProps> = ({
           <div>
             <div className="mb-8">
               <h3 className="text-xl font-bold mb-4">Tamaño de la población</h3>
-              <CustomRangeSlider
-                label=""
-                minLabel="min"
-                maxLabel="max"
-                minValue={populationRange[0]}
-                maxValue={populationRange[1]}
-                absoluteMin={1}
-                absoluteMax={100}
-                onChange={(min, max) => setPopulationRange([min, max])}
-              />
+              <div className="flex justify-between mb-2">
+                <span className="text-sm font-medium text-gray-600 dark:text-gray-400">1</span>
+                <span className="text-sm font-medium text-gray-600 dark:text-gray-400">100</span>
+              </div>
+              <div className="flex justify-center mb-2">
+                <span className="text-lg font-bold text-purple-600 dark:text-purple-400">{populationSize} bots</span>
+              </div>
+              <div className="relative py-4">
+                <input
+                  type="range"
+                  min={1}
+                  max={100}
+                  value={populationSize}
+                  onChange={(e) => setPopulationSize(parseInt((e.target as HTMLInputElement).value))}
+                  aria-label="Tamaño de la población"
+                  className="w-full h-1.5 rounded-full appearance-none cursor-pointer population-slider"
+                  data-value={populationSize}
+                />
+                <style dangerouslySetInnerHTML={{
+                  __html: `
+                    .population-slider {
+                      background: linear-gradient(to right, 
+                        rgb(99, 102, 241) 0%, 
+                        rgb(139, 92, 246) ${((populationSize - 1) / 99) * 50}%, 
+                        rgb(236, 72, 153) ${((populationSize - 1) / 99) * 100}%, 
+                        rgb(229, 231, 235) ${((populationSize - 1) / 99) * 100}%, 
+                        rgb(229, 231, 235) 100%);
+                    }
+                    .dark .population-slider {
+                      background: linear-gradient(to right, 
+                        rgb(99, 102, 241) 0%, 
+                        rgb(139, 92, 246) ${((populationSize - 1) / 99) * 50}%, 
+                        rgb(236, 72, 153) ${((populationSize - 1) / 99) * 100}%, 
+                        rgb(55, 65, 81) ${((populationSize - 1) / 99) * 100}%, 
+                        rgb(55, 65, 81) 100%);
+                    }
+                    .population-slider::-webkit-slider-thumb {
+                      appearance: none;
+                      height: 20px;
+                      width: 20px;
+                      border-radius: 50%;
+                      background: white;
+                      border: 2px solid rgb(236, 72, 153);
+                      box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+                      cursor: pointer;
+                    }
+                    .population-slider::-moz-range-thumb {
+                      height: 18px;
+                      width: 18px;
+                      border-radius: 50%;
+                      background: white;
+                      border: 2px solid rgb(236, 72, 153);
+                      box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+                      cursor: pointer;
+                    }
+                    .dark .population-slider::-webkit-slider-thumb {
+                      background: rgb(3, 7, 18);
+                      border: 2px solid rgb(236, 72, 153);
+                    }
+                    .dark .population-slider::-moz-range-thumb {
+                      background: rgb(3, 7, 18);
+                      border: 2px solid rgb(236, 72, 153);
+                    }
+                  `
+                }} />
+              </div>
             </div>
 
             <div className="mb-8">

@@ -1,8 +1,8 @@
 {
   "name": "STECEi Auriculares Inalámbricos Deportivos, Auriculares Bluetooth 5.4 con HD Micrófono, 75H de Reproducción con Cancelacion Ruido ENC, IPX7 Impermeable Cascos Inalambricos Running con Pantalla LED",
   "description": "Auriculares inalambricos bluetooth utilizan la última tecnología Bluetooth 5.4, que aumenta la velocidad de transmisión de datos de audio hasta en un 75% y ofrece una experiencia de escucha de baja latencia. El auricular bluetooth es compatible con casi todos los dispositivos Bluetooth del mercado. Con la función Hall, simplemente abra la caja de carga y el último dispositivo conectado se puede conectar automáticamente, lo cual es conveniente y rápido. Calidad de sonido cautivadora y cancelación de ruido ENC: los cascos inalambricos bluetooth cuentan con un altavoz de 13 mm y una membrana compuesta de tres capas. Cada parte del controlador trabaja para producir un sonido que va desde graves profundos y ricos hasta medios precisos y agudos limpios. Los auriculares deportivos están equipados con un micrófono ENC de alta calidad con cancelación de ruido y tecnología de renderizado HD sin pérdidas que filtra eficazmente el ruido exterior. Máxima comodidad y resistencia IPX7: los auriculares deportivos bluetooth están equipados con tres tamaños diferentes de tapones (S/M/L). Los auriculares para correr están diseñados con ganchos suaves y flexibles que se adaptan perfectamente a las orejas y no se caen, ni siquiera durante el ejercicio intenso. La función impermeable IPX7 protege fácilmente los auriculares running de las gotas de lluvia o el sudor ligeros, lo que los hace ideales para correr, ir al gimnasio y viajar. Pantalla LED y 75 horas de reproducción: El cascos bluetooth utiliza tecnología de pantalla LED para mostrar con precisión la energía restante del auricular inalámbrico Bluetooth y la caja de carga. Con la tecnología de carga rápida USB-C, le ofrece una carga más rápida y estable. Cada auriculares para correr puede jugar durante 15 horas con una sola carga, y la funda de carga proporciona 3 cargas adicionales, lo que hace que los cascos running tengan un tiempo de reproducción total de 75 horas. Diseño de botón único y amplia compatibilidad: Los auriculares inalambricos bluetooth deportivos utilizan un chip táctil de alta precisión para brindarle control táctil, puede responder llamadas, colgar llamadas, reproducir/pausar música, ajustar el volumen y activar asistentes de voz, etc, con solo tocar los audifonos inalambricos. los cascos inalámbricos son compatibles con casi todos los dispositivos bluetooth del mercado. Por ejemplo IOS/Android.",
-  "price": "25,99€",
-  "image": "https://m.media-amazon.com/images/I/61cVMqSRdwL._AC_SX679_.jpg",
+  "price": "25,99 €",
+  "image": "https://m.media-amazon.com/images/I/61cEj9j59SL._AC_SX679_.jpg",
   "category": "Auriculares de oído abierto",
   "main_features": [
     {
@@ -62,10 +62,6 @@
     {
       "spec": "Tecnología de comunicación inalámbrica",
       "value": "Bluetooth"
-    },
-    {
-      "spec": "Componentes incluidos",
-      "value": "1 *Funda Cargador, 2 *Auriculares Deportivos, 1 *Cable de Carga USB-C, 3 *Orejeras, 1 *Manual de Instrucciones"
     }
   ]
 }

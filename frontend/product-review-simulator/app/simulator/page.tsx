@@ -134,7 +134,7 @@ export default function SimulatorPage() {
   })
 
   // State for bot configuration
-  const [populationRange, setPopulationRange] = useState<[number, number]>([3, 8])
+  const [populationSize, setPopulationSize] = useState<number>(5)
   const [positivityBias, setPositivityBias] = useState<[number, number]>([60, 80])
   const [verbosity, setVerbosity] = useState<[number, number]>([40, 70])
   const [detailLevel, setDetailLevel] = useState<[number, number]>([50, 80])
@@ -179,14 +179,13 @@ export default function SimulatorPage() {
     setError(null)
 
     try {
-      // Usar el rango de población para determinar el número de bots
-      const numReviewers = Math.floor(Math.random() * 
-        (populationRange[1] - populationRange[0] + 1)) + populationRange[0];
+      // Usar el tamaño de población exacto
+      const numReviewers = populationSize;
       
       // Ejecutar fase 2 para generar perfiles de bot (solo inicia el proceso)
       await BotService.generateBots(
         numReviewers,
-        populationRange,
+        [populationSize, populationSize], // Crear un rango con el mismo valor
         positivityBias,
         verbosity,
         detailLevel,
@@ -568,14 +567,8 @@ export default function SimulatorPage() {
 
             {activeStep === 1 && (
               <ConfigPhase 
-                populationRange={populationRange}
-                setPopulationRange={setPopulationRange}
-                positivityBias={positivityBias}
-                setPositivityBias={setPositivityBias}
-                verbosity={verbosity}
-                setVerbosity={setVerbosity}
-                detailLevel={detailLevel}
-                setDetailLevel={setDetailLevel}
+                populationSize={populationSize}
+                setPopulationSize={setPopulationSize}
                 demographics={demographics}
                 setDemographics={setDemographics}
                 personality={personality}
