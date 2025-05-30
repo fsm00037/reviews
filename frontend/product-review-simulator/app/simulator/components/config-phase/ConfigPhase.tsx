@@ -312,8 +312,8 @@ export const ConfigPhase: React.FC<ConfigPhaseProps> = ({
 
                 <div>
                   <div className="flex justify-between mb-2">
+                    <span className="text-sm font-medium text-gray-600 dark:text-gray-400">No Ecologista</span>
                     <span className="text-sm font-medium text-gray-600 dark:text-gray-400">Ecologista</span>
-                    <span className="text-sm font-medium text-gray-600 dark:text-gray-400">No ecologista</span>
                   </div>
                   <CustomRangeSlider
                     label=""
