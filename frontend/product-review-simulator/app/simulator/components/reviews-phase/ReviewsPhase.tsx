@@ -193,13 +193,8 @@ export const ReviewsPhase: React.FC<ReviewsPhaseProps> = ({
                 </div>
 
                 <h4 className="font-semibold mb-1 text-gray-900 dark:text-gray-100">{review.title}</h4>
-                <p className="text-sm text-gray-500 dark:text-gray-400 mb-2">Reseña del {review.date}</p>
                 <p className="text-sm text-gray-600 dark:text-gray-300">{review.content}</p>
 
-                <div className="mt-2 text-sm text-gray-500 dark:text-gray-400 flex items-center">
-                  <ThumbsUp className="h-3 w-3 mr-1" />
-                  {review.helpful_votes || 0} personas encontraron esto útil
-                </div>
               </motion.div>
             );
           })}
