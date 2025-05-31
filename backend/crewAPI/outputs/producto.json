@@ -1,27 +1,55 @@
 {
-  "name": "BAGIS percha para niños y niñas",
-  "description": "Estas perchas están hechas de plástico seguro, duradero y flexible, con un 50% reciclado como mínimo, y no perderán su forma. Percha que vale para pantalones, faldas y camisas.",
-  "price": "2,49 € /8 unidad",
-  "image": "https://www.ikea.com/es/es/images/products/bagis-percha-ninos-ninas-colores-variados__0117560_pe271858_s5.jpg?f=s",
-  "category": "Organizadores infantiles para armario",
+  "name": "Assassin's Creed Shadows Limited Edition (Exclusivo para Amazon.es) (PS5)",
+  "description": "Sumérgete en una épica historia de acción y aventura ambientada en el Japón feudal! Explora un fascinante mundo abierto durante una época turbulenta en la piel de una letal asesina shinobi y un legendario y poderoso samurái. Alterna fácilmente entre dos protagonistas con una insólita alianza mientras descubres el destino que comparten y marcas el inicio de una nueva era en Japón.",
+  "price": "69,99 €",
+  "image": "https://m.media-amazon.com/images/I/718d3L-PzsL._SL1000_.jpg",
+  "category": "Videojuegos › PlayStation 5 › Juegos",
   "main_features": [
     {
-      "feature": "Material",
-      "value": "Plástico de polipropileno (50 % reciclado como mín.)"
+      "feature": "Plataforma",
+      "value": "Playstation 5"
     },
     {
-      "feature": "Como el plástico es flexible",
-      "value": "se minimiza el riesgo de rotura."
+      "feature": "Edición",
+      "value": "Limited Edition"
+    },
+    {
+      "feature": "Incluye",
+      "value": "- El juego base. - El pack de personaje Sekiryū, que incluye conjuntos de equipo y armas para Naoe, la bestia Sekiryū y la baratija Diente del dragón."
+    },
+    {
+      "feature": "Personajes",
+      "value": "Encarna a Naoe, una asesina shinobi, y a Yasuke, un legendario samurái"
+    },
+    {
+      "feature": "Guarida",
+      "value": "Construye una guarida totalmente personalizable para tu liga de shinobi"
     }
   ],
   "technical_specs": [
     {
-      "spec": "Ancho",
-      "value": "34 cm"
+      "spec": "Clasificado",
+      "value": "No recomendada para menores de 18 años"
     },
     {
-      "spec": "Unidades",
-      "value": "8 unidad"
+      "spec": "Idioma",
+      "value": "Español"
+    },
+    {
+      "spec": "Dimensiones del paquete",
+      "value": "18,2 x 13,6 x 1,5 cm; 100 g"
+    },
+    {
+      "spec": "Fecha de lanzamiento",
+      "value": "20 marzo 2025"
+    },
+    {
+      "spec": "ASIN",
+      "value": "B0D362WFCC"
+    },
+    {
+      "spec": "País de origen",
+      "value": "Austria"
     }
   ]
 }
