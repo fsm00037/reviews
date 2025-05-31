@@ -220,38 +220,8 @@ export const ProductPhase: React.FC<ProductPhaseProps> = ({
             </Button>
           </div>
 
-          <div className="flex justify-between mt-6">
-            <Button
-              onClick={async () => {
-                try {
-                  setError(null);
-                  await ProductService.updateProduct(product);
-                  // Mostrar un mensaje de éxito temporal
-                  setError({
-                    status: 200,
-                    message: "Información del producto actualizada correctamente",
-                    details: "Los cambios han sido guardados"
-                  });
-                  setTimeout(() => setError(null), 3000);
-                } catch (err) {
-                  console.error("Error al actualizar el producto:", err);
-                  if ((err as APIError).status !== undefined) {
-                    setError(err as APIError);
-                  } else {
-                    setError({
-                      status: 500,
-                      message: `Error: ${(err as Error).message || 'Desconocido'}`,
-                      details: 'No se pudo actualizar la información del producto'
-                    });
-                  }
-                }
-              }}
-              variant="outline"
-              className="border-purple-200 dark:border-gray-700 hover:bg-purple-50 dark:hover:bg-gray-800 transition-colors"
-              type="button"
-            >
-              Guardar cambios
-            </Button>
+          <div className="flex justify-end mt-6">
+          
             
             <motion.div whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }}>
               <Button
