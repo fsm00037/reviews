@@ -15,7 +15,7 @@ reviews/
 ### Requisitos Previos
 - Python 3.8+
 - pip (gestor de paquetes de Python)
-- Claves API necesarias (OpenAI, etc.)
+- Claves API necesarias (Gemini)
 
 ### Instalación
 
@@ -44,7 +44,6 @@ reviews/
    Crear un archivo `.env` en el directorio `backend/` con:
    ```env
    GEMINI_API_KEY=tu_clave_gemini
-   # Agregar otras claves API según sea necesario
    ```
 
 ### Ejecución
