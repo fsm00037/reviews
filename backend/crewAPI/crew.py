@@ -5,6 +5,7 @@ import re
 from crewai import Crew, Process, LLM
 from typing import Dict, Any, List, Union
 import config
+import solucionadorError
 from agents import (
     create_llm,
     create_product_info_agent,
@@ -22,6 +23,8 @@ from models import APIRequest, APIResponse, Product, BotProfile, Review, Analysi
 
 # Warning control
 warnings.filterwarnings('ignore')
+
+solucionadorError.deshabilitar_opentelemetry()
 
 def load_json_file(file_path):
     """
@@ -100,12 +103,13 @@ def run_phase1(product_url: str, model_name: str = None) -> Dict[str, Any]:
     product_crew = Crew(
         agents=[product_info_agent],
         tasks=[product_info_task],
-        verbose=True,
+        verbose=False,
         process=Process.sequential
     )
     
     # Run the crew and get the Product object directly
     product_results = product_crew.kickoff()
+    print("Fase 1: ", product_results.token_usage)
     
     return product_results
     
@@ -130,12 +134,13 @@ def run_phase2(num_reviewers: int, profile_parameters: Dict[str, Any], model_nam
         user_crew = Crew(
             agents=[user_creator_agent],
             tasks=[user_profiles_task],
-            verbose=True,
+            verbose=False,
             process=Process.sequential
         )
         
         # Run the crew and get List[BotProfile] directly
         user_results = user_crew.kickoff()
+        print("Fase 2: ", user_results.token_usage)
         
     return user_results
 
@@ -158,13 +163,13 @@ def run_phase3(product_info: Dict[str, Any], user_profiles: List[Dict[str, Any]]
     phase3_crew = Crew(
         agents=reviewer_agents,
         tasks=reviewer_tasks,
-        verbose=True,
+        verbose=False,
         process=Process.sequential
     )
     
     # Run the crew - each task produces a Review object
-    phase3_crew.kickoff()
-    
+    result = phase3_crew.kickoff()
+    print("Fase 3: ", result.token_usage)
     # Load reviews
     try:
         reviews_list = load_reviews(config.REVIEWS_DIR)
@@ -195,13 +200,13 @@ def run_phase4(model_name: str = None) -> Dict[str, Any]:
     compiler_crew = Crew(
         agents=[compiler_agent],
         tasks=[compiler_task],
-        verbose=True,
+        verbose=False,
         process=Process.sequential
     )
     
     # Run the crew and get the AnalysisResult object directly
     phase4_results = compiler_crew.kickoff()
-    
+    print("Fase 4: ", phase4_results.token_usage)
     return phase4_results
     
     
