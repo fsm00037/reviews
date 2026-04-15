@@ -2,7 +2,7 @@
 
 Sistema completo para la simulación y análisis de reseñas de productos utilizando CrewAI y Next.js.
 
-## Demo en video
+## Demo en vídeo
 
 [![Ver video](https://img.youtube.com/vi/rJehk2688yA/0.jpg)](https://www.youtube.com/watch?v=rJehk2688yA)
 
