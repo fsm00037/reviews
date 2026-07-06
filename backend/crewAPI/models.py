@@ -30,7 +30,7 @@ class BotPersonality(BaseModel):
 class BotProfile(BaseModel):
     id: int = Field(..., description="ID único del bot")
     name: str = Field(..., description="Nombre completo del bot")
-    avatar: str = Field(..., description="URL del avatar del bot")
+    avatar: Optional[str] = Field(default="", description="URL del avatar del bot (generada automáticamente por el sistema)")
     bio: str = Field(..., description="Biografía breve del bot")
     age: int = Field(..., description="Edad del bot")
     location: str = Field(..., description="Ubicación del bot")

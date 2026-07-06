@@ -1,6 +1,14 @@
 import sqlite3
 import json
 import os
+from urllib.parse import quote
+
+_MOUTH_VARIANTS = "variant01,variant02,variant03,variant04,variant05,variant06,variant07,variant09,variant10,variant11,variant12,variant13,variant14,variant15,variant16,variant17,variant18"
+
+def _dicebear_url(name: str) -> str:
+    """Build a deterministic DiceBear croodles-neutral avatar URL from the bot name."""
+    seed = quote(name.lower().replace(" ", ""), safe="")
+    return f"https://api.dicebear.com/10.x/croodles-neutral/svg?mouthVariant={_MOUTH_VARIANTS}&seed={seed}"
 
 # Determinar la ruta de la base de datos en la raíz del backend
 BACKEND_DIR = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
@@ -157,6 +165,8 @@ def save_reviewers(session_id: str, reviewers: list):
     cursor = conn.cursor()
     cursor.execute("DELETE FROM reviewers WHERE session_id = ?", (session_id,))
     for r in reviewers:
+        # Generate avatar URL deterministically — never trust the LLM for this
+        avatar_url = _dicebear_url(r.get("name") or "")
         cursor.execute("""
         INSERT INTO reviewers (session_id, id, name, avatar, bio, age, location, gender, education_level, personality, backstory)
         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
@@ -164,7 +174,7 @@ def save_reviewers(session_id: str, reviewers: list):
             session_id,
             r.get("id"),
             r.get("name"),
-            r.get("avatar"),
+            avatar_url,
             r.get("bio"),
             r.get("age"),
             r.get("location"),
@@ -184,10 +194,13 @@ def get_reviewers(session_id: str) -> list:
     conn.close()
     result = []
     for row in rows:
+        name = row["name"]
+        # Always regenerate the URL from the name to ensure it's correct
+        avatar_url = _dicebear_url(name) if name else (row["avatar"] or "")
         result.append({
             "id": row["id"],
-            "name": row["name"],
-            "avatar": row["avatar"],
+            "name": name,
+            "avatar": avatar_url,
             "bio": row["bio"],
             "age": row["age"],
             "location": row["location"],

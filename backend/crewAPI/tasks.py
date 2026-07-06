@@ -39,16 +39,26 @@ def create_user_profile_task(profile_parameters: Dict[str, Any], agent: Agent, i
         for p in existing_profiles:
             existing_info += f"- {p.get('name')} ({p.get('gender')}, {p.get('age')} años) de {p.get('location')}. Bio: {p.get('bio')}\n"
             
+    population_prompt_instruction = ""
+    population_prompt = profile_parameters.get("population_prompt", "")
+    if population_prompt:
+        population_prompt_instruction = f"""
+        IMPORTANTE - DESCRIPCIÓN DE LA POBLACIÓN REQUERIDA POR EL USUARIO:
+        El usuario ha descrito el tipo de población con el siguiente prompt:
+        "{population_prompt}"
+        Diseña este perfil de forma que sea totalmente coherente y cumpla con la descripción anterior.
+        """
+            
     return Task(
         description=f"""
         1. Genera un (1) único perfil de usuario realista y detallado para evaluar el producto. Este es el perfil {index} de un total de {total} perfiles a generar.
         {product_instructions}
+        {population_prompt_instruction}
         2. El perfil debe crearse considerando estos rangos demográficos y de personalidad de la población (de 0 a 100): {json.dumps(profile_parameters, ensure_ascii=False)}
         {existing_info}
         3. El perfil de usuario generado debe estar en formato JSON e incluir:
            - id: un número único (usa {index})
            - name: nombre completo en español (nombre y apellido realistas)
-           - avatar: una URL de imagen de perfil ficticia
            - bio: una biografía breve
            - age: edad (número entero)
            - location: ubicación en España (ej. Madrid, Barcelona, Sevilla, Valencia...)

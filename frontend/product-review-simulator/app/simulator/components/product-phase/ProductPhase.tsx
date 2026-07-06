@@ -57,6 +57,18 @@ export const ProductPhase: React.FC<ProductPhaseProps> = ({
     }
   }
 
+  const isValidImageUrl = (url: string | undefined): boolean => {
+    if (!url) return false;
+    const cleanUrl = url.trim().toLowerCase();
+    return (
+      (cleanUrl.startsWith("http://") || cleanUrl.startsWith("https://") || cleanUrl.startsWith("/")) &&
+      !cleanUrl.includes("unavailable") &&
+      !cleanUrl.includes("not present") &&
+      !cleanUrl.includes("scraped text") &&
+      !cleanUrl.includes("placeholder.svg")
+    );
+  };
+
   return (
     <Card className="border-purple-200 dark:border-gray-800 bg-white/80 dark:bg-gray-950/80 backdrop-blur-sm overflow-hidden">
       <CardHeader className="bg-gradient-to-r from-indigo-500/10 via-purple-500/10 to-pink-500/10">
@@ -129,7 +141,7 @@ export const ProductPhase: React.FC<ProductPhaseProps> = ({
                 Imagen del producto
               </Label>
               <div className="relative w-full h-[200px] bg-white dark:bg-gray-900 rounded-lg overflow-hidden border border-purple-200/30 dark:border-gray-800 flex items-center justify-center group shadow-inner">
-                {product.image && !product.image.includes('placeholder.svg') ? (
+                {isValidImageUrl(product.image) ? (
                   <img
                     src={product.image}
                     alt={product.name}
@@ -141,7 +153,7 @@ export const ProductPhase: React.FC<ProductPhaseProps> = ({
                 ) : (
                   <div className="flex flex-col items-center text-center p-6 text-gray-400 dark:text-gray-600">
                     <Sparkles className="h-10 w-10 mb-2 stroke-1 text-purple-400 dark:text-purple-600 animate-pulse" />
-                    <span className="text-xs">Imagen no disponible o autogenerada</span>
+                    <span className="text-xs text-gray-500">Imagen no disponible</span>
                   </div>
                 )}
               </div>

@@ -85,7 +85,7 @@ export const BotProfilesPhase: React.FC<BotProfilesPhaseProps> = ({
                 <CardHeader className="pb-2">
                   <div className="flex items-center gap-3">
                     <Avatar className="h-12 w-12 border-2 border-purple-200 dark:border-gray-700">
-                      <AvatarImage src={bot.avatar} alt={bot.name} />
+                      <AvatarImage src={bot.avatar?.includes('dicebear') ? bot.avatar : `https://api.dicebear.com/10.x/croodles-neutral/svg?mouthVariant=variant01,variant02,variant03,variant04,variant05,variant06,variant07,variant09,variant10,variant11,variant12,variant13,variant14,variant15,variant16,variant17,variant18&seed=${encodeURIComponent(bot.name)}`} alt={bot.name} />
                       <AvatarFallback
                         className={`${bot.gender === "Male" ? "bg-gradient-to-br from-blue-500 to-indigo-500" : "bg-gradient-to-br from-pink-500 to-purple-500"} text-white flex items-center justify-center`}
                       >

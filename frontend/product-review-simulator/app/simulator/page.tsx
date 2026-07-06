@@ -160,6 +160,10 @@ export default function SimulatorPage() {
   // State for product adaptation
   const [adaptToProduct, setAdaptToProduct] = useState<boolean>(true)
 
+  // State for population prompt and custom configuration mode
+  const [populationPrompt, setPopulationPrompt] = useState<string>("")
+  const [useCustomConfig, setUseCustomConfig] = useState<boolean>(false)
+
   // State for generated bots and reviews
   const [bots, setBots] = useState<BotProfile[]>([])
   const [reviews, setReviews] = useState<Review[]>([])
@@ -345,7 +349,9 @@ export default function SimulatorPage() {
         detailLevel,
         demographics,
         personality,
-        adaptToProduct
+        adaptToProduct,
+        undefined, // modelName
+        useCustomConfig ? undefined : populationPrompt // only use populationPrompt if they are not in custom configuration mode
       );
       
       // 3. Temporizador de seguridad: si tras 4 segundos no hay ningún perfil recibido, arrancar el fallback
@@ -918,6 +924,10 @@ export default function SimulatorPage() {
                 setActiveStep={setActiveStep}
                 isGeneratingBots={isGeneratingBots}
                 bots={bots}
+                populationPrompt={populationPrompt}
+                setPopulationPrompt={setPopulationPrompt}
+                useCustomConfig={useCustomConfig}
+                setUseCustomConfig={setUseCustomConfig}
               />
             )}
 

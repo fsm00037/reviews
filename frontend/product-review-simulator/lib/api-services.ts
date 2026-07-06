@@ -193,7 +193,8 @@ export const BotService = {
     demographics: DemographicConfig,
     personality: PersonalityConfig,
     adaptToProduct: boolean,
-    modelName?: string
+    modelName?: string,
+    populationPrompt?: string
   ) => {
     // Crear una copia de demographics para asegurar que se envían correctamente los valores
     const formattedDemographics = {
@@ -214,7 +215,8 @@ export const BotService = {
           detail_level: detailLevel,
           demographics: formattedDemographics,
           personality: personality,
-          adapt_to_product: adaptToProduct
+          adapt_to_product: adaptToProduct,
+          population_prompt: populationPrompt
         },
         model_name: modelName
       }),
