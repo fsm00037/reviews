@@ -85,17 +85,17 @@ export const ConfigPhase: React.FC<ConfigPhaseProps> = ({
       <CardHeader className="bg-gradient-to-r from-indigo-500/10 via-purple-500/10 to-pink-500/10">
         <CardTitle className="flex items-center gap-2">
           <Users className="h-5 w-5 text-purple-500" />
-          ConfiguraciÃ³n de bots
+          Configuración de bots
         </CardTitle>
-        <CardDescription>Ajusta los parÃ¡metros para la generaciÃ³n de perfiles de bots</CardDescription>
+        <CardDescription>Ajusta los parámetros para la generación de perfiles de bots</CardDescription>
       </CardHeader>
       <CardContent className="p-0">
 
-        {/* â”€â”€ Tab Bar â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */}
+        {/*  Tab Bar  */}
         <div className="flex border-b border-purple-100 dark:border-gray-800">
           {[
             { id: "preset", label: "Poblaciones predeterminadas", icon: <Wand2 className="h-4 w-4" /> },
-            { id: "custom", label: "Crear una poblaciÃ³n", icon: <Settings className="h-4 w-4" /> },
+            { id: "custom", label: "Crear una población", icon: <Settings className="h-4 w-4" /> },
           ].map((tab) => {
             const active = configTab === tab.id;
             return (
@@ -119,7 +119,7 @@ export const ConfigPhase: React.FC<ConfigPhaseProps> = ({
         <div className="p-6">
           <AnimatePresence mode="wait">
 
-            {/* â”€â”€ Tab 1: Poblaciones predeterminadas â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */}
+            {/*  Tab 1: Poblaciones predeterminadas  */}
             {configTab === "preset" && (
               <motion.div
                 key="preset"
@@ -132,12 +132,12 @@ export const ConfigPhase: React.FC<ConfigPhaseProps> = ({
                 {presets.length === 0 ? (
                   <div className="text-center py-12 text-gray-400 dark:text-gray-500">
                     <Wand2 className="h-8 w-8 mx-auto mb-3 opacity-40" />
-                    <p className="text-sm">Cargando poblaciones predeterminadasâ€¦</p>
+                    <p className="text-sm">Cargando poblaciones predeterminadas</p>
                   </div>
                 ) : (
                   <>
                     <p className="text-xs text-gray-500 dark:text-gray-400">
-                      Selecciona una poblaciÃ³n lista para usar. Los 10 perfiles se cargarÃ¡n al instante y podrÃ¡s pasar directamente a generar reseÃ±as.
+                      Selecciona una población lista para usar. Los 10 perfiles se cargarán al instante y podrás pasar directamente a generar reseñas.
                     </p>
                     <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
                       {presets.map((preset) => {
@@ -171,7 +171,7 @@ export const ConfigPhase: React.FC<ConfigPhaseProps> = ({
                                 <motion.div animate={{ rotate: 360 }} transition={{ duration: 1, repeat: Infinity, ease: "linear" }}>
                                   <Zap className="h-3 w-3" />
                                 </motion.div>
-                                Cargando perfilesâ€¦
+                                Cargando perfiles
                               </div>
                             )}
                           </motion.div>
@@ -179,14 +179,14 @@ export const ConfigPhase: React.FC<ConfigPhaseProps> = ({
                       })}
                     </div>
                     <p className="text-xs text-center text-gray-400 dark:text-gray-500 pt-1">
-                      Haz clic en una poblaciÃ³n para cargarla y pasar automÃ¡ticamente al siguiente paso.
+                      Haz clic en una población para cargarla y pasar automáticamente al siguiente paso.
                     </p>
                   </>
                 )}
               </motion.div>
             )}
 
-            {/* â”€â”€ Tab 2: Crear una poblaciÃ³n â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */}
+            {/*  Tab 2: Crear una población  */}
             {configTab === "custom" && (
               <motion.div
                 key="custom"
@@ -196,10 +196,10 @@ export const ConfigPhase: React.FC<ConfigPhaseProps> = ({
                 transition={{ duration: 0.2 }}
                 className="space-y-6"
               >
-                {/* Fila superior: TamaÃ±o y AdaptaciÃ³n */}
+                {/* Fila superior: Tamaño y Adaptación */}
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6 bg-purple-50/30 dark:bg-gray-900/30 p-5 rounded-xl border border-purple-100/50 dark:border-gray-800/50">
                   <div>
-                    <h3 className="text-sm font-semibold mb-2 text-gray-700 dark:text-gray-300">TamaÃ±o de la poblaciÃ³n</h3>
+                    <h3 className="text-sm font-semibold mb-2 text-gray-700 dark:text-gray-300">Tamaño de la población</h3>
                     <div className="flex justify-between items-center mb-2">
                       <span className="text-xs text-gray-500">1</span>
                       <span className="text-sm font-bold text-purple-600 dark:text-purple-400">{populationSize} bots</span>
@@ -212,7 +212,7 @@ export const ConfigPhase: React.FC<ConfigPhaseProps> = ({
                         max={100}
                         value={populationSize}
                         onChange={(e) => setPopulationSize(parseInt((e.target as HTMLInputElement).value))}
-                        aria-label="TamaÃ±o de la poblaciÃ³n"
+                        aria-label="Tamaño de la población"
                         className="w-full h-1.5 rounded-full appearance-none cursor-pointer population-slider"
                         data-value={populationSize}
                       />
@@ -280,19 +280,19 @@ export const ConfigPhase: React.FC<ConfigPhaseProps> = ({
                           Adaptar perfiles al producto
                         </label>
                         <span className="text-xs text-purple-700 dark:text-gray-400 block mt-0.5">
-                          Genera perfiles de usuarios que representen al cliente ideal (target) en base a la descripciÃ³n, categorÃ­a y precio del producto.
+                          Genera perfiles de usuarios que representen al cliente ideal (target) en base a la descripción, categoría y precio del producto.
                         </span>
                       </div>
                     </div>
                   </div>
                 </div>
 
-                {/* Prompt de poblaciÃ³n */}
+                {/* Prompt de población */}
                 <div className="space-y-3">
                   <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-2">
                     <Label htmlFor="populationPrompt" className="text-sm font-bold text-gray-800 dark:text-gray-200 flex items-center gap-2">
                       <Sparkles className="h-4 w-4 text-purple-500 animate-pulse" />
-                      Describir la poblaciÃ³n con un Prompt (Recomendado)
+                      Describir la población con un Prompt (Recomendado)
                     </Label>
                     <Button
                       type="button"
@@ -302,19 +302,19 @@ export const ConfigPhase: React.FC<ConfigPhaseProps> = ({
                       onClick={() => setUseCustomConfig(!useCustomConfig)}
                     >
                       <Settings className="h-3.5 w-3.5 mr-1" />
-                      {useCustomConfig ? "Ocultar sliders personalizados" : "PersonalizaciÃ³n avanzada (Sliders)"}
+                      {useCustomConfig ? "Ocultar sliders personalizados" : "Personalización avanzada (Sliders)"}
                     </Button>
                   </div>
                   <Textarea
                     id="populationPrompt"
                     value={populationPrompt}
                     onChange={(e) => setPopulationPrompt(e.target.value)}
-                    placeholder="Ej: Estudiantes universitarios de entre 18 y 24 aÃ±os de Madrid y Barcelona, apasionados por la mÃºsica, que buscan productos duraderos pero de bajo presupuesto..."
+                    placeholder="Ej: Estudiantes universitarios de entre 18 y 24 años de Madrid y Barcelona, apasionados por la música, que buscan productos duraderos pero de bajo presupuesto..."
                     rows={4}
                     className="bg-white/70 dark:bg-gray-800/70 border-purple-200 dark:border-gray-700 focus-visible:ring-purple-500 min-h-[100px] text-sm"
                   />
                   <p className="text-xs text-gray-500 dark:text-gray-400">
-                    Describe en lenguaje natural los intereses, rasgos de personalidad, edad u origen para guiar la generaciÃ³n de los bots.
+                    Describe en lenguaje natural los intereses, rasgos de personalidad, edad u origen para guiar la generación de los bots.
                   </p>
                 </div>
 
@@ -327,11 +327,11 @@ export const ConfigPhase: React.FC<ConfigPhaseProps> = ({
                       exit={{ opacity: 0, height: 0 }}
                       className="grid grid-cols-1 lg:grid-cols-2 gap-8 pt-6 border-t border-purple-100 dark:border-gray-800 overflow-hidden"
                     >
-                      {/* DemografÃ­a */}
+                      {/* Demografía */}
                       <div>
                         <h3 className="text-base font-bold mb-4 text-purple-900 dark:text-purple-300 flex items-center gap-2">
                           <UserCircle2 className="h-5 w-5" />
-                          Datos DemogrÃ¡ficos
+                          Datos Demográficos
                         </h3>
                         <div className="mb-6">
                           <h4 className="text-sm font-semibold mb-2">Edad</h4>
@@ -363,7 +363,7 @@ export const ConfigPhase: React.FC<ConfigPhaseProps> = ({
                           </div>
                         </div>
                         <div className="mb-6">
-                          <h4 className="text-sm font-semibold mb-2">GÃ©nero</h4>
+                          <h4 className="text-sm font-semibold mb-2">Género</h4>
                           <div className="flex items-center space-x-4">
                             {([["Male","Masculino"],["Female","Femenino"],["Male&Female","Mixto"]] as const).map(([val, label]) => (
                               <div key={val} className="flex items-center">
@@ -388,7 +388,7 @@ export const ConfigPhase: React.FC<ConfigPhaseProps> = ({
                           <div className="space-y-4">
                             {([
                               ["introvert_extrovert", "Introvertido", "Extrovertido"],
-                              ["analytical_creative", "AnalÃ­tico", "Creativo"],
+                              ["analytical_creative", "Analítico", "Creativo"],
                               ["busy_free_time", "Ocupado", "Tiempo libre"],
                               ["disorganized_organized", "Desorganizado", "Organizado"],
                             ] as const).map(([key, minL, maxL]) => (
@@ -472,14 +472,14 @@ export const ConfigPhase: React.FC<ConfigPhaseProps> = ({
                             </div>
                             <div className="flex-1 min-w-0">
                               <p className="text-xs font-bold text-gray-800 dark:text-gray-200 truncate">{bot.name}</p>
-                              <p className="text-[10px] text-gray-500 dark:text-gray-400 truncate">{bot.location} â€¢ {bot.age} aÃ±os â€¢ {bot.gender === 'Male' ? 'Hombre' : bot.gender === 'Female' ? 'Mujer' : 'Otro'}</p>
+                              <p className="text-[10px] text-gray-500 dark:text-gray-400 truncate">{bot.location}  {bot.age} años  {bot.gender === 'Male' ? 'Hombre' : bot.gender === 'Female' ? 'Mujer' : 'Otro'}</p>
                             </div>
                           </motion.div>
                         ))}
                       </div>
                     ) : (
                       <p className="text-xs text-purple-600/70 dark:text-purple-400/70 italic text-center py-2">
-                        Preparando primer perfil de reseÃ±ador...
+                        Preparando primer perfil de reseñador...
                       </p>
                     )}
                   </div>
@@ -488,7 +488,7 @@ export const ConfigPhase: React.FC<ConfigPhaseProps> = ({
             )}
           </AnimatePresence>
 
-          {/* â”€â”€ Navigation â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */}
+          {/*  Navigation  */}
           <div className="flex justify-between mt-8">
             <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
               <Button
