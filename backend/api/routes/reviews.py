@@ -250,3 +250,37 @@ def sse_events(session_id):
     response.headers['Connection'] = 'keep-alive'
     response.headers['X-Accel-Buffering'] = 'no'
     return response
+
+# ─── Preset Populations ────────────────────────────────────────────────────────
+
+@reviews_bp.route('/presets', methods=['GET'])
+def get_preset_populations():
+    """List all preset populations (metadata only, no reviewers)."""
+    try:
+        populations = db.get_preset_populations()
+        return jsonify(populations), 200
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+
+@reviews_bp.route('/presets/<int:population_id>/reviewers', methods=['GET'])
+def get_preset_reviewers(population_id: int):
+    """Get the reviewers for a specific preset population."""
+    try:
+        reviewers = db.get_preset_reviewers(population_id)
+        if not reviewers:
+            return jsonify({"error": "Población no encontrada"}), 404
+        return jsonify(reviewers), 200
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+
+@reviews_bp.route('/presets/<int:population_id>/load', methods=['POST'])
+def load_preset_population(population_id: int):
+    """Load a preset population into the current session as the active reviewers."""
+    session_id = get_session_id()
+    try:
+        reviewers = db.load_preset_into_session(population_id, session_id)
+        if not reviewers:
+            return jsonify({"error": "Población no encontrada"}), 404
+        return jsonify({"loaded": len(reviewers), "profiles": reviewers}), 200
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500

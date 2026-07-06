@@ -227,6 +227,19 @@ export const BotService = {
   getReviewerProfiles: () => fetchAPI<BotProfile[]>('/reviewers')
 };
 
+// Servicios para Poblaciones Predeterminadas
+export const PresetService = {
+  // Obtener la lista de poblaciones predeterminadas
+  getPresets: () => fetchAPI<{id: number; name: string; description: string; icon: string; tag: string}[]>('/presets'),
+
+  // Obtener los reseñadores de una población predeterminada (preview)
+  getPresetReviewers: (populationId: number) => fetchAPI<BotProfile[]>(`/presets/${populationId}/reviewers`),
+
+  // Cargar una población predeterminada como reseñadores activos de la sesión
+  loadPreset: (populationId: number) =>
+    fetchAPI<{ loaded: number; profiles: BotProfile[] }>(`/presets/${populationId}/load`, { method: 'POST' }),
+};
+
 // Servicios para Reviews
 export const ReviewService = {
   // Generar reseñas usando la fase 3

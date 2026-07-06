@@ -924,6 +924,7 @@ export default function SimulatorPage() {
                 setActiveStep={setActiveStep}
                 isGeneratingBots={isGeneratingBots}
                 bots={bots}
+                setBots={setBots}
                 populationPrompt={populationPrompt}
                 setPopulationPrompt={setPopulationPrompt}
                 useCustomConfig={useCustomConfig}

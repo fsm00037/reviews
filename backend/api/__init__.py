@@ -12,8 +12,9 @@ def create_app():
     app.register_blueprint(reviews_bp)
     
     # Inicializar la base de datos SQLite
-    from api.utils.db import init_db
+    from api.utils.db import init_db, seed_preset_populations
     init_db()
+    seed_preset_populations()
     
     # Registrar manejadores de errores
     from api.utils.error_handlers import register_error_handlers
