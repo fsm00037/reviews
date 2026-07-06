@@ -3,7 +3,7 @@
 import Link from "next/link"
 import { ArrowRight, Sparkles, BarChart3, UserCircle2, MessageSquare } from "lucide-react"
 import { motion } from "framer-motion"
-import { useState, useRef } from "react"
+import { useState, useRef, useEffect } from "react"
 import { useRouter } from "next/navigation"
 import { useTheme } from "next-themes"
 
@@ -15,7 +15,7 @@ import { ThemeToggle } from "@/components/theme-toggle"
 import { SimulatorService } from "@/lib/api-services"
 import { ApiErrorAlert } from "@/components/api-error-alert"
 import { LoadingSpinner } from "@/components/loading-spinner"
-import { APIError } from "@/lib/types"
+import { APIError, RecentSession } from "@/lib/types"
 import { ProductService } from "@/lib/api-services"
 
 export default function Home() {
@@ -25,6 +25,29 @@ export default function Home() {
   const [isAnalyzing, setIsAnalyzing] = useState(false)
   const [analyzeError, setAnalyzeError] = useState<APIError | null>(null)
   const urlInputRef = useRef<HTMLInputElement>(null)
+  const [recentSessions, setRecentSessions] = useState<RecentSession[]>([])
+  const [isLoadingSessions, setIsLoadingSessions] = useState(true)
+
+  useEffect(() => {
+    const fetchSessions = async () => {
+      try {
+        const sessions = await SimulatorService.getRecentSessions();
+        setRecentSessions(sessions || []);
+      } catch (err) {
+        console.error("Error loading recent sessions:", err);
+      } finally {
+        setIsLoadingSessions(false);
+      }
+    };
+    fetchSessions();
+  }, []);
+
+  const handleSelectRecentSession = (sessionId: string) => {
+    if (typeof window !== 'undefined') {
+      sessionStorage.setItem('review_simulator_session_id', sessionId);
+      router.push('/simulator');
+    }
+  }
 
   const container = {
     hidden: { opacity: 0 },
@@ -58,9 +81,55 @@ export default function Home() {
     
     try {
       const productUrl = urlInputRef.current.value
-      
-      // Ejecutar sólo la fase 1: análisis del producto
+
+      // Generar un identificador de sesión nuevo y único para esta simulación
+      if (typeof window !== 'undefined') {
+        const newSessionId = crypto.randomUUID();
+        sessionStorage.setItem('review_simulator_session_id', newSessionId);
+        console.log('Nueva sesión creada:', newSessionId);
+      }
+
+      // Ejecutar sólo la fase 1: análisis del producto (inicia el proceso en segundo plano)
       await ProductService.analyzeProduct(productUrl)
+      
+      // Sistema de polling para verificar cuando la información del producto esté lista
+      let attemptCount = 0;
+      const maxAttempts = 30; // Intentar por 5 minutos (30 intentos x 10 segundos)
+      const pollingInterval = 10000; // 10 segundos
+      
+      const checkProductReady = async (): Promise<boolean> => {
+        if (attemptCount >= maxAttempts) {
+          throw {
+            status: 408, // Request Timeout
+            message: 'Tiempo de espera agotado',
+            details: 'El análisis del producto no se completó en el tiempo esperado. Intenta nuevamente.'
+          };
+        }
+        
+        try {
+          console.log(`Intento ${attemptCount + 1} de ${maxAttempts} para verificar producto...`);
+          const product = await ProductService.getProductInfo();
+          
+          if (product && product.name && product.name.trim() !== "") {
+            console.log('Información del producto lista:', product);
+            return true; // Listo
+          }
+        } catch (err) {
+          console.error('Error al verificar producto:', err);
+          // Si el error no es 404 (no encontrado), considerarlo como crítico
+          if ((err as APIError).status !== 404) {
+            throw err;
+          }
+        }
+        
+        attemptCount++;
+        // Esperar antes del siguiente intento
+        await new Promise((resolve) => setTimeout(resolve, pollingInterval));
+        return checkProductReady();
+      };
+      
+      // Iniciar el polling y esperar a que complete
+      await checkProductReady();
       
       // Redirigir a la página del simulador
       router.push('/simulator')
@@ -194,6 +263,60 @@ export default function Home() {
                   El análisis se realizará paso a paso en la página del simulador
                 </p>
               </motion.div>
+
+              {recentSessions.length > 0 && (
+                <motion.div
+                  variants={item}
+                  className="w-full max-w-4xl mt-12 text-left"
+                >
+                  <h3 className="text-xl font-bold mb-6 text-center bg-clip-text text-transparent bg-gradient-to-r from-indigo-500 to-purple-500">
+                    Simulaciones Recientes
+                  </h3>
+                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                    {recentSessions.map((session) => (
+                      <motion.div
+                        key={session.session_id}
+                        whileHover={{ y: -4, scale: 1.02 }}
+                        whileTap={{ scale: 0.98 }}
+                        onClick={() => handleSelectRecentSession(session.session_id)}
+                        className="cursor-pointer p-4 bg-white/70 dark:bg-gray-900/70 backdrop-blur-sm border border-purple-100 dark:border-gray-800 rounded-xl hover:border-purple-300 dark:hover:border-purple-900 transition-all flex flex-col justify-between h-36 shadow-sm hover:shadow-md"
+                      >
+                        <div>
+                          <h4 className="font-bold text-sm text-gray-800 dark:text-gray-200 line-clamp-2">
+                            {session.product_name}
+                          </h4>
+                          <span className="text-xs text-gray-400 block mt-1">
+                            {new Date(session.created_at).toLocaleDateString('es-ES', {
+                              day: '2-digit',
+                              month: 'short',
+                              year: 'numeric',
+                              hour: '2-digit',
+                              minute: '2-digit'
+                            })}
+                          </span>
+                        </div>
+                        <div className="flex items-center justify-between mt-4 pt-2 border-t border-purple-50 dark:border-gray-800">
+                          {session.average_rating ? (
+                            <div className="flex items-center space-x-1">
+                              <span className="text-amber-500 font-bold text-sm">★</span>
+                              <span className="text-sm font-semibold text-gray-700 dark:text-gray-300">
+                                {session.average_rating.toFixed(1)} / 5.0
+                              </span>
+                            </div>
+                          ) : (
+                            <span className="text-xs font-medium text-purple-600 dark:text-purple-400 bg-purple-50 dark:bg-purple-900/30 px-2 py-0.5 rounded">
+                              En progreso...
+                            </span>
+                          )}
+                          <span className="text-xs text-purple-600 dark:text-purple-400 font-semibold flex items-center gap-1">
+                            Ver simulación <ArrowRight className="h-3 w-3" />
+                          </span>
+                        </div>
+                      </motion.div>
+                    ))}
+                  </div>
+                </motion.div>
+              )}
             </motion.div>
           </div>
         </section>

@@ -70,53 +70,93 @@ export const ProductPhase: React.FC<ProductPhaseProps> = ({
         <form onSubmit={handleProductSubmit} className="space-y-4">
           
 
-          <div className="space-y-2">
-            <Label htmlFor="productName" className="text-sm font-medium">
-              Nombre del producto
-            </Label>
-            <Input
-              id="productName"
-              value={product.name}
-              onChange={(e) => setProduct({ ...product, name: e.target.value })}
-              className="bg-white/70 dark:bg-gray-800/70 border-purple-200 dark:border-gray-700 focus-visible:ring-purple-500"
-            />
-          </div>
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+            <div className="lg:col-span-2 space-y-4">
+              <div className="space-y-2">
+                <Label htmlFor="productName" className="text-sm font-medium">
+                  Nombre del producto
+                </Label>
+                <Input
+                  id="productName"
+                  value={product.name}
+                  onChange={(e) => setProduct({ ...product, name: e.target.value })}
+                  className="bg-white/70 dark:bg-gray-800/70 border-purple-200 dark:border-gray-700 focus-visible:ring-purple-500"
+                />
+              </div>
 
-          <div className="space-y-2">
-            <Label htmlFor="productDescription" className="text-sm font-medium">
-              Descripción del producto
-            </Label>
-            <Textarea
-              id="productDescription"
-              rows={3}
-              value={product.description}
-              onChange={(e) => setProduct({ ...product, description: e.target.value })}
-              className="bg-white/70 dark:bg-gray-800/70 border-purple-200 dark:border-gray-700 focus-visible:ring-purple-500 min-h-[100px]"
-            />
-          </div>
+              <div className="space-y-2">
+                <Label htmlFor="productDescription" className="text-sm font-medium">
+                  Descripción del producto
+                </Label>
+                <Textarea
+                  id="productDescription"
+                  rows={4}
+                  value={product.description}
+                  onChange={(e) => setProduct({ ...product, description: e.target.value })}
+                  className="bg-white/70 dark:bg-gray-800/70 border-purple-200 dark:border-gray-700 focus-visible:ring-purple-500 min-h-[120px]"
+                />
+              </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            <div className="space-y-2">
-              <Label htmlFor="productPrice" className="text-sm font-medium">
-                Precio
-              </Label>
-              <Input
-                id="productPrice"
-                value={product.price}
-                onChange={(e) => setProduct({ ...product, price: e.target.value })}
-                className="bg-white/70 dark:bg-gray-800/70 border-purple-200 dark:border-gray-700 focus-visible:ring-purple-500"
-              />
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <Label htmlFor="productPrice" className="text-sm font-medium">
+                    Precio
+                  </Label>
+                  <Input
+                    id="productPrice"
+                    value={product.price}
+                    onChange={(e) => setProduct({ ...product, price: e.target.value })}
+                    className="bg-white/70 dark:bg-gray-800/70 border-purple-200 dark:border-gray-700 focus-visible:ring-purple-500"
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="productCategory" className="text-sm font-medium">
+                    Categoría
+                  </Label>
+                  <Input
+                    id="productCategory"
+                    value={product.category}
+                    onChange={(e) => setProduct({ ...product, category: e.target.value })}
+                    className="bg-white/70 dark:bg-gray-800/70 border-purple-200 dark:border-gray-700 focus-visible:ring-purple-500"
+                  />
+                </div>
+              </div>
             </div>
-            <div className="space-y-2">
-              <Label htmlFor="productCategory" className="text-sm font-medium">
-                Categoría
+
+            {/* Columna derecha: Imagen del producto */}
+            <div className="flex flex-col items-stretch justify-start p-4 bg-purple-500/5 rounded-xl border border-purple-200/50 dark:border-gray-800 backdrop-blur-sm">
+              <Label className="text-sm font-medium mb-3">
+                Imagen del producto
               </Label>
-              <Input
-                id="productCategory"
-                value={product.category}
-                onChange={(e) => setProduct({ ...product, category: e.target.value })}
-                className="bg-white/70 dark:bg-gray-800/70 border-purple-200 dark:border-gray-700 focus-visible:ring-purple-500"
-              />
+              <div className="relative w-full h-[200px] bg-white dark:bg-gray-900 rounded-lg overflow-hidden border border-purple-200/30 dark:border-gray-800 flex items-center justify-center group shadow-inner">
+                {product.image && !product.image.includes('placeholder.svg') ? (
+                  <img
+                    src={product.image}
+                    alt={product.name}
+                    className="max-w-full max-h-full object-contain p-2 transition-transform duration-300 group-hover:scale-105"
+                    onError={(e) => {
+                      (e.currentTarget as HTMLImageElement).src = "/placeholder.svg?height=300&width=300";
+                    }}
+                  />
+                ) : (
+                  <div className="flex flex-col items-center text-center p-6 text-gray-400 dark:text-gray-600">
+                    <Sparkles className="h-10 w-10 mb-2 stroke-1 text-purple-400 dark:text-purple-600 animate-pulse" />
+                    <span className="text-xs">Imagen no disponible o autogenerada</span>
+                  </div>
+                )}
+              </div>
+              <div className="w-full mt-4">
+                <Label htmlFor="productImage" className="text-xs font-medium text-gray-500 dark:text-gray-400">
+                  URL de la imagen
+                </Label>
+                <Input
+                  id="productImage"
+                  value={product.image || ""}
+                  onChange={(e) => setProduct({ ...product, image: e.target.value })}
+                  placeholder="https://..."
+                  className="bg-white/70 dark:bg-gray-800/70 border-purple-200/40 dark:border-gray-800/40 focus-visible:ring-purple-500 text-xs h-8 mt-1"
+                />
+              </div>
             </div>
           </div>
 

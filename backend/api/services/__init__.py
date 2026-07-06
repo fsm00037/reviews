@@ -1,6 +1,5 @@
 # Importar los servicios
 from api.services.crew_service import (
-    execute_product_analysis, 
     execute_phase1,
     execute_phase2,
     execute_phase3,

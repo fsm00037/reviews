@@ -11,6 +11,10 @@ def create_app():
     from api.routes.reviews import reviews_bp
     app.register_blueprint(reviews_bp)
     
+    # Inicializar la base de datos SQLite
+    from api.utils.db import init_db
+    init_db()
+    
     # Registrar manejadores de errores
     from api.utils.error_handlers import register_error_handlers
     register_error_handlers(app)

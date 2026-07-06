@@ -5,11 +5,25 @@ import {
   AnalysisResult,
   APIError,
   DemographicConfig,
-  PersonalityConfig
+  PersonalityConfig,
+  RecentSession
 } from './types';
 
 // URL base de la API
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000/api';
+
+// Función para obtener o generar el identificador de sesión único
+export function getSessionId(): string {
+  if (typeof window !== 'undefined') {
+    let id = sessionStorage.getItem('review_simulator_session_id');
+    if (!id) {
+      id = crypto.randomUUID();
+      sessionStorage.setItem('review_simulator_session_id', id);
+    }
+    return id;
+  }
+  return 'default-session';
+}
 
 // Función de ayuda para realizar peticiones
 async function fetchAPI<T>(
@@ -20,11 +34,13 @@ async function fetchAPI<T>(
   
   const headers = {
     'Content-Type': 'application/json',
+    'X-Session-ID': getSessionId(),
     ...options.headers,
   };
   
   try {
     const response = await fetch(url, {
+      cache: 'no-store',
       ...options,
       headers,
     });
@@ -176,6 +192,7 @@ export const BotService = {
     detailLevel: [number, number],
     demographics: DemographicConfig,
     personality: PersonalityConfig,
+    adaptToProduct: boolean,
     modelName?: string
   ) => {
     // Crear una copia de demographics para asegurar que se envían correctamente los valores
@@ -196,7 +213,8 @@ export const BotService = {
           verbosity: verbosity,
           detail_level: detailLevel,
           demographics: formattedDemographics,
-          personality: personality
+          personality: personality,
+          adapt_to_product: adaptToProduct
         },
         model_name: modelName
       }),
@@ -459,6 +477,16 @@ export const SimulatorService = {
     }
     
     return results;
+  },
+  
+  // Obtener las sesiones de simulación recientes
+  getRecentSessions: () => {
+    return fetchAPI<RecentSession[]>('/sessions');
+  },
+  
+  // Obtener el estado de ejecución de una fase
+  getPhaseStatus: (phase: string) => {
+    return fetchAPI<{status: string, error: string | null}>(`/status/${phase}`);
   }
 };
 

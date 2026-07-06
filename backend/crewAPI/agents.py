@@ -7,38 +7,56 @@ from typing import List, Dict, Any
 import config
 from crewai.tools import tool
 
-@tool("leerReviews")
-def leer_reviews() -> dict:
+def create_leer_reviews_tool(reviews_dir: str):
     """
-    Lee todos los archivos de revisiones (.json) del directorio de revisiones y devuelve
-    su contenido completo en formato JSON.
-    
-    Returns:
-        Un diccionario donde las claves son los nombres de los archivos y
-        los valores son el contenido completo de cada archivo de revisión en formato JSON.
+    Crea una herramienta dinámica leerReviews vinculada a un directorio de reseñas específico.
     """
-    reviews_content = {}
-    
-    # Buscar todos los archivos .json en el directorio de revisiones
-    review_files = glob.glob(os.path.join(config.REVIEWS_DIR, "*.json"))
-    
-    for file_path in review_files:
-        file_name = os.path.basename(file_path)
-        try:
-            with open(file_path, 'r', encoding='utf-8') as file:
-                content = json.load(file)
-                reviews_content[file_name] = content
-        except Exception as e:
-            reviews_content[file_name] = {"error": f"Error al leer el archivo: {str(e)}"}
-    
-    return reviews_content
+    @tool("leerReviews")
+    def leer_reviews_dinamico() -> dict:
+        """
+        Lee todos los archivos de revisiones (.json) del directorio de revisiones y devuelve
+        su contenido completo en formato JSON.
+        
+        Returns:
+            Un diccionario donde las claves son los nombres de los archivos y
+            los valores son el contenido completo de cada archivo de revisión en formato JSON.
+        """
+        reviews_content = {}
+        
+        # Buscar todos los archivos .json en el directorio de revisiones
+        review_files = glob.glob(os.path.join(reviews_dir, "*.json"))
+        
+        for file_path in review_files:
+            file_name = os.path.basename(file_path)
+            try:
+                with open(file_path, 'r', encoding='utf-8') as file:
+                    content = json.load(file)
+                    reviews_content[file_name] = content
+            except Exception as e:
+                reviews_content[file_name] = {"error": f"Error al leer el archivo: {str(e)}"}
+        
+        return reviews_content
+    return leer_reviews_dinamico
+
+# Herramienta por defecto para compatibilidad hacia atrás
+leer_reviews = create_leer_reviews_tool(config.REVIEWS_DIR)
     
 def create_llm(model_name=None):
     """Create and return an LLM instance"""
-    return LLM(
-        model=model_name or config.DEFAULT_MODEL,
-        temperature=1,
-    )
+    if config.OPENAI_API_BASE and config.OPENAI_API_KEY:
+        model = model_name or config.OPENAI_MODEL_NAME
+        return LLM(
+            model=model,
+            base_url=config.OPENAI_API_BASE,
+            api_key=config.OPENAI_API_KEY,
+            temperature=1,
+        )
+    else:
+        return LLM(
+            model=model_name or config.DEFAULT_MODEL,
+            api_key=config.GEMINI_API_KEY,
+            temperature=1,
+        )
 
 def create_product_info_agent(llm=None):
     """Create and return the product information agent"""
@@ -90,10 +108,13 @@ def create_reviewer_agents(profiles: List[Dict[str, Any]], llm=None):
     
     return agents
 
-def create_compiler_agent(llm=None):
+def create_compiler_agent(llm=None, reviews_dir=None):
     """Create and return the review compiler agent with the combined review reading tool"""
     if llm is None:
         llm = create_llm()
+        
+    target_reviews_dir = reviews_dir or config.REVIEWS_DIR
+    leer_reviews_tool = create_leer_reviews_tool(target_reviews_dir)
         
     return Agent(
         llm=llm,
@@ -102,5 +123,5 @@ def create_compiler_agent(llm=None):
         backstory=config.AGENT_CONFIG["compiler"]["backstory"],
         verbose=True,
         allow_delegation=False,
-        tools=[leer_reviews]  
+        tools=[leer_reviews_tool]  
     ) 

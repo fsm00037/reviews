@@ -15,6 +15,8 @@ interface ReviewsPhaseProps {
   generateAnalysis: () => Promise<void>;
   setActiveStep: (step: number) => void;
   isGeneratingAnalysis: boolean;
+  isGeneratingReviews?: boolean;
+  populationSize?: number;
 }
 
 export const ReviewsPhase: React.FC<ReviewsPhaseProps> = ({
@@ -24,6 +26,8 @@ export const ReviewsPhase: React.FC<ReviewsPhaseProps> = ({
   generateAnalysis,
   setActiveStep,
   isGeneratingAnalysis,
+  isGeneratingReviews = false,
+  populationSize = 0,
 }) => {
   const [showProductDetails, setShowProductDetails] = useState(false);
 
@@ -86,6 +90,44 @@ export const ReviewsPhase: React.FC<ReviewsPhaseProps> = ({
             </Button>
           </div>
         </div>
+
+        {isGeneratingReviews && populationSize > 0 && (
+          <div className="mb-6 p-4 bg-purple-500/5 rounded-xl border border-purple-200/50 dark:border-gray-800 backdrop-blur-sm">
+            <div className="flex items-center justify-between mb-2">
+              <span className="text-xs font-semibold text-purple-700 dark:text-purple-400 flex items-center gap-1.5">
+                <MessageSquare className="h-3.5 w-3.5 text-purple-500 animate-pulse" />
+                Redactando reseñas en tiempo real...
+              </span>
+              <span className="text-xs font-bold text-purple-900 dark:text-purple-300">
+                {reviews.length} de {populationSize} completadas
+              </span>
+            </div>
+            <div className="w-full bg-purple-100 dark:bg-gray-800 rounded-full h-1.5 overflow-hidden">
+              <motion.div
+                className="bg-gradient-to-r from-indigo-500 via-purple-500 to-pink-500 h-full"
+                initial={{ width: 0 }}
+                animate={{ width: `${(reviews.length / populationSize) * 100}%` }}
+                transition={{ duration: 0.3 }}
+              />
+            </div>
+          </div>
+        )}
+
+        {reviews.length === 0 && (
+          <div className="flex flex-col items-center justify-center py-12 text-center">
+            <motion.div
+              animate={{ rotate: 360 }}
+              transition={{ duration: 2, repeat: Number.POSITIVE_INFINITY, ease: "linear" }}
+              className="mb-4 bg-purple-100 dark:bg-purple-950/50 p-3 rounded-full"
+            >
+              <Zap className="h-8 w-8 text-purple-600 dark:text-purple-400" />
+            </motion.div>
+            <h3 className="font-bold text-lg text-gray-800 dark:text-gray-200">Redactando reseñas de usuarios</h3>
+            <p className="text-sm text-gray-500 dark:text-gray-400 max-w-sm mt-1">
+              Los agentes críticos de producto están evaluando las características del producto según sus perfiles...
+            </p>
+          </div>
+        )}
         
         {/* Detalles del producto (características y especificaciones) */}
         <AnimatePresence>
@@ -206,16 +248,17 @@ export const ReviewsPhase: React.FC<ReviewsPhaseProps> = ({
               onClick={() => setActiveStep(2)}
               variant="outline"
               className="border-purple-200 dark:border-gray-700 hover:bg-purple-50 dark:hover:bg-gray-800 transition-colors"
+              disabled={isGeneratingReviews}
             >
               <ArrowLeft className="mr-2 h-4 w-4" />
               Volver a perfiles
             </Button>
           </motion.div>
-          <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
+          <motion.div whileHover={{ scale: (isGeneratingAnalysis || isGeneratingReviews) ? 1 : 1.05 }} whileTap={{ scale: (isGeneratingAnalysis || isGeneratingReviews) ? 1 : 0.95 }}>
             <Button
               onClick={generateAnalysis}
               className="bg-gradient-to-r from-indigo-500 via-purple-500 to-pink-500 text-white hover:opacity-90 transition-opacity"
-              disabled={isGeneratingAnalysis}
+              disabled={isGeneratingAnalysis || isGeneratingReviews}
             >
               {isGeneratingAnalysis ? (
                 <>
@@ -227,6 +270,17 @@ export const ReviewsPhase: React.FC<ReviewsPhaseProps> = ({
                     <Zap className="h-4 w-4" />
                   </motion.div>
                   Analizando reseñas...
+                </>
+              ) : isGeneratingReviews ? (
+                <>
+                  <motion.div
+                    animate={{ rotate: 360 }}
+                    transition={{ duration: 1.5, repeat: Number.POSITIVE_INFINITY, ease: "linear" }}
+                    className="mr-2"
+                  >
+                    <Zap className="h-4 w-4" />
+                  </motion.div>
+                  Generando reseñas ({reviews.length}/{populationSize})...
                 </>
               ) : (
                 <>

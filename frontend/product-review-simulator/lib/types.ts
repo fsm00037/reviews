@@ -115,4 +115,13 @@ export interface APIError {
   status: number;
   message: string;
   details: string | null;
+}
+
+// Tipo para sesiones recientes
+export interface RecentSession {
+  session_id: string;
+  created_at: string;
+  product_name: string;
+  product_image: string | null;
+  average_rating: number | null;
 } 

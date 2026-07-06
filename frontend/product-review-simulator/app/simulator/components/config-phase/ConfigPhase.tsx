@@ -5,7 +5,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Slider } from "@/components/ui/slider";
 import { ArrowLeft, ArrowRight, Users, UserCircle2, Zap } from "lucide-react";
 import { CustomRangeSlider } from "@/components/custom-range-slider";
-import { DemographicConfig, PersonalityConfig } from "@/lib/types";
+import { DemographicConfig, PersonalityConfig, BotProfile } from "@/lib/types";
 
 interface ConfigPhaseProps {
   populationSize: number;
@@ -14,9 +14,12 @@ interface ConfigPhaseProps {
   setDemographics: (config: DemographicConfig) => void;
   personality: PersonalityConfig;
   setPersonality: (config: PersonalityConfig) => void;
+  adaptToProduct: boolean;
+  setAdaptToProduct: (adapt: boolean) => void;
   generateBots: () => Promise<void>;
   setActiveStep: (step: number) => void;
   isGeneratingBots: boolean;
+  bots: BotProfile[];
 }
 
 export const ConfigPhase: React.FC<ConfigPhaseProps> = ({
@@ -26,9 +29,12 @@ export const ConfigPhase: React.FC<ConfigPhaseProps> = ({
   setDemographics,
   personality,
   setPersonality,
+  adaptToProduct,
+  setAdaptToProduct,
   generateBots,
   setActiveStep,
   isGeneratingBots,
+  bots,
 }) => {
   return (
     <Card className="border-purple-200 dark:border-gray-800 bg-white/80 dark:bg-gray-950/80 backdrop-blur-sm overflow-hidden">
@@ -110,6 +116,24 @@ export const ConfigPhase: React.FC<ConfigPhaseProps> = ({
                     }
                   `
                 }} />
+              </div>
+            </div>
+
+            <div className="flex items-center space-x-3 p-4 bg-purple-500/10 rounded-lg border border-purple-200 dark:border-gray-800 mb-6">
+              <input
+                type="checkbox"
+                id="adaptToProduct"
+                checked={adaptToProduct}
+                onChange={(e) => setAdaptToProduct(e.target.checked)}
+                className="h-4 w-4 rounded border-gray-300 text-purple-600 focus:ring-purple-500 cursor-pointer"
+              />
+              <div className="flex-1 cursor-pointer" onClick={() => setAdaptToProduct(!adaptToProduct)}>
+                <label htmlFor="adaptToProduct" className="font-bold text-sm text-purple-900 dark:text-purple-300 cursor-pointer block">
+                  Adaptar perfiles al producto (Clientes Objetivo)
+                </label>
+                <span className="text-xs text-purple-700 dark:text-gray-400 block mt-0.5">
+                  Genera perfiles de usuarios que representen al cliente ideal (target) en base a la descripción, categoría y precio del producto.
+                </span>
               </div>
             </div>
 
@@ -343,6 +367,59 @@ export const ConfigPhase: React.FC<ConfigPhaseProps> = ({
             </div>
           </div>
         </div>
+
+        {isGeneratingBots && (
+          <div className="mt-8 p-6 bg-purple-500/5 rounded-xl border border-purple-200/50 dark:border-gray-800 backdrop-blur-sm">
+            <div className="flex items-center justify-between mb-4">
+              <h4 className="font-bold text-sm text-purple-900 dark:text-purple-300 flex items-center gap-2">
+                <motion.div
+                  animate={{ rotate: 360 }}
+                  transition={{ duration: 1.5, repeat: Number.POSITIVE_INFINITY, ease: "linear" }}
+                >
+                  <Zap className="h-4 w-4 text-purple-500" />
+                </motion.div>
+                Generando perfiles ({bots.length} de {populationSize})
+              </h4>
+              <span className="text-xs font-semibold text-purple-700 dark:text-purple-400">
+                {Math.round((bots.length / populationSize) * 100)}% completado
+              </span>
+            </div>
+            
+            <div className="w-full bg-purple-100 dark:bg-gray-800 rounded-full h-2 mb-6 overflow-hidden">
+              <motion.div 
+                className="bg-gradient-to-r from-indigo-500 via-purple-500 to-pink-500 h-full"
+                initial={{ width: 0 }}
+                animate={{ width: `${(bots.length / populationSize) * 100}%` }}
+                transition={{ duration: 0.5 }}
+              />
+            </div>
+            
+            {bots.length > 0 ? (
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 max-h-48 overflow-y-auto pr-2">
+                {bots.map((bot, index) => (
+                  <motion.div
+                    key={bot.id || index}
+                    initial={{ opacity: 0, y: 10 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    className="p-3 bg-white/50 dark:bg-gray-900/50 border border-purple-100/50 dark:border-gray-800/50 rounded-lg flex items-center space-x-3 shadow-sm"
+                  >
+                    <div className="w-8 h-8 rounded-full bg-purple-100 dark:bg-purple-950 flex items-center justify-center font-bold text-xs text-purple-600 dark:text-purple-400 shrink-0">
+                      {bot.name.substring(0, 2).toUpperCase()}
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <p className="text-xs font-bold text-gray-800 dark:text-gray-200 truncate">{bot.name}</p>
+                      <p className="text-[10px] text-gray-500 dark:text-gray-400 truncate">{bot.location} • {bot.age} años • {bot.gender === 'Male' ? 'Hombre' : bot.gender === 'Female' ? 'Mujer' : 'Otro'}</p>
+                    </div>
+                  </motion.div>
+                ))}
+              </div>
+            ) : (
+              <p className="text-xs text-purple-600/70 dark:text-purple-400/70 italic text-center py-2">
+                Preparando primer perfil de reseñador...
+              </p>
+            )}
+          </div>
+        )}
 
         <div className="flex justify-between mt-8">
           <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>

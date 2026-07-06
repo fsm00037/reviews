@@ -15,7 +15,7 @@ from agents import (
 )
 from tasks import (
     create_product_info_task,
-    create_user_profiles_task,
+    create_user_profile_task,
     create_reviewer_tasks,
     create_compiler_task
 )
@@ -88,7 +88,7 @@ def load_reviews(reviews_dir: str = config.REVIEWS_DIR) -> List[Review]:
                     print(f"Error loading review file {filename}: {e}")
     return reviews
 
-def run_phase1(product_url: str, model_name: str = None) -> Dict[str, Any]:
+def run_phase1(product_url: str, model_name: str = None, session_dir: str = None) -> Dict[str, Any]:
     """Run phase 1: Extract product info"""
     # Create LLM instance
     llm = create_llm(model_name)
@@ -96,8 +96,11 @@ def run_phase1(product_url: str, model_name: str = None) -> Dict[str, Any]:
     # Create product info agent
     product_info_agent = create_product_info_agent(llm)
     
+    # Use session-specific file if session_dir is provided
+    output_file = os.path.join(session_dir, "producto.json") if session_dir else config.PRODUCT_INFO_FILE
+    
     # Create product info task
-    product_info_task = create_product_info_task(product_url, product_info_agent)
+    product_info_task = create_product_info_task(product_url, product_info_agent, output_file=output_file)
     
     # Create and run product info crew
     product_crew = Crew(
@@ -114,87 +117,196 @@ def run_phase1(product_url: str, model_name: str = None) -> Dict[str, Any]:
     return product_results
     
 
-def run_phase2(num_reviewers: int, profile_parameters: Dict[str, Any], model_name: str = None) -> Dict[str, Any]:
-    """Run phase 2: Create user profiles"""
-    # Ensure output directories exist
-  
-    
+def run_phase2(num_reviewers: int, profile_parameters: Dict[str, Any], model_name: str = None, session_dir: str = None, on_profile_generated = None) -> Dict[str, Any]:
+    """Run phase 2: Create user profiles sequentially"""
     # Create LLM instance
     llm = create_llm(model_name)
     
     # Create user creator agent
     user_creator_agent = create_user_creator_agent(llm)
     
-    # Create user profiles only if num_reviewers > 0
+    profiles = []
+    
     if num_reviewers > 0:
-        # Create user profiles task
-        user_profiles_task = create_user_profiles_task(num_reviewers, profile_parameters, user_creator_agent)
+        # Load product info if adapt_to_product is enabled
+        adapt_to_product = profile_parameters.get("adapt_to_product", False)
+        product_instructions = ""
+        if adapt_to_product:
+            product_info = {}
+            # Primero intentar buscar el producto de sesión
+            product_file = os.path.join(session_dir, "producto.json") if session_dir else config.PRODUCT_INFO_FILE
+            try:
+                if os.path.exists(product_file):
+                    with open(product_file, 'r', encoding='utf-8') as f:
+                        product_info = json.load(f)
+            except Exception as e:
+                print(f"Error loading product info for profile generation: {e}")
+                
+            if product_info:
+                product_instructions = f"""
+                IMPORTANTE - ADAPTACIÓN AL PRODUCTO (CLIENTES TARGET):
+                Crea perfiles que representen a clientes objetivo (target customers) lógicos para el siguiente producto:
+                - Nombre: {product_info.get('name', 'N/A')}
+                - Categoría: {product_info.get('category', 'N/A')}
+                - Descripción: {product_info.get('description', 'N/A')}
+                - Precio: {product_info.get('price', 'N/A')}
+                
+                Analiza el tipo de producto para deducir qué datos demográficos e intereses/rasgos de personalidad serían coherentes para las personas que lo comprarían y usarían.
+                """
+                
+        for i in range(1, num_reviewers + 1):
+            print(f"Generando perfil {i} de {num_reviewers}...")
+            # Archivo temporal para este perfil individual
+            temp_output_file = os.path.join(session_dir, f"reviewer_temp_{i}.json") if session_dir else os.path.join(config.OUTPUT_DIR, f"reviewer_temp_{i}.json")
+            
+            task = create_user_profile_task(
+                profile_parameters=profile_parameters,
+                agent=user_creator_agent,
+                index=i,
+                total=num_reviewers,
+                existing_profiles=profiles,
+                output_file=temp_output_file,
+                product_instructions=product_instructions
+            )
+            
+            crew = Crew(
+                agents=[user_creator_agent],
+                tasks=[task],
+                verbose=False,
+                process=Process.sequential
+            )
+            
+            crew_result = crew.kickoff()
+            
+            profile_dict = {}
+            if os.path.exists(temp_output_file):
+                try:
+                    with open(temp_output_file, 'r', encoding='utf-8') as f:
+                        profile_dict = json.load(f)
+                except Exception as e:
+                    print(f"Error loading temp profile file: {e}")
+            
+            if not profile_dict:
+                try:
+                    profile_dict = crew_result.json_dict
+                except Exception:
+                    pass
+                    
+            if profile_dict:
+                profiles.append(profile_dict)
+                # Ejecutar callback si se proporciona (guardar en base de datos en tiempo real)
+                if on_profile_generated:
+                    try:
+                        on_profile_generated(profiles)
+                    except Exception as e:
+                        print(f"Error in on_profile_generated callback: {e}")
+            
+            # Limpiar archivo temporal
+            if os.path.exists(temp_output_file):
+                try:
+                    os.remove(temp_output_file)
+                except Exception:
+                    pass
         
-        # Create and run user profiles crew
-        user_crew = Crew(
-            agents=[user_creator_agent],
-            tasks=[user_profiles_task],
-            verbose=False,
-            process=Process.sequential
-        )
-        
-        # Run the crew and get List[BotProfile] directly
-        user_results = user_crew.kickoff()
-        print("Fase 2: ", user_results.token_usage)
-        
-    return user_results
+        # Guardar lista final en reviewers.json
+        output_file = os.path.join(session_dir, "reviewers.json") if session_dir else config.USER_PROFILES_FILE
+        try:
+            with open(output_file, 'w', encoding='utf-8') as f:
+                json.dump({"profiles": profiles}, f, ensure_ascii=False, indent=2)
+        except Exception as e:
+            print(f"Error saving final user profiles file: {e}")
+            
+    # Devolver estructura compatible
+    return {"profiles": profiles}
 
-def run_phase3(product_info: Dict[str, Any], user_profiles: List[Dict[str, Any]], model_name: str = None) -> Dict[str, Any]:
-    """Run phase 3: Generate reviews"""
-    # Ensure output directories exist
-    print(user_profiles)
+def run_phase3(product_info: Dict[str, Any], user_profiles: List[Dict[str, Any]], model_name: str = None, session_dir: str = None, on_review_generated = None) -> Dict[str, Any]:
+    """Run phase 3: Generate reviews sequentially"""
     # Create LLM instance
     llm = create_llm(model_name)
     
+    # Use session-specific files if session_dir is provided
+    target_reviews_dir = os.path.join(session_dir, "reviews") if session_dir else config.REVIEWS_DIR
+    os.makedirs(target_reviews_dir, exist_ok=True)
     
-   
-    # Create reviewer agents
-    reviewer_agents = create_reviewer_agents(user_profiles, llm)
+    # Import tasks dynamically
+    from tasks import create_reviewer_task
     
-    # Create reviewer tasks
-    reviewer_tasks = create_reviewer_tasks(product_info, user_profiles, reviewer_agents)
+    reviews_generated = []
     
-    # Create and run crew
-    phase3_crew = Crew(
-        agents=reviewer_agents,
-        tasks=reviewer_tasks,
-        verbose=False,
-        process=Process.sequential
-    )
-    
-    # Run the crew - each task produces a Review object
-    result = phase3_crew.kickoff()
-    print("Fase 3: ", result.token_usage)
-    # Load reviews
+    for i, profile in enumerate(user_profiles):
+        print(f"Generando reseña {i+1} de {len(user_profiles)}...")
+        
+        try:
+            # Create a single reviewer agent for this profile
+            reviewer_agents = create_reviewer_agents([profile], llm)
+            agent = reviewer_agents[0]
+            
+            # Create a single task for this profile
+            task = create_reviewer_task(product_info, profile, agent, i, target_reviews_dir)
+            
+            # Run task
+            crew = Crew(
+                agents=[agent],
+                tasks=[task],
+                verbose=False,
+                process=Process.sequential
+            )
+            
+            crew.kickoff()
+            
+            # Load the generated review
+            review_file_path = os.path.join(target_reviews_dir, f"review_{i}.json")
+            if os.path.exists(review_file_path):
+                with open(review_file_path, 'r', encoding='utf-8') as f:
+                    review_content = json.load(f)
+                    
+                    # Convert to Review and to dict for normalization
+                    try:
+                        review_obj = Review(**review_content)
+                        review_data = review_obj.to_dict()
+                    except Exception:
+                        review_data = review_content
+                        
+                    reviews_generated.append(review_data)
+                    
+                    if on_review_generated:
+                        try:
+                            on_review_generated(reviews_generated)
+                        except Exception as e:
+                            print(f"Error in on_review_generated callback: {e}")
+        except Exception as e:
+            print(f"⚠️ Error al generar reseña para bot {profile.get('name')}: {e}")
+            # Continuar con el siguiente bot
+            continue
+            
     try:
-        reviews_list = load_reviews(config.REVIEWS_DIR)
-        reviews = [review.model_dump() for review in reviews_list] if reviews_list else []
-        with open(os.path.join(config.OUTPUT_DIR, 'reviews.json'), 'w', encoding='utf-8') as json_file:
-            json.dump({"reviews": reviews}, json_file, ensure_ascii=False, indent=4)
-    
+        reviews_list = load_reviews(target_reviews_dir)
+        reviews_data = [r.to_dict() if hasattr(r, 'to_dict') else r.dict() for r in reviews_list]
+        
+        # Guardar en reviews.json de compatibilidad
+        output_reviews_json = os.path.join(session_dir, 'reviews.json') if session_dir else os.path.join(config.OUTPUT_DIR, 'reviews.json')
+        with open(output_reviews_json, 'w', encoding='utf-8') as json_file:
+            json.dump({"reviews": reviews_data}, json_file, ensure_ascii=False, indent=4)
     except Exception as e:
-        print(f"Error loading reviews: {e}")
-        reviews = []
-    
-    return reviews
+        print(f"Error loading reviews at end of Phase 3: {e}")
+        reviews_data = reviews_generated
+        
+    return {"reviews": reviews_data}
 
-def run_phase4(model_name: str = None) -> Dict[str, Any]:
+def run_phase4(model_name: str = None, session_dir: str = None) -> Dict[str, Any]:
     """Run phase 4: Compile reviews and generate final report"""
-    # Ensure output directories exist
-    
     # Create LLM instance
     llm = create_llm(model_name)
+    
+    # Use session-specific file if session_dir is provided
+    target_reviews_dir = os.path.join(session_dir, "reviews") if session_dir else config.REVIEWS_DIR
+    output_file = os.path.join(session_dir, "informe_final.json") if session_dir else config.FINAL_REPORT_FILE
     
     # Create compiler agent
-    compiler_agent = create_compiler_agent(llm)
+    compiler_agent = create_compiler_agent(llm, reviews_dir=target_reviews_dir)
     
     # Create compiler task
-    compiler_task = create_compiler_task(compiler_agent)
+    compiler_task = create_compiler_task(compiler_agent, final_report_file=output_file, reviews_dir=target_reviews_dir)
     
     # Create and run crew
     compiler_crew = Crew(

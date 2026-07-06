@@ -1,44 +1,46 @@
 import os
 import json
 import shutil
+import threading
+import traceback
 from typing import Dict, Any, List
 
 # Importación directa simple del módulo crewAPI
 from crewAPI import run_phase1, run_phase2, run_phase3, run_phase4
+from api.utils import db
 
 # Definir la ruta de la carpeta outputs
 outputs_dir = os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(__file__))), "crewAPI", "outputs")
 
-def clean_outputs():
+def get_session_dir(session_id: str) -> str:
+    """Obtiene la ruta al directorio temporal de una sesión"""
+    path = os.path.join(outputs_dir, session_id)
+    os.makedirs(path, exist_ok=True)
+    return path
+
+def clean_outputs(session_id: str = "default-session"):
     """
-    Limpia la carpeta de outputs de crewAPI eliminando todos sus contenidos.
-    
-    Returns:
-        Un diccionario indicando el resultado de la operación
+    Limpia el directorio temporal y los registros de SQLite para la sesión actual.
     """
     try:
-        print("Limpiando carpeta de outputs...")
+        print(f"Limpiando datos para sesión: {session_id}...")
         
-        # Verificar si la carpeta existe
-        if os.path.exists(outputs_dir):
-            # Eliminar todos los archivos y subdirectorios
-            for item in os.listdir(outputs_dir):
-                item_path = os.path.join(outputs_dir, item)
-                
-                if os.path.isfile(item_path):
-                    os.remove(item_path)
-                elif os.path.isdir(item_path):
-                    shutil.rmtree(item_path)
+        # 1. Limpiar directorio temporal
+        session_dir = os.path.join(outputs_dir, session_id)
+        if os.path.exists(session_dir):
+            shutil.rmtree(session_dir)
+            print(f"Carpeta de sesión {session_id} eliminada")
             
-            print("Carpeta de outputs limpiada correctamente")
-            return {"status": "success", "message": "Carpeta de outputs limpiada correctamente"}
-        else:
-            # Crear la carpeta si no existe
-            os.makedirs(outputs_dir, exist_ok=True)
-            print("Carpeta de outputs creada")
-            return {"status": "success", "message": "Carpeta de outputs creada"}
+        # 2. Borrar datos de la base de datos
+        db.delete_session(session_id)
+        
+        # Resetear estados de tareas
+        for phase in ['phase1', 'phase2', 'phase3', 'phase4']:
+            db.set_task_status(session_id, phase, 'idle')
+            
+        return {"status": "success", "message": f"Datos de la sesión {session_id} limpiados correctamente"}
     except Exception as e:
-        error_msg = f"Error al limpiar la carpeta de outputs: {str(e)}"
+        error_msg = f"Error al limpiar datos de la sesión: {str(e)}"
         print(error_msg)
         return {"status": "error", "message": error_msg}
 
@@ -47,142 +49,180 @@ def load_json_file(file_path):
     try:
         if not os.path.exists(file_path):
             return {}
-        
         if os.path.getsize(file_path) == 0:
             return {}
-        
         with open(file_path, "r", encoding="utf-8") as f:
             data = json.load(f)
             return data
     except Exception as e:
         return {}
 
-def load_reviews(reviews_dir):
-    """Carga todas las reseñas del directorio de reseñas"""
-    reviews = []
-    if os.path.exists(reviews_dir):
-        for filename in os.listdir(reviews_dir):
-            if filename.endswith('.json'):
-                file_path = os.path.join(reviews_dir, filename)
-                try:
-                    data = load_json_file(file_path)
-                    reviews.append(data)
-                except Exception as e:
-                    print(f"Error al cargar el archivo de reseña {filename}: {e}")
-    return reviews
-
-def execute_phase1(product_url: str, model_name: str = None) -> Dict[str, Any]:
-    """
-    Fase 1: Extrae información del producto.
-    
-    Args:
-        product_url: URL del producto a analizar
-        model_name: Nombre del modelo LLM a utilizar (opcional)
-        
-    Returns:
-        Diccionario con la información del producto
-    """
+# --- Fase 1 ---
+def _bg_phase1(product_url: str, model_name: str, session_id: str, session_dir: str):
     try:
-        print("Ejecutando fase 1: Extracción de información del producto...")
-        phase1_results = run_phase1(product_url, model_name)
-        return phase1_results.json_dict
+        db.set_task_status(session_id, 'phase1', 'running')
+        
+        phase1_results = run_phase1(product_url, model_name, session_dir)
+        product_data = phase1_results.json_dict
+        
+        # Guardar en SQLite
+        db.save_product(session_id, product_data)
+        db.set_task_status(session_id, 'phase1', 'completed')
+        print(f"✅ Fase 1 completada para sesión {session_id}")
     except Exception as e:
-        print(f"Error durante la fase 1: {str(e)}")
-        raise
+        error_trace = traceback.format_exc()
+        db.set_task_status(session_id, 'phase1', 'failed', error=f"{str(e)}\n{error_trace}")
+        print(f"❌ Error en Fase 1 para sesión {session_id}: {e}")
 
-def execute_phase2(num_reviewers: int, profile_parameters: Dict[str, Any], model_name: str = None) -> Dict[str, Any]:
-    """
-    Fase 2: Crea perfiles de usuario.
+def execute_phase1(product_url: str, model_name: str = None, session_id: str = "default-session"):
+    """Inicia la Fase 1 de manera asíncrona"""
+    session_dir = get_session_dir(session_id)
+    # Primero limpiar datos previos de la sesión para evitar estados incoherentes
+    clean_outputs(session_id)
     
-    Args:
-        num_reviewers: Número de perfiles de reseñadores a generar
-        profile_parameters: Parámetros de los perfiles de usuario
-        model_name: Nombre del modelo LLM a utilizar (opcional)
-        
-    Returns:
-        Diccionario con los perfiles de usuario
-    """
-    try:
-        print("Ejecutando fase 2: Creación de perfiles de usuario...")
-        phase2_results = run_phase2(num_reviewers, profile_parameters, model_name)
-        return phase2_results.to_dict()
-    except Exception as e:
-        print(f"Error durante la fase 2: {str(e)}")
-        raise
+    thread = threading.Thread(target=_bg_phase1, args=(product_url, model_name, session_id, session_dir))
+    thread.daemon = True
+    thread.start()
+    return {"status": "processing", "message": "Fase 1 iniciada en segundo plano"}
 
-def execute_phase3(product_info: Dict[str, Any], user_profiles: List[Dict[str, Any]], model_name: str = None) -> List[Dict[str, Any]]:
-    """
-    Fase 3: Genera reseñas basadas en la información del producto y los perfiles de usuario.
-    
-    Args:
-        product_info: Información del producto (resultado de fase 1)
-        user_profiles: Perfiles de usuario (resultado de fase 2)
-        model_name: Nombre del modelo LLM a utilizar (opcional)
-        
-    Returns:
-        Lista de reseñas generadas
-    """
+# --- Fase 2 ---
+def _bg_phase2(num_reviewers: int, profile_parameters: Dict[str, Any], model_name: str, session_id: str, session_dir: str):
+    from api.utils.pubsub import pubsub
     try:
-        print("Ejecutando fase 3: Generación de reseñas...")
-        phase3_results = run_phase3(product_info, user_profiles, model_name)
-        return phase3_results
+        db.set_task_status(session_id, 'phase2', 'running')
+        
+        # Primero limpiar los perfiles anteriores de la sesión
+        db.save_reviewers(session_id, [])
+        
+        # Definir callback para guardar perfiles en la base de datos en tiempo real
+        def on_profile_gen(current_profiles):
+            db.save_reviewers(session_id, current_profiles)
+            if current_profiles:
+                pubsub.publish(session_id, 'profile_generated', current_profiles[-1])
+            
+        phase2_results = run_phase2(
+            num_reviewers, 
+            profile_parameters, 
+            model_name, 
+            session_dir, 
+            on_profile_generated=on_profile_gen
+        )
+        
+        # Asegurar que se guarda el listado definitivo
+        profiles = []
+        if phase2_results and "profiles" in phase2_results:
+            profiles = phase2_results["profiles"]
+            db.save_reviewers(session_id, profiles)
+            
+        db.set_task_status(session_id, 'phase2', 'completed')
+        pubsub.publish(session_id, 'phase2_completed', {'total': len(profiles)})
+        print(f"✅ Fase 2 completada para sesión {session_id}")
     except Exception as e:
-        print(f"Error durante la fase 3: {str(e)}")
-        raise
+        error_trace = traceback.format_exc()
+        db.set_task_status(session_id, 'phase2', 'failed', error=f"{str(e)}\n{error_trace}")
+        pubsub.publish(session_id, 'phase2_failed', {'error': str(e)})
+        print(f"❌ Error en Fase 2 para sesión {session_id}: {e}")
 
-def execute_phase4(model_name: str = None) -> Dict[str, Any]:
-    """
-    Fase 4: Compila reseñas y genera informe final.
+def execute_phase2(num_reviewers: int, profile_parameters: Dict[str, Any], model_name: str = None, session_id: str = "default-session"):
+    """Inicia la Fase 2 de manera asíncrona"""
+    session_dir = get_session_dir(session_id)
+    db.set_task_status(session_id, 'phase2', 'pending')
     
-    Args:
-        model_name: Nombre del modelo LLM a utilizar (opcional)
-        
-    Returns:
-        Diccionario con el análisis de las reseñas
-    """
-    try:
-        print("Ejecutando fase 4: Compilación de reseñas y generación de informe...")
-        phase4_results = run_phase4(model_name)
-        return phase4_results.json_dict
-    except Exception as e:
-        print(f"Error durante la fase 4: {str(e)}")
-        raise
+    thread = threading.Thread(target=_bg_phase2, args=(num_reviewers, profile_parameters, model_name, session_id, session_dir))
+    thread.daemon = True
+    thread.start()
+    return {"status": "processing", "message": "Fase 2 iniciada en segundo plano"}
 
-def execute_product_analysis(product_url: str, num_reviewers: int = 3, model_name: str = None) -> Dict[str, Any]:
-    """
-    Ejecuta el análisis completo del producto utilizando el sistema CrewAI.
-    
-    Args:
-        product_url: URL del producto a analizar
-        num_reviewers: Número de perfiles de reseñadores a generar
-        model_name: Nombre del modelo LLM a utilizar (opcional)
-        
-    Returns:
-        Diccionario con los resultados del análisis
-    """
+# --- Fase 3 ---
+def _bg_phase3(product_info: Dict[str, Any], user_profiles: List[Dict[str, Any]], model_name: str, session_id: str, session_dir: str):
+    from api.utils.pubsub import pubsub
     try:
-        # Fase 1: Extraer información del producto
-        product_info = execute_phase1(product_url, model_name)
+        db.set_task_status(session_id, 'phase3', 'running')
         
-        # Fase 2: Crear perfiles de usuario
-        phase2_results = execute_phase2(num_reviewers, model_name)
-        user_profiles = phase2_results['profiles']
+        # Primero limpiar reseñas anteriores de la sesión
+        db.save_reviews(session_id, [])
         
-        # Fase 3: Generar reseñas
-        reviews = execute_phase3(product_info, user_profiles, model_name).to_dict()
+        # Definir callback para guardar en SQLite en tiempo real
+        def on_review_gen(current_reviews):
+            db.save_reviews(session_id, current_reviews)
+            if current_reviews:
+                pubsub.publish(session_id, 'review_generated', current_reviews[-1])
+            
+        reviews_result = run_phase3(
+            product_info, 
+            user_profiles, 
+            model_name, 
+            session_dir, 
+            on_review_generated=on_review_gen
+        )
         
-        # Fase 4: Compilar reseñas y generar informe final
-        analysis = execute_phase4(model_name)
-        
-        # Construir y devolver respuesta
-        response = {
-            "product": product_info,
-            "reviewers": user_profiles,
-            "reviews": reviews,
-            "analysis": analysis
-        }
-        
-        return response
+        # Guardar lista final en SQLite
+        total_reviews = 0
+        if reviews_result and "reviews" in reviews_result:
+            db.save_reviews(session_id, reviews_result["reviews"])
+            total_reviews = len(reviews_result["reviews"])
+            
+        db.set_task_status(session_id, 'phase3', 'completed')
+        pubsub.publish(session_id, 'phase3_completed', {'total': total_reviews})
+        print(f"✅ Fase 3 completada para sesión {session_id}")
     except Exception as e:
-        print(f"Error durante la ejecución del análisis: {str(e)}")
-        raise 
+        error_trace = traceback.format_exc()
+        db.set_task_status(session_id, 'phase3', 'failed', error=f"{str(e)}\n{error_trace}")
+        pubsub.publish(session_id, 'phase3_failed', {'error': str(e)})
+        print(f"❌ Error en Fase 3 para sesión {session_id}: {e}")
+
+def execute_phase3(product_info: Dict[str, Any], user_profiles: List[Dict[str, Any]], model_name: str = None, session_id: str = "default-session"):
+    """Inicia la Fase 3 de manera asíncrona"""
+    session_dir = get_session_dir(session_id)
+    db.set_task_status(session_id, 'phase3', 'pending')
+    
+    # Escribir producto y revisores temporales en disco (por si acaso el crew en ejecución los necesita)
+    try:
+        with open(os.path.join(session_dir, "producto.json"), "w", encoding="utf-8") as f:
+            json.dump(product_info, f, ensure_ascii=False, indent=2)
+        with open(os.path.join(session_dir, "reviewers.json"), "w", encoding="utf-8") as f:
+            json.dump({"profiles": user_profiles}, f, ensure_ascii=False, indent=2)
+    except Exception as e:
+        print(f"Error escribiendo datos temporales en disco para Fase 3: {e}")
+        
+    thread = threading.Thread(target=_bg_phase3, args=(product_info, user_profiles, model_name, session_id, session_dir))
+    thread.daemon = True
+    thread.start()
+    return {"status": "processing", "message": "Fase 3 iniciada en segundo plano"}
+
+# --- Fase 4 ---
+def _bg_phase4(model_name: str, session_id: str, session_dir: str):
+    try:
+        db.set_task_status(session_id, 'phase4', 'running')
+        
+        # Asegurar que las reviews de la sesión estén en disco para que el leerReviews del agente pueda leerlas
+        reviews_dir = os.path.join(session_dir, "reviews")
+        os.makedirs(reviews_dir, exist_ok=True)
+        
+        reviews = db.get_reviews(session_id)
+        for r in reviews:
+            review_file = os.path.join(reviews_dir, f"review_{r['id']}.json")
+            with open(review_file, "w", encoding="utf-8") as f:
+                json.dump(r, f, ensure_ascii=False, indent=2)
+                
+        phase4_results = run_phase4(model_name, session_dir)
+        analysis_data = phase4_results.json_dict
+        
+        # Guardar en SQLite
+        db.save_analysis(session_id, analysis_data)
+        db.set_task_status(session_id, 'phase4', 'completed')
+        print(f"✅ Fase 4 completada para sesión {session_id}")
+    except Exception as e:
+        error_trace = traceback.format_exc()
+        db.set_task_status(session_id, 'phase4', 'failed', error=f"{str(e)}\n{error_trace}")
+        print(f"❌ Error en Fase 4 para sesión {session_id}: {e}")
+
+def execute_phase4(model_name: str = None, session_id: str = "default-session"):
+    """Inicia la Fase 4 de manera asíncrona"""
+    session_dir = get_session_dir(session_id)
+    db.set_task_status(session_id, 'phase4', 'pending')
+    
+    thread = threading.Thread(target=_bg_phase4, args=(model_name, session_id, session_dir))
+    thread.daemon = True
+    thread.start()
+    return {"status": "processing", "message": "Fase 4 iniciada en segundo plano"} 

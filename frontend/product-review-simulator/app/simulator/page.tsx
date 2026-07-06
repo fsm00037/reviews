@@ -1,7 +1,7 @@
 "use client"
 
 import type React from "react"
-import { useState, useEffect } from "react"
+import { useState, useEffect, useRef } from "react"
 import Link from "next/link"
 import { motion, AnimatePresence } from "framer-motion"
 import { Button } from "@/components/ui/button"
@@ -16,7 +16,7 @@ import { SimulatorService } from "@/lib/api-services"
 import { APIError } from "@/lib/types"
 
 // Importar servicios API y tipos
-import { ProductService, BotService, ReviewService, AnalysisService } from "@/lib/api-services"
+import { ProductService, BotService, ReviewService, AnalysisService, getSessionId } from "@/lib/api-services"
 import { 
   Product, 
   BotProfile, 
@@ -157,6 +157,9 @@ export default function SimulatorPage() {
     safe_risky: [0, 100],
   })
 
+  // State for product adaptation
+  const [adaptToProduct, setAdaptToProduct] = useState<boolean>(true)
+
   // State for generated bots and reviews
   const [bots, setBots] = useState<BotProfile[]>([])
   const [reviews, setReviews] = useState<Review[]>([])
@@ -173,78 +176,192 @@ export default function SimulatorPage() {
   // Actualizar los pasos para incluir la nueva fase de dashboard
   const steps = ["Producto", "Configuración", "Perfiles", "Reseñas", "Dashboard"]
 
+  const eventSourceRef = useRef<EventSource | null>(null);
+
+  // Función para conectar a Server-Sent Events (SSE)
+  const connectSSE = (
+    phase: 'phase2' | 'phase3',
+    onMessage: (message: { type: string; data: any }) => void,
+    onError: () => void
+  ): EventSource | null => {
+    if (typeof window === 'undefined') return null;
+
+    // Asegurarse de cerrar conexiones previas
+    if (eventSourceRef.current) {
+      eventSourceRef.current.close();
+    }
+
+    const sessionId = getSessionId();
+    const API_URL_BASE = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000';
+    const sseUrl = `${API_URL_BASE}/api/events/${sessionId}`;
+    
+    console.log(`[SSE] Conectando a canal de eventos: ${sseUrl}`);
+    const eventSource = new EventSource(sseUrl);
+    eventSourceRef.current = eventSource;
+
+    eventSource.onmessage = (event) => {
+      try {
+        const message = JSON.parse(event.data);
+        console.log(`[SSE] Evento recibido (${phase}):`, message.type);
+        
+        if (message.type === 'ping' || message.type === 'connected') {
+          return;
+        }
+        
+        onMessage(message);
+      } catch (err) {
+        console.error('[SSE] Error al parsear mensaje:', err);
+      }
+    };
+
+    eventSource.onerror = (err) => {
+      console.warn(`[SSE] Error o desconexión en canal de eventos de ${phase}:`, err);
+      eventSource.close();
+      if (eventSourceRef.current === eventSource) {
+        eventSourceRef.current = null;
+      }
+      onError();
+    };
+
+    return eventSource;
+  };
+
   // Function to generate bot profiles
   const generateBots = async () => {
     setIsGeneratingBots(true)
     setError(null)
+    // Transición inmediata a la fase de perfiles para mostrar la generación uno a uno en tiempo real
+    setActiveStep(2)
+    setCheckpointStep(2)
+
+    let sseSource: EventSource | null = null;
+    let isConnected = false;
+    const numReviewers = populationSize;
+
+    // --- FALLBACK DE POLLING ROBUSTO ---
+    let attemptCount = 0;
+    const maxAttempts = 100;
+    const pollingInterval = 3000;
+    
+    const checkBotProfilesFallback = async () => {
+      if (attemptCount >= maxAttempts) {
+        setIsGeneratingBots(false);
+        throw {
+          status: 408,
+          message: 'Tiempo de espera agotado',
+          details: 'Los perfiles de bot no se generaron en el tiempo esperado. Intenta nuevamente.'
+        };
+      }
+      
+      try {
+        console.log(`[Fallback Polling] Intento ${attemptCount + 1} de ${maxAttempts}...`);
+        const statusInfo = await SimulatorService.getPhaseStatus('phase2');
+        const profiles = await BotService.getReviewerProfiles();
+        
+        if (profiles && Array.isArray(profiles)) {
+          if (profiles.length > 0) {
+            setBots(profiles);
+          }
+          
+          if (statusInfo.status === 'completed' || profiles.length === numReviewers) {
+            console.log('[Fallback Polling] Fase 2 completada. Obtenidos:', profiles.length);
+            setIsGeneratingBots(false);
+            return true;
+          } else if (statusInfo.status === 'failed') {
+            setIsGeneratingBots(false);
+            throw {
+              status: 500,
+              message: 'Error al generar perfiles (Fallback)',
+              details: statusInfo.error || 'La Fase 2 falló críticamente en el backend'
+            };
+          } else {
+            attemptCount++;
+            setTimeout(checkBotProfilesFallback, pollingInterval);
+            return false;
+          }
+        }
+      } catch (err) {
+        console.error('[Fallback Polling] Error:', err);
+        if ((err as APIError).status === 404) {
+          attemptCount++;
+          setTimeout(checkBotProfilesFallback, pollingInterval);
+          return false;
+        }
+        setIsGeneratingBots(false);
+        throw err;
+      }
+    };
+
+    const startFallback = () => {
+      if (isConnected) return;
+      console.log('[SSE Fallback] Activando polling de respaldo para perfiles...');
+      setTimeout(checkBotProfilesFallback, 1000);
+    };
 
     try {
-      // Usar el tamaño de población exacto
-      const numReviewers = populationSize;
-      
-      // Ejecutar fase 2 para generar perfiles de bot (solo inicia el proceso)
+      // 1. Conectar a SSE antes de lanzar la tarea
+      sseSource = connectSSE(
+        'phase2',
+        async (message) => {
+          isConnected = true;
+          if (message.type === 'profile_generated') {
+            const newBot = message.data;
+            setBots((prev) => {
+              const filtered = prev.filter((b) => b.id !== newBot.id);
+              return [...filtered, newBot].sort((a, b) => a.id - b.id);
+            });
+          } else if (message.type === 'phase2_completed') {
+            console.log('[SSE] Fase 2 completada reportada por eventos');
+            try {
+              const res = await BotService.getReviewerProfiles();
+              if (res && Array.isArray(res)) setBots(res);
+            } catch (e) {
+              console.error('Error en fetch final de perfiles:', e);
+            }
+            setIsGeneratingBots(false);
+            sseSource?.close();
+          } else if (message.type === 'phase2_failed') {
+            console.error('[SSE] Fase 2 falló reportada por eventos:', message.data.error);
+            setError({
+              status: 500,
+              message: 'Error al generar perfiles',
+              details: message.data.error || 'La generación falló en el backend'
+            });
+            setIsGeneratingBots(false);
+            sseSource?.close();
+          }
+        },
+        () => {
+          startFallback();
+        }
+      );
+
+      // 2. Ejecutar fase 2 en segundo plano
       await BotService.generateBots(
         numReviewers,
-        [populationSize, populationSize], // Crear un rango con el mismo valor
+        [populationSize, populationSize],
         positivityBias,
         verbosity,
         detailLevel,
         demographics,
-        personality
+        personality,
+        adaptToProduct
       );
       
-      // Implementar un sistema de polling para verificar cuando los perfiles estén listos
-      let attemptCount = 0;
-      const maxAttempts = 30; // Intentar por 5 minutos (30 intentos x 10 segundos)
-      const pollingInterval = 10000; // 10 segundos entre cada intento
-      
-      const checkBotProfiles = async () => {
-        if (attemptCount >= maxAttempts) {
-          setIsGeneratingBots(false); // Asegurarse de desactivar el estado de generación
-          throw {
-            status: 408, // Request Timeout
-            message: 'Tiempo de espera agotado',
-            details: 'Los perfiles de bot no se generaron en el tiempo esperado. Intenta nuevamente.'
-          };
-        }
-        
-        try {
-          console.log(`Intento ${attemptCount + 1} de ${maxAttempts} para verificar perfiles de bot...`);
-          const profiles = await BotService.getReviewerProfiles();
-          
-          if (profiles && Array.isArray(profiles) && profiles.length > 0) {
-            console.log('Perfiles de bot generados exitosamente:', profiles);
-            setBots(profiles);
-            setActiveStep(2);
-            setCheckpointStep(2);
-            setIsGeneratingBots(false); // Desactivar el estado de generación al terminar exitosamente
-            return true; // Éxito, terminar el polling
-          } else {
-            console.log('Los perfiles de bot aún no están listos, esperando...');
-            attemptCount++;
-            // Programar el próximo intento
-            setTimeout(checkBotProfiles, pollingInterval);
-            return false; // Continuar con el polling
+      // 3. Temporizador de seguridad: si tras 4 segundos no hay ningún perfil recibido, arrancar el fallback
+      setTimeout(() => {
+        setBots((currentBots) => {
+          if (currentBots.length === 0) {
+            console.log('[SSE] Sin perfiles recibidos en 4s. Activando polling de seguridad.');
+            startFallback();
           }
-        } catch (err) {
-          console.error('Error al verificar perfiles de bot:', err);
-          // Si hay un error pero no es 404 (no encontrado), considerarlo como crítico
-          if ((err as APIError).status !== 404) {
-            setIsGeneratingBots(false); // Desactivar en caso de error crítico
-            throw err;
-          }
-          attemptCount++;
-          // Si es 404, los perfiles aún no existen, seguir esperando
-          setTimeout(checkBotProfiles, pollingInterval);
-          return false;
-        }
-      };
-      
-      // Iniciar el proceso de polling después de un breve retraso inicial
-      setTimeout(checkBotProfiles, 5000);
+          return currentBots;
+        });
+      }, 4000);
       
     } catch (err) {
       console.error("Error al generar los bots:", err);
+      sseSource?.close();
       if ((err as APIError).status !== undefined) {
         setError(err as APIError);
       } else {
@@ -262,6 +379,77 @@ export default function SimulatorPage() {
   const generateReviews = async () => {
     setIsGeneratingReviews(true)
     setError(null)
+    // Transición inmediata a la fase de reseñas para mostrar la generación en directo
+    setActiveStep(3)
+    setCheckpointStep(3)
+
+    let sseSource: EventSource | null = null;
+    let isConnected = false;
+
+    // --- FALLBACK DE POLLING ROBUSTO ---
+    let attemptCount = 0;
+    const maxAttempts = 100;
+    const pollingInterval = 3000;
+    
+    const checkReviewsFallback = async () => {
+      if (attemptCount >= maxAttempts) {
+        setIsGeneratingReviews(false);
+        throw {
+          status: 408,
+          message: 'Tiempo de espera agotado',
+          details: 'Las reseñas no se generaron en el tiempo esperado. Intenta nuevamente.'
+        };
+      }
+      
+      try {
+        console.log(`[Fallback Polling] Intento ${attemptCount + 1} de ${maxAttempts}...`);
+        const statusInfo = await SimulatorService.getPhaseStatus('phase3');
+        const response = await ReviewService.getReviews();
+        
+        if (response && Array.isArray(response)) {
+          if (response.length > 0) {
+            setReviews(response);
+          }
+          
+          if (statusInfo.status === 'completed' || response.length === bots.length) {
+            console.log('[Fallback Polling] Fase 3 completada. Obtenidas:', response.length);
+            if (response.length > 0) {
+              setReviews(response);
+              setShowConfetti(true);
+              setTimeout(() => setShowConfetti(false), 3000);
+            }
+            setIsGeneratingReviews(false);
+            return true;
+          } else if (statusInfo.status === 'failed') {
+            setIsGeneratingReviews(false);
+            throw {
+              status: 500,
+              message: 'Error al generar reseñas (Fallback)',
+              details: statusInfo.error || 'La Fase 3 falló críticamente en el backend'
+            };
+          } else {
+            attemptCount++;
+            setTimeout(checkReviewsFallback, pollingInterval);
+            return false;
+          }
+        }
+      } catch (err) {
+        console.error('[Fallback Polling] Error:', err);
+        if ((err as APIError).status === 404) {
+          attemptCount++;
+          setTimeout(checkReviewsFallback, pollingInterval);
+          return false;
+        }
+        setIsGeneratingReviews(false);
+        throw err;
+      }
+    };
+
+    const startFallback = () => {
+      if (isConnected) return;
+      console.log('[SSE Fallback] Activando polling de respaldo para reseñas...');
+      setTimeout(checkReviewsFallback, 1000);
+    };
 
     try {
       // Verificar que tenemos los datos necesarios
@@ -281,63 +469,62 @@ export default function SimulatorPage() {
         };
       }
 
-      // Ejecutar fase 3 para generar reseñas pasando los datos como parámetros
-      await ReviewService.generateReviews(product, bots);
-      
-      // Implementar un sistema de polling para verificar cuando las reseñas estén listas
-      let attemptCount = 0;
-      const maxAttempts = 30; // Intentar por 5 minutos (30 intentos x 10 segundos)
-      const pollingInterval = 10000; // 10 segundos entre cada intento
-      
-      const checkReviews = async () => {
-        if (attemptCount >= maxAttempts) {
-          setIsGeneratingReviews(false); // Asegurarse de desactivar el estado de generación
-          throw {
-            status: 408, // Request Timeout
-            message: 'Tiempo de espera agotado',
-            details: 'Las reseñas no se generaron en el tiempo esperado. Intenta nuevamente.'
-          };
-        }
-        
-        try {
-          console.log(`Intento ${attemptCount + 1} de ${maxAttempts} para verificar reseñas...`);
-          const response = await ReviewService.getReviews();
-          
-          if (response && Array.isArray(response) && response.length > 0) {
-            console.log('Reseñas generadas exitosamente:', response);
-            setReviews(response);
+      // 1. Conectar a SSE antes de lanzar la tarea
+      sseSource = connectSSE(
+        'phase3',
+        async (message) => {
+          isConnected = true;
+          if (message.type === 'review_generated') {
+            const newReview = message.data;
+            setReviews((prev) => {
+              const filtered = prev.filter((r) => r.id !== newReview.id);
+              return [...filtered, newReview].sort((a, b) => a.id - b.id);
+            });
+          } else if (message.type === 'phase3_completed') {
+            console.log('[SSE] Fase 3 completada reportada por eventos');
+            try {
+              const res = await ReviewService.getReviews();
+              if (res && Array.isArray(res)) setReviews(res);
+            } catch (e) {
+              console.error('Error en fetch final de reseñas:', e);
+            }
             setShowConfetti(true);
             setTimeout(() => setShowConfetti(false), 3000);
-            setActiveStep(3);
-            setCheckpointStep(3);
-            setIsGeneratingReviews(false); // Desactivar el estado de generación al terminar exitosamente
-            return true; // Éxito, terminar el polling
-          } else {
-            console.log('Las reseñas aún no están listas, esperando...');
-            attemptCount++;
-            // Programar el próximo intento
-            setTimeout(checkReviews, pollingInterval);
-            return false; // Continuar con el polling
+            setIsGeneratingReviews(false);
+            sseSource?.close();
+          } else if (message.type === 'phase3_failed') {
+            console.error('[SSE] Fase 3 falló reportada por eventos:', message.data.error);
+            setError({
+              status: 500,
+              message: 'Error al generar reseñas',
+              details: message.data.error || 'La generación falló en el backend'
+            });
+            setIsGeneratingReviews(false);
+            sseSource?.close();
           }
-        } catch (err) {
-          console.error('Error al verificar reseñas:', err);
-          // Si hay un error pero no es 404 (no encontrado), considerarlo como crítico
-          if ((err as APIError).status !== 404) {
-            setIsGeneratingReviews(false); // Desactivar en caso de error crítico
-            throw err;
-          }
-          attemptCount++;
-          // Si es 404, las reseñas aún no existen, seguir esperando
-          setTimeout(checkReviews, pollingInterval);
-          return false;
+        },
+        () => {
+          startFallback();
         }
-      };
+      );
+
+      // 2. Ejecutar fase 3
+      await ReviewService.generateReviews(product, bots);
       
-      // Iniciar el proceso de polling después de un breve retraso inicial
-      setTimeout(checkReviews, 5000);
+      // 3. Temporizador de seguridad: si tras 4 segundos no hay ninguna reseña recibida, arrancar el fallback
+      setTimeout(() => {
+        setReviews((currentReviews) => {
+          if (currentReviews.length === 0) {
+            console.log('[SSE] Sin reseñas recibidas en 4s. Activando polling de seguridad.');
+            startFallback();
+          }
+          return currentReviews;
+        });
+      }, 4000);
       
     } catch (err) {
       console.error("Error al generar las reseñas:", err);
+      sseSource?.close();
       if ((err as APIError).status !== undefined) {
         setError(err as APIError);
       } else {
@@ -440,7 +627,7 @@ export default function SimulatorPage() {
     }
   }
 
-  // Función para cargar los resultados actuales
+  // Función para cargar los resultados actuales y reconectar a procesos activos
   const loadCurrentResults = async () => {
     setError(null);
     
@@ -467,6 +654,152 @@ export default function SimulatorPage() {
         
         setActiveStep(newCheckpoint);
         setCheckpointStep(newCheckpoint);
+
+        // --- RECONEXIÓN AUTOMÁTICA SSE SI HAY GENERACIÓN ACTIVA ---
+        try {
+          const status2 = await SimulatorService.getPhaseStatus('phase2');
+          if (status2.status === 'running' || status2.status === 'pending') {
+            setIsGeneratingBots(true);
+            const numReviewers = results.reviewers.length || populationSize; // Intentar deducir la población
+            
+            let isConnected = false;
+            let attemptCount = 0;
+            const maxAttempts = 100;
+            const pollingInterval = 3000;
+
+            const checkBotProfilesFallback = async () => {
+              if (attemptCount >= maxAttempts) { setIsGeneratingBots(false); return; }
+              try {
+                const s = await SimulatorService.getPhaseStatus('phase2');
+                const p = await BotService.getReviewerProfiles();
+                if (p && Array.isArray(p)) {
+                  if (p.length > 0) setBots(p);
+                  if (s.status === 'completed' || p.length === numReviewers) {
+                    setIsGeneratingBots(false);
+                    return;
+                  } else if (s.status === 'failed') {
+                    setIsGeneratingBots(false);
+                    return;
+                  } else {
+                    attemptCount++;
+                    setTimeout(checkBotProfilesFallback, pollingInterval);
+                  }
+                }
+              } catch (e) {
+                attemptCount++;
+                setTimeout(checkBotProfilesFallback, pollingInterval);
+              }
+            };
+
+            const sse2 = connectSSE(
+              'phase2',
+              (message) => {
+                isConnected = true;
+                if (message.type === 'profile_generated') {
+                  const newBot = message.data;
+                  setBots((prev) => {
+                    const filtered = prev.filter((b) => b.id !== newBot.id);
+                    return [...filtered, newBot].sort((a, b) => a.id - b.id);
+                  });
+                } else if (message.type === 'phase2_completed') {
+                  setIsGeneratingBots(false);
+                  sse2?.close();
+                } else if (message.type === 'phase2_failed') {
+                  setIsGeneratingBots(false);
+                  sse2?.close();
+                }
+              },
+              () => {
+                if (!isConnected) setTimeout(checkBotProfilesFallback, 1000);
+              }
+            );
+
+            setTimeout(() => {
+              setBots((currentBots) => {
+                if (currentBots.length === 0) {
+                  console.log('[SSE Reconexión] Sin perfiles en 4s. Activando polling.');
+                  setTimeout(checkBotProfilesFallback, 1000);
+                }
+                return currentBots;
+              });
+            }, 4000);
+          }
+        } catch (e) {
+          console.warn('Error en reconexión Fase 2:', e);
+        }
+
+        try {
+          const status3 = await SimulatorService.getPhaseStatus('phase3');
+          if (status3.status === 'running' || status3.status === 'pending') {
+            setIsGeneratingReviews(true);
+            const numBots = results.reviewers.length;
+
+            let isConnected = false;
+            let attemptCount = 0;
+            const maxAttempts = 100;
+            const pollingInterval = 3000;
+
+            const checkReviewsFallback = async () => {
+              if (attemptCount >= maxAttempts) { setIsGeneratingReviews(false); return; }
+              try {
+                const s = await SimulatorService.getPhaseStatus('phase3');
+                const r = await ReviewService.getReviews();
+                if (r && Array.isArray(r)) {
+                  if (r.length > 0) setReviews(r);
+                  if (s.status === 'completed' || r.length === numBots) {
+                    setIsGeneratingReviews(false);
+                    return;
+                  } else if (s.status === 'failed') {
+                    setIsGeneratingReviews(false);
+                    return;
+                  } else {
+                    attemptCount++;
+                    setTimeout(checkReviewsFallback, pollingInterval);
+                  }
+                }
+              } catch (e) {
+                attemptCount++;
+                setTimeout(checkReviewsFallback, pollingInterval);
+              }
+            };
+
+            const sse3 = connectSSE(
+              'phase3',
+              (message) => {
+                isConnected = true;
+                if (message.type === 'review_generated') {
+                  const newReview = message.data;
+                  setReviews((prev) => {
+                    const filtered = prev.filter((r) => r.id !== newReview.id);
+                    return [...filtered, newReview].sort((a, b) => a.id - b.id);
+                  });
+                } else if (message.type === 'phase3_completed') {
+                  setIsGeneratingReviews(false);
+                  sse3?.close();
+                } else if (message.type === 'phase3_failed') {
+                  setIsGeneratingReviews(false);
+                  sse3?.close();
+                }
+              },
+              () => {
+                if (!isConnected) setTimeout(checkReviewsFallback, 1000);
+              }
+            );
+
+            setTimeout(() => {
+              setReviews((currentReviews) => {
+                if (currentReviews.length === 0) {
+                  console.log('[SSE Reconexión] Sin reseñas en 4s. Activando polling.');
+                  setTimeout(checkReviewsFallback, 1000);
+                }
+                return currentReviews;
+              });
+            }, 4000);
+          }
+        } catch (e) {
+          console.warn('Error en reconexión Fase 3:', e);
+        }
+
       } else {
         setActiveStep(0); // Si no hay resultados disponibles, iniciar en la fase 0
         setCheckpointStep(0);
@@ -489,9 +822,15 @@ export default function SimulatorPage() {
     }
   };
 
-  // Añadir useEffect para cargar los resultados al iniciar
+  // Añadir useEffect para cargar los resultados al iniciar y limpiar SSE al desmontar
   useEffect(() => {
     loadCurrentResults();
+    return () => {
+      if (eventSourceRef.current) {
+        console.log('[SSE] Cerrando conexión de eventos activa al desmontar componente');
+        eventSourceRef.current.close();
+      }
+    };
   }, []);
 
   return (
@@ -573,19 +912,24 @@ export default function SimulatorPage() {
                 setDemographics={setDemographics}
                 personality={personality}
                 setPersonality={setPersonality}
+                adaptToProduct={adaptToProduct}
+                setAdaptToProduct={setAdaptToProduct}
                 generateBots={generateBots}
                 setActiveStep={setActiveStep}
                 isGeneratingBots={isGeneratingBots}
+                bots={bots}
               />
             )}
 
             {/* Fase para ver los perfiles generados */}
             {activeStep === 2 && (
-              <BotProfilesPhase
+              <BotProfilesPhase 
                 bots={bots}
                 generateReviews={generateReviews}
                 setActiveStep={setActiveStep}
                 isGeneratingReviews={isGeneratingReviews}
+                isGeneratingBots={isGeneratingBots}
+                populationSize={populationSize}
               />
             )}
 
@@ -598,6 +942,8 @@ export default function SimulatorPage() {
                 generateAnalysis={generateAnalysis}
                 setActiveStep={setActiveStep}
                 isGeneratingAnalysis={isGeneratingAnalysis}
+                isGeneratingReviews={isGeneratingReviews}
+                populationSize={bots.length}
               />
             )}
 

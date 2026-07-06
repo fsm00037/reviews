@@ -1,3 +1,48 @@
-# env files
-.env*
+# dependencies and virtual environments
+node_modules/
+.venv/
+venv/
+ENV/
+env/
+
+# Next.js and frontend build outputs
+.next/
+out/
+build/
+dist/
+*.tsbuildinfo
+
+# Python cache files
+__pycache__/
+*.py[cod]
+*$py.class
+.pytest_cache/
+.tox/
+.coverage
+.cache
+.mypy_cache/
+
+# Databases and Local outputs
+*.db
+*.sqlite
+*.sqlite3
+backend/reviews.db
 backend/crewAPI/outputs/*
+
+# Environment variables
+.env
+.env.*
+!.env.example
+
+# Operating System Files
+.DS_Store
+Thumbs.db
+
+# Editor Configurations
+.vscode/
+.idea/
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+*.swp

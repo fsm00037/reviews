@@ -13,6 +13,8 @@ interface BotProfilesPhaseProps {
   generateReviews: () => Promise<void>;
   setActiveStep: (step: number) => void;
   isGeneratingReviews: boolean;
+  isGeneratingBots?: boolean;
+  populationSize?: number;
 }
 
 export const BotProfilesPhase: React.FC<BotProfilesPhaseProps> = ({
@@ -20,6 +22,8 @@ export const BotProfilesPhase: React.FC<BotProfilesPhaseProps> = ({
   generateReviews,
   setActiveStep,
   isGeneratingReviews,
+  isGeneratingBots = false,
+  populationSize = 0,
 }) => {
   return (
     <Card className="border-purple-200 dark:border-gray-800 bg-white/80 dark:bg-gray-950/80 backdrop-blur-sm overflow-hidden">
@@ -31,6 +35,44 @@ export const BotProfilesPhase: React.FC<BotProfilesPhaseProps> = ({
         <CardDescription>Revisa los perfiles de bot generados antes de crear las reseñas</CardDescription>
       </CardHeader>
       <CardContent className="p-6">
+        {isGeneratingBots && populationSize > 0 && (
+          <div className="mb-6 p-4 bg-purple-500/5 rounded-xl border border-purple-200/50 dark:border-gray-800 backdrop-blur-sm">
+            <div className="flex items-center justify-between mb-2">
+              <span className="text-xs font-semibold text-purple-700 dark:text-purple-400 flex items-center gap-1.5">
+                <Zap className="h-3.5 w-3.5 text-purple-500 animate-pulse" />
+                Creando población de reseñadores en tiempo real...
+              </span>
+              <span className="text-xs font-bold text-purple-900 dark:text-purple-300">
+                {bots.length} de {populationSize} completados
+              </span>
+            </div>
+            <div className="w-full bg-purple-100 dark:bg-gray-800 rounded-full h-1.5 overflow-hidden">
+              <motion.div
+                className="bg-gradient-to-r from-indigo-500 via-purple-500 to-pink-500 h-full"
+                initial={{ width: 0 }}
+                animate={{ width: `${(bots.length / populationSize) * 100}%` }}
+                transition={{ duration: 0.3 }}
+              />
+            </div>
+          </div>
+        )}
+
+        {bots.length === 0 && (
+          <div className="flex flex-col items-center justify-center py-12 text-center">
+            <motion.div
+              animate={{ rotate: 360 }}
+              transition={{ duration: 2, repeat: Number.POSITIVE_INFINITY, ease: "linear" }}
+              className="mb-4 bg-purple-100 dark:bg-purple-950/50 p-3 rounded-full"
+            >
+              <Zap className="h-8 w-8 text-purple-600 dark:text-purple-400" />
+            </motion.div>
+            <h3 className="font-bold text-lg text-gray-800 dark:text-gray-200">Inicializando simulación de perfiles</h3>
+            <p className="text-sm text-gray-500 dark:text-gray-400 max-w-sm mt-1">
+              Conectando con el agente creador de usuarios para generar el primer perfil...
+            </p>
+          </div>
+        )}
+
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
           {bots.map((bot, index) => (
             <motion.div
@@ -169,16 +211,17 @@ export const BotProfilesPhase: React.FC<BotProfilesPhaseProps> = ({
               onClick={() => setActiveStep(1)}
               variant="outline"
               className="border-purple-200 dark:border-gray-700 hover:bg-purple-50 dark:hover:bg-gray-800 transition-colors"
+              disabled={isGeneratingBots}
             >
               <ArrowLeft className="mr-2 h-4 w-4" />
               Volver a configuración
             </Button>
           </motion.div>
-          <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
+          <motion.div whileHover={{ scale: (isGeneratingReviews || isGeneratingBots) ? 1 : 1.05 }} whileTap={{ scale: (isGeneratingReviews || isGeneratingBots) ? 1 : 0.95 }}>
             <Button
               onClick={generateReviews}
               className="bg-gradient-to-r from-indigo-500 via-purple-500 to-pink-500 text-white hover:opacity-90 transition-opacity"
-              disabled={isGeneratingReviews}
+              disabled={isGeneratingReviews || isGeneratingBots}
             >
               {isGeneratingReviews ? (
                 <>
@@ -190,6 +233,17 @@ export const BotProfilesPhase: React.FC<BotProfilesPhaseProps> = ({
                     <Zap className="h-4 w-4" />
                   </motion.div>
                   Generando reseñas...
+                </>
+              ) : isGeneratingBots ? (
+                <>
+                  <motion.div
+                    animate={{ rotate: 360 }}
+                    transition={{ duration: 1.5, repeat: Number.POSITIVE_INFINITY, ease: "linear" }}
+                    className="mr-2"
+                  >
+                    <Zap className="h-4 w-4" />
+                  </motion.div>
+                  Generando perfiles ({bots.length}/{populationSize})...
                 </>
               ) : (
                 <>

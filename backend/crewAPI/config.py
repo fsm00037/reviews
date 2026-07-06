@@ -2,12 +2,16 @@ import os
 
 # API Configuration
 GEMINI_API_KEY = os.getenv("GEMINI_API_KEY")
+OPENAI_API_BASE = os.getenv("OPENAI_API_BASE")
+OPENAI_API_KEY = os.getenv("OPENAI_API_KEY")
+OPENAI_MODEL_NAME = os.getenv("OPENAI_MODEL_NAME")
 
 # LLM Configuration
 DEFAULT_MODEL = "gemini/gemini-2.0-flash"
 
 # File paths for intermediate results
-OUTPUT_DIR = "backend/crewAPI/outputs"
+CONFIG_DIR = os.path.dirname(os.path.abspath(__file__))
+OUTPUT_DIR = os.path.join(CONFIG_DIR, "outputs")
 PRODUCT_INFO_FILE = os.path.join(OUTPUT_DIR, "producto.json")
 USER_PROFILES_FILE = os.path.join(OUTPUT_DIR, "reviewers.json")
 REVIEWS_DIR = os.path.join(OUTPUT_DIR, "reviews")

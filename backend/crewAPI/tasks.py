@@ -7,7 +7,7 @@ from models import Product, BotProfile, Review, AnalysisResult, UserProfilesResp
 
 
 
-def create_product_info_task(product_url: str, agent: Agent):
+def create_product_info_task(product_url: str, agent: Agent, output_file: str = config.PRODUCT_INFO_FILE):
     """Create and return the product information task"""
     
     return Task(
@@ -27,27 +27,33 @@ def create_product_info_task(product_url: str, agent: Agent):
         """,
         agent=agent,
         expected_output="Un objeto JSON con información detallada del producto",
-        output_file=config.PRODUCT_INFO_FILE,
+        output_file=output_file,
         output_json=Product
     )
 
-def create_user_profiles_task(num_reviewers: int, profile_parameters: Dict[str, Any], agent: Agent):
-    """Create and return the user profiles creation task"""
-   
-    
+def create_user_profile_task(profile_parameters: Dict[str, Any], agent: Agent, index: int, total: int, existing_profiles: List[Dict[str, Any]], output_file: str, product_instructions: str = ""):
+    """Create and return a task to generate a single user profile"""
+    existing_info = ""
+    if existing_profiles:
+        existing_info = f"\nPERFILES YA GENERADOS (Evita repetir nombres, biografías o trasfondos similares):\n"
+        for p in existing_profiles:
+            existing_info += f"- {p.get('name')} ({p.get('gender')}, {p.get('age')} años) de {p.get('location')}. Bio: {p.get('bio')}\n"
+            
     return Task(
         description=f"""
-        1. Genera {num_reviewers} perfiles de usuario diferentes para evaluar el producto
-        2. La población de perfiles será creada con estos rangos entre 0 y 100: {json.dumps(profile_parameters, ensure_ascii=False)}
-        4. Cada perfil debe estar en formato JSON e incluir:
-           - id: un número único
-           - name: nombre completo
-           - avatar: una URL de imagen de perfil (ficticia)
+        1. Genera un (1) único perfil de usuario realista y detallado para evaluar el producto. Este es el perfil {index} de un total de {total} perfiles a generar.
+        {product_instructions}
+        2. El perfil debe crearse considerando estos rangos demográficos y de personalidad de la población (de 0 a 100): {json.dumps(profile_parameters, ensure_ascii=False)}
+        {existing_info}
+        3. El perfil de usuario generado debe estar en formato JSON e incluir:
+           - id: un número único (usa {index})
+           - name: nombre completo en español (nombre y apellido realistas)
+           - avatar: una URL de imagen de perfil ficticia
            - bio: una biografía breve
-           - age: edad
-           - location: ubicación
-           - gender: género
-           - education_level: nivel educativo (Doctorado, instituto, carrera, universidad... ejemplos realistas)
+           - age: edad (número entero)
+           - location: ubicación en España (ej. Madrid, Barcelona, Sevilla, Valencia...)
+           - gender: género (Male, Female o Other)
+           - education_level: nivel educativo
            - personality: un objeto con rasgos de personalidad (valores de 0 a 100):
              * introvert_extrovert
              * analytical_creative
@@ -56,18 +62,18 @@ def create_user_profiles_task(num_reviewers: int, profile_parameters: Dict[str, 
              * independent_cooperative
              * environmentalist
              * safe_risky
-           - backstory: historia detallada del usuario con su experiencia, intereses y motivaciones
-        4. Los perfiles deben ser diversos y representativos de diferentes segmentos de mercado
+           - backstory: historia detallada del usuario con su experiencia, intereses y motivaciones.
+        4. El perfil debe ser original, diverso y complementar a los perfiles ya generados.
         """,
         agent=agent,
-        expected_output=f"Una lista con {num_reviewers} perfiles de usuario en formato JSON en español",
-        output_file=config.USER_PROFILES_FILE,
-        output_json=UserProfilesResponse
+        expected_output="Un único perfil de usuario en formato JSON en español",
+        output_file=output_file,
+        output_json=BotProfile
     )
 
-def create_reviewer_task(product_info: Dict[str, Any], profile: Dict[str, Any], agent: Agent, index: int):
+def create_reviewer_task(product_info: Dict[str, Any], profile: Dict[str, Any], agent: Agent, index: int, reviews_dir: str = config.REVIEWS_DIR):
     """Create and return a reviewer task based on a user profile"""
-    review_file = os.path.join(config.REVIEWS_DIR, f"review_{index}.json")
+    review_file = os.path.join(reviews_dir, f"review_{index}.json")
     
     return Task(
         description=f"""
@@ -87,18 +93,18 @@ def create_reviewer_task(product_info: Dict[str, Any], profile: Dict[str, Any], 
         output_json=Review
     )
 
-def create_reviewer_tasks(product_info: Dict[str, Any], profiles: List[Dict[str, Any]], agents: List[Agent]) -> List[Task]:
+def create_reviewer_tasks(product_info: Dict[str, Any], profiles: List[Dict[str, Any]], agents: List[Agent], reviews_dir: str = config.REVIEWS_DIR) -> List[Task]:
     """Create and return a list of reviewer tasks based on user profiles"""
     tasks = []
     for i, (profile, agent) in enumerate(zip(profiles, agents)):
-        tasks.append(create_reviewer_task(product_info, profile, agent, i))
+        tasks.append(create_reviewer_task(product_info, profile, agent, i, reviews_dir))
     return tasks
 
-def create_compiler_task(agent: Agent):
+def create_compiler_task(agent: Agent, final_report_file: str = config.FINAL_REPORT_FILE, reviews_dir: str = config.REVIEWS_DIR):
     """Create and return the review compiler task"""
     return Task(
         description=f"""
-        1. Estudia y analiza las reseñas de los usuarios en formato JSON del directorio {config.REVIEWS_DIR}
+        1. Estudia y analiza las reseñas de los usuarios en formato JSON del directorio {reviews_dir}
         2. Organiza la información en un formato JSON claro y estructurado
         3. Calcula la valoración media del producto
         4. Destaca puntos fuertes y débiles mencionados con frecuencia
@@ -114,6 +120,6 @@ def create_compiler_task(agent: Agent):
         """,
         agent=agent,
         expected_output="Un informe completo con el análisis de las reseñas en formato JSON en español",
-        output_file=config.FINAL_REPORT_FILE,
+        output_file=final_report_file,
         output_json=AnalysisResult
     ) 
