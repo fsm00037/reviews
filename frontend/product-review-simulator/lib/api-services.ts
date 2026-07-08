@@ -32,9 +32,25 @@ async function fetchAPI<T>(
 ): Promise<T> {
   const url = `${API_BASE_URL}${endpoint}`;
   
+  let userIdHeader = {};
+  if (typeof window !== 'undefined') {
+    const userStr = localStorage.getItem('review_simulator_user');
+    if (userStr) {
+      try {
+        const user = JSON.parse(userStr);
+        if (user && user.id) {
+          userIdHeader = { 'X-User-Id': String(user.id) };
+        }
+      } catch (e) {
+        console.error('Error parsing user storage', e);
+      }
+    }
+  }
+
   const headers = {
     'Content-Type': 'application/json',
     'X-Session-ID': getSessionId(),
+    ...userIdHeader,
     ...options.headers,
   };
   
@@ -224,7 +240,10 @@ export const BotService = {
   },
   
   // Obtener perfiles actuales
-  getReviewerProfiles: () => fetchAPI<BotProfile[]>('/reviewers')
+  getReviewerProfiles: () => fetchAPI<BotProfile[]>('/reviewers'),
+  
+  // Obtener perfiles de una sesión específica
+  getSessionReviewers: (sessionId: string) => fetchAPI<BotProfile[]>(`/sessions/${sessionId}/reviewers`)
 };
 
 // Servicios para Poblaciones Predeterminadas
@@ -505,10 +524,43 @@ export const SimulatorService = {
   }
 };
 
+export const SavedPopulationService = {
+  getSavedPopulations: () => fetchAPI<any[]>('/populations'),
+  savePopulation: (name: string, description: string, numReviewers: number, profileParameters: any) =>
+    fetchAPI<{message: string; id: number}>('/populations', {
+      method: 'POST',
+      body: JSON.stringify({ name, description, num_reviewers: numReviewers, profile_parameters: profileParameters })
+    }),
+  deletePopulation: (id: number) =>
+    fetchAPI<{message: string}>(`/populations/${id}`, {
+      method: 'DELETE'
+    })
+};
+
+export const CompareService = {
+  compareSessions: (sessionId1: string, sessionId2: string) =>
+    fetchAPI<any>('/compare', {
+      method: 'POST',
+      body: JSON.stringify({ session_id_1: sessionId1, session_id_2: sessionId2 })
+    })
+};
+
+export const ImprovementService = {
+  getImprovements: (sessionId: string) =>
+    fetchAPI<{session_id: string; improvements: string}>(`/sessions/${sessionId}/improvements`),
+  createImprovedProduct: (sessionId: string) =>
+    fetchAPI<{status: string; session_id: string; product: Product}>(`/sessions/${sessionId}/create-improved`, {
+      method: 'POST'
+    })
+};
+
 export default {
   ProductService,
   BotService,
   ReviewService,
   AnalysisService,
-  SimulatorService
+  SimulatorService,
+  SavedPopulationService,
+  CompareService,
+  ImprovementService
 }; 

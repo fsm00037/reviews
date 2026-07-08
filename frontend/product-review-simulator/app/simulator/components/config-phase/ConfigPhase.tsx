@@ -1,14 +1,16 @@
-﻿import React, { useState, useEffect } from "react";
+import React, { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Slider } from "@/components/ui/slider";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
-import { ArrowLeft, ArrowRight, Users, UserCircle2, Zap, Settings, Sparkles, Wand2, CheckCircle2 } from "lucide-react";
+import { ArrowLeft, ArrowRight, Users, UserCircle2, Zap, Settings, Sparkles, Wand2, CheckCircle2, Trash2 } from "lucide-react";
 import { CustomRangeSlider } from "@/components/custom-range-slider";
-import { DemographicConfig, PersonalityConfig, BotProfile } from "@/lib/types";
-import { PresetService } from "@/lib/api-services";
+import { DemographicConfig, PersonalityConfig, BotProfile, RecentSession } from "@/lib/types";
+import { PresetService, SavedPopulationService, SimulatorService, BotService } from "@/lib/api-services";
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import { Input } from "@/components/ui/input";
 
 interface ConfigPhaseProps {
   populationSize: number;
@@ -56,11 +58,61 @@ export const ConfigPhase: React.FC<ConfigPhaseProps> = ({
   const [presetLoaded, setPresetLoaded] = useState<number | null>(null);
   const [configTab, setConfigTab] = useState<"preset" | "custom">("preset");
 
+  // Custom User Population states
+  const [currentUser, setCurrentUser] = useState<{ id: number; username: string } | null>(null);
+  const [userSavedPopulations, setUserSavedPopulations] = useState<any[]>([]);
+  const [isSaveModalOpen, setIsSaveModalOpen] = useState(false);
+  const [saveName, setSaveName] = useState("");
+  const [saveDesc, setSaveDesc] = useState("");
+  const [savingPop, setSavingPop] = useState(false);
+
+  // Recent sessions populations states
+  const [recentSessions, setRecentSessions] = useState<RecentSession[]>([]);
+  const [loadingRecentPop, setLoadingRecentPop] = useState<string | null>(null);
+
   useEffect(() => {
     PresetService.getPresets().then((data) => {
       if (Array.isArray(data)) setPresets(data);
     }).catch(() => {});
+
+    SimulatorService.getRecentSessions().then((data) => {
+      if (Array.isArray(data)) {
+        setRecentSessions(data.slice(0, 3));
+      }
+    }).catch(() => {});
+
+    if (typeof window !== "undefined") {
+      const stored = localStorage.getItem("review_simulator_user");
+      if (stored) {
+        try {
+          const parsedUser = JSON.parse(stored);
+          setCurrentUser(parsedUser);
+          SavedPopulationService.getSavedPopulations().then((data) => {
+            if (Array.isArray(data)) setUserSavedPopulations(data);
+          }).catch(() => {});
+        } catch (e) {}
+      }
+    }
   }, []);
+
+  const handleLoadRecentPopulation = async (sessId: string) => {
+    setLoadingRecentPop(sessId);
+    try {
+      const profiles = await BotService.getSessionReviewers(sessId);
+      if (Array.isArray(profiles) && profiles.length > 0) {
+        setBots(profiles);
+        setPopulationSize(profiles.length);
+        // Auto-navigate to profiles phase
+        setActiveStep(2);
+      } else {
+        alert("Esta simulación no tiene perfiles de reseñadores generados.");
+      }
+    } catch (e) {
+      console.error("Error loading recent reviewers:", e);
+    } finally {
+      setLoadingRecentPop(null);
+    }
+  };
 
   const handleLoadPreset = async (id: number) => {
     setLoadingPreset(id);
@@ -77,6 +129,68 @@ export const ConfigPhase: React.FC<ConfigPhaseProps> = ({
       // silently ignore
     } finally {
       setLoadingPreset(null);
+    }
+  };
+
+  const handleLoadUserPopulation = (pop: any) => {
+    setPopulationSize(pop.num_reviewers);
+    if (pop.profile_parameters) {
+      const params = pop.profile_parameters;
+      if (params.demographics) setDemographics(params.demographics);
+      if (params.personality) setPersonality(params.personality);
+      if (params.population_prompt !== undefined) setPopulationPrompt(params.population_prompt);
+      setUseCustomConfig(true);
+      setConfigTab("custom");
+    }
+  };
+
+  const handleSavePopulation = async () => {
+    if (!saveName.trim()) return;
+    setSavingPop(true);
+    try {
+      const response = await SavedPopulationService.savePopulation(
+        saveName,
+        saveDesc,
+        populationSize,
+        {
+          demographics,
+          personality,
+          population_prompt: populationPrompt
+        }
+      );
+      if (response && response.id) {
+        setUserSavedPopulations([
+          {
+            id: response.id,
+            name: saveName,
+            description: saveDesc,
+            num_reviewers: populationSize,
+            profile_parameters: { demographics, personality, population_prompt: populationPrompt }
+          },
+          ...userSavedPopulations
+        ]);
+        setIsSaveModalOpen(false);
+        setSaveName("");
+        setSaveDesc("");
+      }
+    } catch (e) {
+      console.error(e);
+    } finally {
+      setSavingPop(false);
+    }
+  };
+
+  const handleDeleteUserPopulation = async (id: number, e: React.MouseEvent) => {
+    e.stopPropagation();
+    if (!confirm("¿Estás seguro de que quieres eliminar esta población guardada?")) return;
+    try {
+      await SavedPopulationService.deletePopulation(id);
+      setUserSavedPopulations(userSavedPopulations.filter(p => p.id !== id));
+      if (selectedPreset === id) {
+        setSelectedPreset(null);
+      }
+    } catch (e) {
+      console.error(e);
     }
   };
 
@@ -178,8 +292,83 @@ export const ConfigPhase: React.FC<ConfigPhaseProps> = ({
                         );
                       })}
                     </div>
-                    <p className="text-xs text-center text-gray-400 dark:text-gray-500 pt-1">
-                      Haz clic en una población para cargarla y pasar automáticamente al siguiente paso.
+
+                    {currentUser && userSavedPopulations.length > 0 && (
+                      <div className="mt-8 border-t border-purple-100 dark:border-gray-800 pt-6 text-left">
+                        <h4 className="text-sm font-bold text-gray-700 dark:text-gray-300 mb-3">
+                          Mis Poblaciones Personalizadas Guardadas
+                        </h4>
+                        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                          {userSavedPopulations.map((pop) => (
+                            <motion.div
+                              key={pop.id}
+                              whileHover={{ scale: 1.02 }}
+                              whileTap={{ scale: 0.98 }}
+                              className="relative rounded-xl border border-purple-200/60 dark:border-gray-800 bg-purple-500/[0.01] dark:bg-purple-950/[0.02] p-5 cursor-pointer hover:border-purple-400 hover:shadow-md transition-all flex flex-col justify-between"
+                              onClick={() => handleLoadUserPopulation(pop)}
+                            >
+                              <div className="absolute top-3 right-3">
+                                <Button
+                                  variant="ghost"
+                                  size="icon"
+                                  className="h-7 w-7 text-gray-400 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-950/20 rounded-full"
+                                  onClick={(e) => handleDeleteUserPopulation(pop.id, e)}
+                                >
+                                  <Trash2 className="h-3.5 w-3.5" />
+                                </Button>
+                              </div>
+                              <div>
+                                <div className="text-2xl mb-2">👤</div>
+                                <p className="text-sm font-bold text-gray-800 dark:text-gray-100 leading-tight mb-1">{pop.name}</p>
+                                <p className="text-[11px] text-gray-500 dark:text-gray-400 leading-snug mb-3 line-clamp-2">{pop.description || "Sin descripción"}</p>
+                              </div>
+                              <span className="inline-block text-[10px] font-semibold px-2 py-0.5 rounded-full bg-purple-100/70 dark:bg-purple-900/30 text-purple-700 dark:text-purple-300 w-max">
+                                {pop.num_reviewers} reseñadores
+                              </span>
+                            </motion.div>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+
+                    {recentSessions.length > 0 && (
+                      <div className="mt-8 border-t border-purple-100 dark:border-gray-800 pt-6 text-left">
+                        <h4 className="text-sm font-bold text-gray-700 dark:text-gray-300 mb-3">
+                          Poblaciones Usadas Recientemente
+                        </h4>
+                        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                          {recentSessions.map((sess) => {
+                            const isLoading = loadingRecentPop === sess.session_id;
+                            return (
+                              <motion.div
+                                key={sess.session_id}
+                                whileHover={{ scale: 1.02 }}
+                                whileTap={{ scale: 0.98 }}
+                                className="relative rounded-xl border border-purple-100 dark:border-gray-800 bg-white/50 dark:bg-gray-900/40 p-5 cursor-pointer hover:border-purple-300 hover:shadow-md transition-all flex flex-col justify-between"
+                                onClick={() => !isLoading && handleLoadRecentPopulation(sess.session_id)}
+                              >
+                                {isLoading && (
+                                  <div className="absolute inset-0 bg-white/80 dark:bg-gray-950/80 rounded-xl flex items-center justify-center z-10">
+                                    <Zap className="h-4 w-4 animate-spin text-purple-600" />
+                                  </div>
+                                )}
+                                <div>
+                                  <div className="text-2xl mb-2">⏱️</div>
+                                  <p className="text-[10px] font-bold text-purple-600 dark:text-purple-400 uppercase tracking-wider">Simulación previa</p>
+                                  <p className="text-sm font-bold text-gray-800 dark:text-gray-100 leading-tight mt-1 line-clamp-2">{sess.product_name}</p>
+                                </div>
+                                <span className="inline-block text-[10px] font-semibold px-2 py-0.5 mt-3 rounded-full bg-indigo-100/70 dark:bg-indigo-900/30 text-indigo-700 dark:text-indigo-300 w-max">
+                                  Reutilizar población
+                                </span>
+                              </motion.div>
+                            );
+                          })}
+                        </div>
+                      </div>
+                    )}
+
+                    <p className="text-xs text-center text-gray-400 dark:text-gray-500 pt-3">
+                      Haz clic en una población para cargarla y empezar a simular.
                     </p>
                   </>
                 )}
@@ -502,37 +691,90 @@ export const ConfigPhase: React.FC<ConfigPhaseProps> = ({
             </motion.div>
 
             {configTab === "custom" && (
-              <motion.div whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }}>
-                <Button
-                  onClick={generateBots}
-                  className="bg-gradient-to-r from-indigo-500 via-purple-500 to-pink-500 text-white hover:opacity-90 transition-opacity relative overflow-hidden"
-                  disabled={isGeneratingBots}
-                >
-                  {isGeneratingBots ? (
-                    <>
-                      <motion.div
-                        animate={{ rotate: 360 }}
-                        transition={{ duration: 1, repeat: Number.POSITIVE_INFINITY, ease: "linear" }}
-                        className="mr-2"
+              <div className="flex gap-3">
+                {currentUser && (
+                  <Dialog open={isSaveModalOpen} onOpenChange={setIsSaveModalOpen}>
+                    <DialogTrigger asChild>
+                      <Button
+                        variant="outline"
+                        className="border-purple-200 dark:border-gray-700 hover:bg-purple-50 dark:hover:bg-gray-800 transition-colors"
+                        disabled={isGeneratingBots}
                       >
-                        <Zap className="h-4 w-4" />
-                      </motion.div>
-                      <span className="relative z-10">Generando perfiles...</span>
-                      <motion.div
-                        className="absolute inset-0 bg-gradient-to-r from-blue-600 via-purple-600 to-pink-600"
-                        animate={{ x: ["-100%", "100%"] }}
-                        transition={{ repeat: Number.POSITIVE_INFINITY, duration: 2, ease: "linear" }}
-                        style={{ opacity: 0.3 }}
-                      />
-                    </>
-                  ) : (
-                    <>
-                      <UserCircle2 className="mr-2 h-4 w-4" />
-                      <span>Generar perfiles de bot</span>
-                    </>
-                  )}
-                </Button>
-              </motion.div>
+                        Guardar población
+                      </Button>
+                    </DialogTrigger>
+                    <DialogContent className="max-w-sm bg-white dark:bg-gray-950 border dark:border-gray-800 text-gray-900 dark:text-gray-100 animate-in fade-in-50">
+                      <DialogHeader>
+                        <DialogTitle className="text-lg font-bold">Guardar Población</DialogTitle>
+                        <DialogDescription className="text-gray-500 dark:text-gray-400">
+                          Guarda la configuración actual para usarla en futuros experimentos.
+                        </DialogDescription>
+                      </DialogHeader>
+                      <div className="space-y-4 mt-2">
+                        <div className="space-y-1.5">
+                          <Label htmlFor="pop-name">Nombre de la Población</Label>
+                          <Input
+                            id="pop-name"
+                            placeholder="ej. Jóvenes Tecnólogos"
+                            value={saveName}
+                            onChange={(e) => setSaveName(e.target.value)}
+                            className="bg-white/50 dark:bg-gray-900/50 border-purple-100 dark:border-gray-800 focus-visible:ring-purple-500"
+                          />
+                        </div>
+                        <div className="space-y-1.5">
+                          <Label htmlFor="pop-desc">Descripción (opcional)</Label>
+                          <Input
+                            id="pop-desc"
+                            placeholder="ej. Rango de edad 20-30, creativos..."
+                            value={saveDesc}
+                            onChange={(e) => setSaveDesc(e.target.value)}
+                            className="bg-white/50 dark:bg-gray-900/50 border-purple-100 dark:border-gray-800 focus-visible:ring-purple-500"
+                          />
+                        </div>
+                        <Button
+                          onClick={handleSavePopulation}
+                          className="w-full bg-gradient-to-r from-indigo-500 via-purple-500 to-pink-500 text-white hover:opacity-90 gap-1.5 mt-2"
+                          disabled={savingPop || !saveName.trim()}
+                        >
+                          {savingPop ? "Guardando..." : "Guardar plantilla"}
+                        </Button>
+                      </div>
+                    </DialogContent>
+                  </Dialog>
+                )}
+
+                <motion.div whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }}>
+                  <Button
+                    onClick={generateBots}
+                    className="bg-gradient-to-r from-indigo-500 via-purple-500 to-pink-500 text-white hover:opacity-90 transition-opacity relative overflow-hidden"
+                    disabled={isGeneratingBots}
+                  >
+                    {isGeneratingBots ? (
+                      <>
+                        <motion.div
+                          animate={{ rotate: 360 }}
+                          transition={{ duration: 1, repeat: Number.POSITIVE_INFINITY, ease: "linear" }}
+                          className="mr-2"
+                        >
+                          <Zap className="h-4 w-4" />
+                        </motion.div>
+                        <span className="relative z-10">Generando perfiles...</span>
+                        <motion.div
+                          className="absolute inset-0 bg-gradient-to-r from-blue-600 via-purple-600 to-pink-600"
+                          animate={{ x: ["-100%", "100%"] }}
+                          transition={{ repeat: Number.POSITIVE_INFINITY, duration: 2, ease: "linear" }}
+                          style={{ opacity: 0.3 }}
+                        />
+                      </>
+                    ) : (
+                      <>
+                        <UserCircle2 className="mr-2 h-4 w-4" />
+                        <span>Generar perfiles de bot</span>
+                      </>
+                    )}
+                  </Button>
+                </motion.div>
+              </div>
             )}
           </div>
         </div>

@@ -58,7 +58,7 @@ def load_json_file(file_path):
         return {}
 
 # --- Fase 1 ---
-def _bg_phase1(product_url: str, model_name: str, session_id: str, session_dir: str):
+def _bg_phase1(product_url: str, model_name: str, session_id: str, session_dir: str, user_id: int = None):
     try:
         db.set_task_status(session_id, 'phase1', 'running')
         
@@ -66,7 +66,7 @@ def _bg_phase1(product_url: str, model_name: str, session_id: str, session_dir: 
         product_data = phase1_results.json_dict
         
         # Guardar en SQLite
-        db.save_product(session_id, product_data)
+        db.save_product(session_id, product_data, user_id=user_id)
         db.set_task_status(session_id, 'phase1', 'completed')
         print(f"✅ Fase 1 completada para sesión {session_id}")
     except Exception as e:
@@ -74,13 +74,13 @@ def _bg_phase1(product_url: str, model_name: str, session_id: str, session_dir: 
         db.set_task_status(session_id, 'phase1', 'failed', error=f"{str(e)}\n{error_trace}")
         print(f"❌ Error en Fase 1 para sesión {session_id}: {e}")
 
-def execute_phase1(product_url: str, model_name: str = None, session_id: str = "default-session"):
+def execute_phase1(product_url: str, model_name: str = None, session_id: str = "default-session", user_id: int = None):
     """Inicia la Fase 1 de manera asíncrona"""
     session_dir = get_session_dir(session_id)
     # Primero limpiar datos previos de la sesión para evitar estados incoherentes
     clean_outputs(session_id)
     
-    thread = threading.Thread(target=_bg_phase1, args=(product_url, model_name, session_id, session_dir))
+    thread = threading.Thread(target=_bg_phase1, args=(product_url, model_name, session_id, session_dir, user_id))
     thread.daemon = True
     thread.start()
     return {"status": "processing", "message": "Fase 1 iniciada en segundo plano"}

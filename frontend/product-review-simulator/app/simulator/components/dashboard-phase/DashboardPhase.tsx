@@ -1,4 +1,5 @@
-import React from "react";
+import React, { useState, useEffect } from "react";
+import Link from "next/link";
 import { motion } from "framer-motion";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from "@/components/ui/card";
@@ -19,6 +20,7 @@ import {
   TrendingDown,
 } from "lucide-react";
 import { Product, AnalysisResult, KeywordAnalysis } from "@/lib/types";
+import { getSessionId, ImprovementService } from "@/lib/api-services";
 
 interface DashboardPhaseProps {
   product: Product;
@@ -251,6 +253,59 @@ const KeywordCloud = ({ keywords }: { keywords: KeywordAnalysis[] }) => {
   );
 };
 
+interface ImprovementSection {
+  title: string;
+  icon: string;
+  content: string[];
+}
+
+function parseImprovements(markdown: string): ImprovementSection[] {
+  if (!markdown) return [];
+  
+  const sections: ImprovementSection[] = [];
+  
+  // Dividir por cabeceras que contengan números o emojis
+  const parts = markdown.split(/(?=###?\s+\d*\.?\s*[\uD800-\uDBFF\uDC00-\uDFFF])|(?=###?\s+\d*\.)|(?=##\s+\d*\.?)/g);
+  
+  const finalParts = parts.length > 1 ? parts : markdown.split("\n\n");
+  
+  finalParts.forEach(part => {
+    const lines = part.split('\n').map(l => l.trim()).filter(Boolean);
+    if (lines.length === 0) return;
+    
+    // El primer renglón es el título
+    const titleLine = lines[0].replace(/[#\d\.*\-]/g, '').trim();
+    
+    // Intentar extraer el emoji
+    const emojiMatch = lines[0].match(/[\uD800-\uDBFF\uDC00-\uDFFF]/);
+    const icon = emojiMatch ? emojiMatch[0] : "💡";
+    
+    // El contenido son las líneas siguientes
+    const contentLines = lines.slice(1).map(l => {
+      return l.replace(/^[-*+]\s+/, '').trim();
+    }).filter(Boolean);
+    
+    if (titleLine && contentLines.length > 0) {
+      sections.push({
+        title: titleLine,
+        icon,
+        content: contentLines
+      });
+    }
+  });
+  
+  if (sections.length === 0) {
+    const paragraphs = markdown.split('\n\n').map(p => p.trim()).filter(Boolean);
+    sections.push({
+      title: "Plan Estratégico",
+      icon: "💡",
+      content: paragraphs
+    });
+  }
+  
+  return sections;
+}
+
 export const DashboardPhase: React.FC<DashboardPhaseProps> = ({
   product,
   analysisResult,
@@ -260,6 +315,58 @@ export const DashboardPhase: React.FC<DashboardPhaseProps> = ({
   setAnalysisResult,
   demographics,
 }) => {
+  const [activeTab, setActiveTab] = useState<"metrics" | "improvements">("metrics");
+  const [improvements, setImprovements] = useState<string>("");
+  const [improvementsLoading, setImprovementsLoading] = useState(false);
+
+  // States for creating improved child product
+  const [creatingProduct, setCreatingProduct] = useState(false);
+  const [createdProductSession, setCreatedProductSession] = useState<string | null>(null);
+  const [createdProductName, setCreatedProductName] = useState<string>("");
+  const [createError, setCreateError] = useState<string>("");
+
+  const fetchImprovements = async () => {
+    if (improvements) return;
+    setImprovementsLoading(true);
+    try {
+      const sessionId = getSessionId();
+      const res = await ImprovementService.getImprovements(sessionId);
+      if (res && res.improvements) {
+        setImprovements(res.improvements);
+      }
+    } catch (e) {
+      console.error("Error loading improvements:", e);
+    } finally {
+      setImprovementsLoading(false);
+    }
+  };
+
+  const handleCreateImprovedProduct = async () => {
+    setCreatingProduct(true);
+    setCreateError("");
+    try {
+      const sessionId = getSessionId();
+      const res = await ImprovementService.createImprovedProduct(sessionId);
+      if (res && res.session_id) {
+        setCreatedProductSession(res.session_id);
+        setCreatedProductName(res.product?.name || "Producto v2");
+      } else {
+        setCreateError("No se pudo registrar la versión mejorada del producto");
+      }
+    } catch (e: any) {
+      console.error(e);
+      setCreateError(e.message || "Error al crear el producto mejorado");
+    } finally {
+      setCreatingProduct(false);
+    }
+  };
+
+  useEffect(() => {
+    if (activeTab === "improvements") {
+      fetchImprovements();
+    }
+  }, [activeTab]);
+
   // Intentar parsear el analysisResult si viene como string
   const parsedAnalysisResult = React.useMemo(() => {
     if (typeof analysisResult === 'string') {
@@ -391,7 +498,33 @@ export const DashboardPhase: React.FC<DashboardPhaseProps> = ({
           </CardDescription>
         </CardHeader>
         <CardContent className="p-6">
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
+          {/* Tab Selector */}
+          <div className="flex border-b border-purple-100 dark:border-gray-800 mb-6">
+            <button
+              onClick={() => setActiveTab("metrics")}
+              className={`px-4 py-2 text-sm font-semibold transition-all border-b-2 -mb-px ${
+                activeTab === "metrics"
+                  ? "border-purple-500 text-purple-700 dark:text-purple-300"
+                  : "border-transparent text-gray-500 dark:text-gray-400 hover:text-purple-600"
+              }`}
+            >
+              Métricas y Sentimientos
+            </button>
+            <button
+              onClick={() => setActiveTab("improvements")}
+              className={`px-4 py-2 text-sm font-semibold transition-all border-b-2 -mb-px ${
+                activeTab === "improvements"
+                  ? "border-purple-500 text-purple-700 dark:text-purple-300"
+                  : "border-transparent text-gray-500 dark:text-gray-400 hover:text-purple-600"
+              }`}
+            >
+              Propuestas de Mejora 💡
+            </button>
+          </div>
+
+          {activeTab === "metrics" ? (
+            <>
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
             <Card className="border-purple-100 dark:border-gray-800">
               <CardHeader className="pb-2">
                 <CardTitle className="text-lg flex items-center gap-2">
@@ -666,6 +799,122 @@ export const DashboardPhase: React.FC<DashboardPhaseProps> = ({
               </CardContent>
             </Card>
           </div>
+          </>
+          ) : (
+            <div className="space-y-6 text-left pb-6 animate-in fade-in-40">
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-purple-100 dark:border-gray-800 pb-4">
+                <div>
+                  <h3 className="text-xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-indigo-500 via-purple-500 to-pink-500">
+                    Plan de Innovación y Mejora del Producto
+                  </h3>
+                  <p className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">
+                    Propuestas de rediseño y posicionamiento generadas por la IA a partir del feedback de los clientes.
+                  </p>
+                </div>
+                {!createdProductSession && improvements && (
+                  <Button
+                    onClick={handleCreateImprovedProduct}
+                    disabled={creatingProduct}
+                    className="bg-gradient-to-r from-emerald-500 to-green-600 hover:opacity-90 text-white font-semibold text-xs shrink-0 self-start sm:self-center shadow-md shadow-emerald-500/10"
+                  >
+                    {creatingProduct ? (
+                      <>
+                        <span className="animate-spin mr-1.5">•</span>
+                        Creando v2...
+                      </>
+                    ) : (
+                      <>
+                        <Sparkles className="mr-1.5 h-3.5 w-3.5" />
+                        Crear producto mejorado (v2)
+                      </>
+                    )}
+                  </Button>
+                )}
+              </div>
+
+              {createdProductSession && (
+                <div className="p-5 border border-emerald-200 dark:border-emerald-950 bg-emerald-500/[0.03] dark:bg-emerald-950/20 rounded-2xl flex flex-col md:flex-row items-center justify-between gap-4 animate-in zoom-in-95">
+                  <div className="text-left">
+                    <span className="inline-flex items-center gap-1.5 text-[10px] font-bold text-emerald-600 dark:text-emerald-400 bg-emerald-100 dark:bg-emerald-950/40 px-2 py-0.5 rounded-full uppercase tracking-wider">
+                      <Check className="h-3 w-3" />
+                      Versión v2 Creada
+                    </span>
+                    <h4 className="font-bold text-sm mt-2 text-gray-800 dark:text-gray-200">
+                      ¡{createdProductName} está listo para ser evaluado!
+                    </h4>
+                    <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
+                      El producto mejorado se ha registrado en tu historial de experimentos como una versión hija del producto actual.
+                    </p>
+                  </div>
+                  <div className="flex gap-2 shrink-0 w-full md:w-auto">
+                    <Link href="/experiments" className="flex-1 md:flex-none">
+                      <Button variant="outline" size="sm" className="w-full text-xs border-emerald-200/50 hover:bg-emerald-100/20 text-emerald-700 dark:text-emerald-300">
+                        Ver experimentos
+                      </Button>
+                    </Link>
+                    <Button
+                      onClick={() => {
+                        if (typeof window !== "undefined") {
+                          sessionStorage.setItem('review_simulator_session_id', createdProductSession);
+                          window.location.reload();
+                        }
+                      }}
+                      className="flex-1 md:flex-none bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-semibold"
+                      size="sm"
+                    >
+                      Simular v2 ahora
+                    </Button>
+                  </div>
+                </div>
+              )}
+
+              {createError && (
+                <div className="p-3 text-xs text-red-600 dark:text-red-400 bg-red-50 dark:bg-red-950/30 border border-red-200 dark:border-red-900 rounded-lg">
+                  {createError}
+                </div>
+              )}
+
+              {improvementsLoading ? (
+                <div className="flex flex-col items-center justify-center py-20 gap-4">
+                  <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-purple-500" />
+                  <p className="text-sm text-gray-500 dark:text-gray-400">El consultor IA está redactando el plan estratégico...</p>
+                </div>
+              ) : (
+                <div className="space-y-6">
+                  {/* Grid de Tarjetas de Recomendación */}
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    {parseImprovements(improvements).map((section, idx) => (
+                      <Card 
+                        key={idx} 
+                        className="border-purple-100/70 dark:border-gray-800 bg-purple-500/[0.01] hover:border-purple-300 hover:shadow-md transition-all duration-300 flex flex-col justify-between"
+                      >
+                        <div>
+                          <CardHeader className="pb-2 flex flex-row items-center space-y-0 gap-3">
+                            <div className="h-9 w-9 rounded-full bg-purple-100 dark:bg-purple-950/60 flex items-center justify-center text-lg shadow-sm">
+                              {section.icon}
+                            </div>
+                            <CardTitle className="text-sm font-bold text-gray-800 dark:text-gray-200 leading-tight">
+                              {section.title}
+                            </CardTitle>
+                          </CardHeader>
+                          <CardContent className="pt-2">
+                            <ul className="space-y-2 text-xs text-gray-600 dark:text-gray-300">
+                              {section.content.map((point, pIdx) => (
+                                <li key={pIdx} className="flex items-start gap-2 leading-relaxed">
+                                  <span className="text-purple-500 dark:text-purple-400 text-sm mt-0.5">•</span>
+                                  <span>{point}</span>
+                                </li>
+                              ))}
+                            </ul>
+                          </CardContent>
+                        </div>
+                      </Card>
+                    ))}
+                  </div>
+                </div>
+              )}
+            </div>
+          )}
         </CardContent>
         <CardFooter className="bg-gradient-to-r from-indigo-500/5 via-purple-500/5 to-pink-500/5 border-t border-purple-100 dark:border-gray-800 px-6 py-4">
           <div className="flex justify-between w-full">

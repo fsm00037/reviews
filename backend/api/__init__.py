@@ -9,7 +9,16 @@ def create_app():
     
     # Registrar rutas
     from api.routes.reviews import reviews_bp
+    from api.routes.auth import auth_bp
+    from api.routes.populations import populations_bp
+    from api.routes.compare import compare_bp
+    from api.routes.improvements import improvements_bp
+    
     app.register_blueprint(reviews_bp)
+    app.register_blueprint(auth_bp)
+    app.register_blueprint(populations_bp)
+    app.register_blueprint(compare_bp)
+    app.register_blueprint(improvements_bp)
     
     # Inicializar la base de datos SQLite
     from api.utils.db import init_db, seed_preset_populations

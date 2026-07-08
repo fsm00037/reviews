@@ -124,4 +124,6 @@ export interface RecentSession {
   product_name: string;
   product_image: string | null;
   average_rating: number | null;
+  parent_session_id?: string | null;
+  parent_product_name?: string | null;
 } 

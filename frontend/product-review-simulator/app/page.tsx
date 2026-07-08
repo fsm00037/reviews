@@ -17,6 +17,7 @@ import { ApiErrorAlert } from "@/components/api-error-alert"
 import { LoadingSpinner } from "@/components/loading-spinner"
 import { APIError, RecentSession } from "@/lib/types"
 import { ProductService } from "@/lib/api-services"
+import { AuthModal } from "@/components/auth-modal"
 
 export default function Home() {
   const [hovered, setHovered] = useState(false)
@@ -27,9 +28,22 @@ export default function Home() {
   const urlInputRef = useRef<HTMLInputElement>(null)
   const [recentSessions, setRecentSessions] = useState<RecentSession[]>([])
   const [isLoadingSessions, setIsLoadingSessions] = useState(true)
+  const [currentUser, setCurrentUser] = useState<{ id: number; username: string } | null>(null)
+
+  useEffect(() => {
+    if (typeof window !== "undefined") {
+      const stored = localStorage.getItem("review_simulator_user")
+      if (stored) {
+        try {
+          setCurrentUser(JSON.parse(stored))
+        } catch (e) {}
+      }
+    }
+  }, [])
 
   useEffect(() => {
     const fetchSessions = async () => {
+      setIsLoadingSessions(true);
       try {
         const sessions = await SimulatorService.getRecentSessions();
         setRecentSessions(sessions || []);
@@ -40,7 +54,7 @@ export default function Home() {
       }
     };
     fetchSessions();
-  }, []);
+  }, [currentUser]);
 
   const handleSelectRecentSession = (sessionId: string) => {
     if (typeof window !== 'undefined') {
@@ -173,6 +187,14 @@ export default function Home() {
           </motion.span>
         </Link>
         <nav className="ml-auto flex gap-4 sm:gap-6 items-center">
+          {currentUser && (
+            <Link
+              className="text-sm font-semibold text-purple-600 dark:text-purple-400 hover:text-purple-800 transition-colors"
+              href="/experiments"
+            >
+              Mis Experimentos
+            </Link>
+          )}
           <Link
             className="text-sm font-medium hover:text-purple-600 dark:hover:text-purple-400 transition-colors"
             href="#"
@@ -186,6 +208,14 @@ export default function Home() {
             Help
           </Link>
           <ThemeToggle />
+          <AuthModal onStateChange={() => {
+            const stored = localStorage.getItem("review_simulator_user")
+            if (stored) {
+              setCurrentUser(JSON.parse(stored))
+            } else {
+              setCurrentUser(null)
+            }
+          }} />
         </nav>
       </header>
       <main className="flex-1 relative z-10">

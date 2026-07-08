@@ -14,6 +14,7 @@ import { useTheme } from "next-themes"
 import { ApiErrorAlert } from "@/components/api-error-alert"
 import { SimulatorService } from "@/lib/api-services"
 import { APIError } from "@/lib/types"
+import { AuthModal } from "@/components/auth-modal"
 
 // Importar servicios API y tipos
 import { ProductService, BotService, ReviewService, AnalysisService, getSessionId } from "@/lib/api-services"
@@ -122,6 +123,18 @@ const SpaceStars = () => {
 export default function SimulatorPage() {
   // Dentro de la función SimulatorPage
   const { theme, setTheme } = useTheme()
+  const [currentUser, setCurrentUser] = useState<{ id: number; username: string } | null>(null)
+
+  useEffect(() => {
+    if (typeof window !== "undefined") {
+      const stored = localStorage.getItem("review_simulator_user")
+      if (stored) {
+        try {
+          setCurrentUser(JSON.parse(stored))
+        } catch (e) {}
+      }
+    }
+  }, [])
 
   // State for product information
   const [product, setProduct] = useState<Product>({
@@ -864,8 +877,24 @@ export default function SimulatorPage() {
           <h1 className="text-2xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-indigo-500 via-purple-500 to-pink-500">
             Product Review Simulator
           </h1>
-          <div className="ml-auto">
+          <div className="ml-auto flex items-center gap-3">
+            {currentUser && (
+              <Link
+                className="text-sm font-semibold text-purple-600 dark:text-purple-400 hover:text-purple-800 transition-colors"
+                href="/experiments"
+              >
+                Mis Experimentos
+              </Link>
+            )}
             <ThemeToggle />
+            <AuthModal onStateChange={() => {
+              const stored = localStorage.getItem("review_simulator_user")
+              if (stored) {
+                setCurrentUser(JSON.parse(stored))
+              } else {
+                setCurrentUser(null)
+              }
+            }} />
           </div>
         </motion.div>
 

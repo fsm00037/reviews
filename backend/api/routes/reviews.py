@@ -32,8 +32,15 @@ def health_check():
 @reviews_bp.route('/sessions', methods=['GET'])
 def get_recent_sessions_endpoint():
     """Obtener las sesiones recientes con datos"""
+    user_id_header = request.headers.get("X-User-Id")
+    user_id = None
+    if user_id_header:
+        try:
+            user_id = int(user_id_header)
+        except ValueError:
+            pass
     try:
-        sessions = db.get_recent_sessions()
+        sessions = db.get_recent_sessions(user_id)
         return jsonify(sessions), 200
     except Exception as e:
         return jsonify({"error": str(e)}), 500
@@ -54,6 +61,14 @@ def phase1_product_info():
     Fase 1: Extraer información del producto (Asíncrona)
     """
     session_id = get_session_id()
+    user_id_header = request.headers.get("X-User-Id")
+    user_id = None
+    if user_id_header:
+        try:
+            user_id = int(user_id_header)
+        except ValueError:
+            pass
+            
     data = request.json
     
     if not data or 'product_url' not in data:
@@ -63,7 +78,7 @@ def phase1_product_info():
     model_name = data.get('model_name', None)
     
     try:
-        res = execute_phase1(product_url, model_name, session_id)
+        res = execute_phase1(product_url, model_name, session_id, user_id=user_id)
         return jsonify(res), 202
     except Exception as e:
         return jsonify({"error": str(e)}), 500
@@ -175,6 +190,12 @@ def get_reviewers():
     if not reviewers and status_info['status'] in ['pending', 'running']:
         return jsonify({"error": "Perfiles de reseñadores no listos"}), 404
         
+    return jsonify(reviewers)
+
+@reviews_bp.route('/sessions/<session_id>/reviewers', methods=['GET'])
+def get_session_reviewers(session_id):
+    """Obtener perfiles de los reseñadores de una sesión específica"""
+    reviewers = get_reviewer_profiles(session_id)
     return jsonify(reviewers)
 
 @reviews_bp.route('/reviews', methods=['GET'])

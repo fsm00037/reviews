@@ -28,11 +28,59 @@ def init_db():
     # Habilitar claves foráneas
     cursor.execute("PRAGMA foreign_keys = ON")
     
+    # Tabla para los usuarios
+    cursor.execute("""
+    CREATE TABLE IF NOT EXISTS users (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        username TEXT UNIQUE NOT NULL,
+        password_hash TEXT NOT NULL,
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+    )
+    """)
+    
     # Tabla para las sesiones de usuario
     cursor.execute("""
     CREATE TABLE IF NOT EXISTS sessions (
         session_id TEXT PRIMARY KEY,
         created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+    )
+    """)
+    
+    # Migración: Intentar añadir la columna user_id a la tabla sessions
+    try:
+        cursor.execute("ALTER TABLE sessions ADD COLUMN user_id INTEGER REFERENCES users(id) ON DELETE SET NULL")
+    except sqlite3.OperationalError:
+        # La columna ya existe
+        pass
+        
+    # Migración: Intentar añadir la columna parent_session_id a la tabla sessions
+    try:
+        cursor.execute("ALTER TABLE sessions ADD COLUMN parent_session_id TEXT REFERENCES sessions(session_id) ON DELETE SET NULL")
+    except sqlite3.OperationalError:
+        # La columna ya existe
+        pass
+        
+    # Tabla para poblaciones personalizadas guardadas
+    cursor.execute("""
+    CREATE TABLE IF NOT EXISTS saved_populations (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        user_id INTEGER NOT NULL,
+        name TEXT NOT NULL,
+        description TEXT,
+        num_reviewers INTEGER NOT NULL,
+        profile_parameters TEXT NOT NULL, -- Serializado como JSON
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
+    )
+    """)
+    
+    # Tabla para las propuestas de mejora del producto
+    cursor.execute("""
+    CREATE TABLE IF NOT EXISTS product_improvements (
+        session_id TEXT PRIMARY KEY,
+        improvements_report TEXT NOT NULL,
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        FOREIGN KEY (session_id) REFERENCES sessions(session_id) ON DELETE CASCADE
     )
     """)
     
@@ -145,15 +193,30 @@ def init_db():
     conn.close()
 
 
-def init_session(session_id: str):
+def init_session(session_id: str, user_id: int = None):
     conn = get_connection()
     cursor = conn.cursor()
-    cursor.execute("INSERT OR IGNORE INTO sessions (session_id) VALUES (?)", (session_id,))
+    cursor.execute("""
+    INSERT INTO sessions (session_id, user_id) VALUES (?, ?)
+    ON CONFLICT(session_id) DO UPDATE SET user_id = COALESCE(sessions.user_id, excluded.user_id)
+    """, (session_id, user_id))
     conn.commit()
     conn.close()
 
-def save_product(session_id: str, product: dict):
-    init_session(session_id)
+def init_child_session(session_id: str, parent_session_id: str, user_id: int = None):
+    conn = get_connection()
+    cursor = conn.cursor()
+    cursor.execute("""
+    INSERT INTO sessions (session_id, user_id, parent_session_id) VALUES (?, ?, ?)
+    ON CONFLICT(session_id) DO UPDATE SET 
+        user_id = COALESCE(sessions.user_id, excluded.user_id),
+        parent_session_id = COALESCE(sessions.parent_session_id, excluded.parent_session_id)
+    """, (session_id, user_id, parent_session_id))
+    conn.commit()
+    conn.close()
+
+def save_product(session_id: str, product: dict, user_id: int = None):
+    init_session(session_id, user_id)
     conn = get_connection()
     cursor = conn.cursor()
     cursor.execute("""
@@ -338,12 +401,6 @@ def get_task_status(session_id: str, phase: str) -> dict:
         return {"status": "idle", "error": None}
     return {"status": row["status"], "error": row["error"]}
 
-def init_session(session_id: str):
-    conn = get_connection()
-    cursor = conn.cursor()
-    cursor.execute("INSERT OR IGNORE INTO sessions (session_id) VALUES (?)", (session_id,))
-    conn.commit()
-    conn.close()
 
 def delete_session(session_id: str):
     conn = get_connection()
@@ -358,17 +415,28 @@ def delete_session(session_id: str):
     conn.commit()
     conn.close()
 
-def get_recent_sessions() -> list:
+def get_recent_sessions(user_id=None) -> list:
     conn = get_connection()
     cursor = conn.cursor()
-    cursor.execute("""
-    SELECT s.session_id, s.created_at, p.name as product_name, p.image as product_image, a.average_rating
-    FROM sessions s
-    JOIN products p ON s.session_id = p.session_id
-    LEFT JOIN analysis a ON s.session_id = a.session_id
-    ORDER BY s.created_at DESC
-    LIMIT 10
-    """)
+    if user_id is not None:
+        cursor.execute("""
+        SELECT s.session_id, s.created_at, s.parent_session_id, p.name as product_name, p.image as product_image, a.average_rating,
+               (SELECT name FROM products WHERE session_id = s.parent_session_id) as parent_product_name
+        FROM sessions s
+        JOIN products p ON s.session_id = p.session_id
+        LEFT JOIN analysis a ON s.session_id = a.session_id
+        WHERE s.user_id = ?
+        ORDER BY s.created_at DESC
+        """, (user_id,))
+    else:
+        cursor.execute("""
+        SELECT s.session_id, s.created_at, s.parent_session_id, p.name as product_name, p.image as product_image, a.average_rating,
+               (SELECT name FROM products WHERE session_id = s.parent_session_id) as parent_product_name
+        FROM sessions s
+        JOIN products p ON s.session_id = p.session_id
+        LEFT JOIN analysis a ON s.session_id = a.session_id
+        ORDER BY s.created_at DESC
+        """)
     rows = cursor.fetchall()
     conn.close()
     result = []
@@ -376,6 +444,8 @@ def get_recent_sessions() -> list:
         result.append({
             "session_id": row["session_id"],
             "created_at": row["created_at"],
+            "parent_session_id": row["parent_session_id"],
+            "parent_product_name": row["parent_product_name"],
             "product_name": row["product_name"],
             "product_image": row["product_image"],
             "average_rating": row["average_rating"]
@@ -534,3 +604,109 @@ def seed_preset_populations():
         print(f"❌ Error al crear poblaciones predeterminadas: {e}")
     finally:
         conn.close()
+
+# ─── User Authentication Helpers ───────────────────────────────────────────────
+
+def create_user(username, password_hash) -> int:
+    conn = get_connection()
+    cursor = conn.cursor()
+    try:
+        cursor.execute("INSERT INTO users (username, password_hash) VALUES (?, ?)", (username, password_hash))
+        user_id = cursor.lastrowid
+        conn.commit()
+        return user_id
+    except sqlite3.IntegrityError:
+        return None
+    finally:
+        conn.close()
+
+def get_user_by_username(username) -> dict:
+    conn = get_connection()
+    cursor = conn.cursor()
+    cursor.execute("SELECT * FROM users WHERE username = ?", (username,))
+    row = cursor.fetchone()
+    conn.close()
+    if not row:
+        return None
+    return {
+        "id": row["id"],
+        "username": row["username"],
+        "password_hash": row["password_hash"]
+    }
+
+def get_user_by_id(user_id) -> dict:
+    conn = get_connection()
+    cursor = conn.cursor()
+    cursor.execute("SELECT * FROM users WHERE id = ?", (user_id,))
+    row = cursor.fetchone()
+    conn.close()
+    if not row:
+        return None
+    return {
+        "id": row["id"],
+        "username": row["username"]
+    }
+
+# ─── Saved Populations Helpers ─────────────────────────────────────────────────
+
+def save_population(user_id: int, name: str, description: str, num_reviewers: int, profile_parameters: dict) -> int:
+    conn = get_connection()
+    cursor = conn.cursor()
+    cursor.execute("""
+    INSERT INTO saved_populations (user_id, name, description, num_reviewers, profile_parameters)
+    VALUES (?, ?, ?, ?, ?)
+    """, (user_id, name, description, num_reviewers, json.dumps(profile_parameters)))
+    pop_id = cursor.lastrowid
+    conn.commit()
+    conn.close()
+    return pop_id
+
+def get_saved_populations(user_id: int) -> list:
+    conn = get_connection()
+    cursor = conn.cursor()
+    cursor.execute("SELECT * FROM saved_populations WHERE user_id = ? ORDER BY created_at DESC", (user_id,))
+    rows = cursor.fetchall()
+    conn.close()
+    result = []
+    for row in rows:
+        result.append({
+            "id": row["id"],
+            "user_id": row["user_id"],
+            "name": row["name"],
+            "description": row["description"],
+            "num_reviewers": row["num_reviewers"],
+            "profile_parameters": json.loads(row["profile_parameters"] or "{}"),
+            "created_at": row["created_at"]
+        })
+    return result
+
+def delete_saved_population(pop_id: int, user_id: int) -> bool:
+    conn = get_connection()
+    cursor = conn.cursor()
+    cursor.execute("DELETE FROM saved_populations WHERE id = ? AND user_id = ?", (pop_id, user_id))
+    changes = conn.total_changes
+    conn.commit()
+    conn.close()
+    return changes > 0
+
+# ─── Product Improvements Helpers ──────────────────────────────────────────────
+
+def save_improvements(session_id: str, improvements_report: str):
+    conn = get_connection()
+    cursor = conn.cursor()
+    cursor.execute("""
+    INSERT OR REPLACE INTO product_improvements (session_id, improvements_report)
+    VALUES (?, ?)
+    """, (session_id, improvements_report))
+    conn.commit()
+    conn.close()
+
+def get_improvements(session_id: str) -> str:
+    conn = get_connection()
+    cursor = conn.cursor()
+    cursor.execute("SELECT improvements_report FROM product_improvements WHERE session_id = ?", (session_id,))
+    row = cursor.fetchone()
+    conn.close()
+    if not row:
+        return None
+    return row["improvements_report"]
