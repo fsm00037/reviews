@@ -9,4 +9,5 @@ langchain-community>=0.0.16
 langchain-core>=0.1.20
 numpy>=2.1.0
 pandas>=2.2.3
-requests>=2.31.0 
+requests>=2.31.0
+litellm 

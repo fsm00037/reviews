@@ -176,15 +176,6 @@ def execute_phase3(product_info: Dict[str, Any], user_profiles: List[Dict[str, A
     session_dir = get_session_dir(session_id)
     db.set_task_status(session_id, 'phase3', 'pending')
     
-    # Escribir producto y revisores temporales en disco (por si acaso el crew en ejecución los necesita)
-    try:
-        with open(os.path.join(session_dir, "producto.json"), "w", encoding="utf-8") as f:
-            json.dump(product_info, f, ensure_ascii=False, indent=2)
-        with open(os.path.join(session_dir, "reviewers.json"), "w", encoding="utf-8") as f:
-            json.dump({"profiles": user_profiles}, f, ensure_ascii=False, indent=2)
-    except Exception as e:
-        print(f"Error escribiendo datos temporales en disco para Fase 3: {e}")
-        
     thread = threading.Thread(target=_bg_phase3, args=(product_info, user_profiles, model_name, session_id, session_dir))
     thread.daemon = True
     thread.start()
@@ -195,17 +186,8 @@ def _bg_phase4(model_name: str, session_id: str, session_dir: str):
     try:
         db.set_task_status(session_id, 'phase4', 'running')
         
-        # Asegurar que las reviews de la sesión estén en disco para que el leerReviews del agente pueda leerlas
-        reviews_dir = os.path.join(session_dir, "reviews")
-        os.makedirs(reviews_dir, exist_ok=True)
-        
         reviews = db.get_reviews(session_id)
-        for r in reviews:
-            review_file = os.path.join(reviews_dir, f"review_{r['id']}.json")
-            with open(review_file, "w", encoding="utf-8") as f:
-                json.dump(r, f, ensure_ascii=False, indent=2)
-                
-        phase4_results = run_phase4(model_name, session_dir)
+        phase4_results = run_phase4(model_name, session_dir, reviews)
         analysis_data = phase4_results.json_dict
         
         # Guardar en SQLite
