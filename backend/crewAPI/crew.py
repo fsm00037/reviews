@@ -280,6 +280,26 @@ def run_phase2(num_reviewers: int, profile_parameters: Union[Dict[str, Any], str
                 print(f"Error loading product info from DB for profile generation: {e}")
 
         def generate_single_profile(index: int):
+            from faker import Faker
+            
+            # Determinar género basado en la proporción demográfica
+            demographics = profile_parameters.get("demographics", {})
+            gender_ratio = demographics.get("gender_ratio", "Male&Female")
+            
+            if gender_ratio == "Male":
+                gender = "Male"
+            elif gender_ratio == "Female":
+                gender = "Female"
+            else:
+                # Distribuir equitativamente alternando según el índice
+                gender = "Male" if index % 2 == 0 else "Female"
+                
+            # Generar nombre español realista con Faker
+            fake = Faker('es_ES')
+            first_name = fake.first_name_male() if gender == "Male" else fake.first_name_female()
+            last_name = fake.last_name()
+            generated_name = f"{first_name} {last_name}"
+            
             population_prompt_instruction = ""
             population_prompt = profile_parameters.get("population_prompt", "")
             if population_prompt:
@@ -293,6 +313,11 @@ def run_phase2(num_reviewers: int, profile_parameters: Union[Dict[str, Any], str
             prompt = f"""
             Genera un (1) único perfil de usuario realista y detallado para evaluar un producto en español.
             Este es el perfil {index} de un total de {num_reviewers} perfiles a generar.
+            
+            DEBES usar estrictamente el siguiente nombre y género predeterminados para este perfil:
+            - Nombre completo: {generated_name}
+            - Género: {gender}
+            
             {product_instructions}
             {population_prompt_instruction}
             El perfil debe crearse considerando estos rasgos demográficos y de personalidad de la población (de 0 a 100):
@@ -301,11 +326,11 @@ def run_phase2(num_reviewers: int, profile_parameters: Union[Dict[str, Any], str
             Asegúrate de que el perfil generado sea original, diverso y diferente a otros perfiles típicos.
             El perfil de usuario debe incluir:
             - id: un número único (usa {index})
-            - name: nombre completo en español (nombre y apellido realistas)
+            - name: {generated_name}
             - bio: una biografía breve
             - age: edad (número entero)
             - location: ubicación en España (ej. Madrid, Barcelona, Sevilla, Valencia...)
-            - gender: género (Male, Female o Other)
+            - gender: {gender}
             - education_level: nivel educativo
             - personality: un objeto con rasgos de personalidad (valores de 0 a 100):
               * introvert_extrovert
@@ -319,6 +344,10 @@ def run_phase2(num_reviewers: int, profile_parameters: Union[Dict[str, Any], str
             """
             try:
                 profile_dict = call_llm_json(prompt, BotProfile, model_name=model_name, temperature=1.2)
+                # Forzar el nombre y género generados por Faker para evitar desviaciones
+                profile_dict["name"] = generated_name
+                profile_dict["gender"] = gender
+                
                 with db_lock:
                     profiles.append(profile_dict)
                     # Ordenar perfiles por id
