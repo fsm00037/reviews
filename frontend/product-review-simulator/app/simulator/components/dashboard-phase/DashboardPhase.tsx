@@ -658,11 +658,7 @@ export const DashboardPhase: React.FC<DashboardPhaseProps> = ({
                       animate={{ opacity: 1, y: 0 }}
                       transition={{ delay: index * 0.1 }}
                     >
-                      {index % 2 === 0 ? (
-                        <TrendingUp className="h-4 w-4 text-blue-500 mt-0.5 flex-shrink-0" />
-                      ) : (
-                        <TrendingDown className="h-4 w-4 text-purple-500 mt-0.5 flex-shrink-0" />
-                      )}
+                      <div className={`h-2 w-2 rounded-full ${index % 2 === 0 ? "bg-blue-500" : "bg-purple-500"} mt-1.5 flex-shrink-0`} />
                       <span className="text-sm">{insight}</span>
                     </motion.div>
                   ))}
