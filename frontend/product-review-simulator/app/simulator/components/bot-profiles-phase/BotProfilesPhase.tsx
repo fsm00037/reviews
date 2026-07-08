@@ -3,7 +3,8 @@ import { motion } from "framer-motion";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from "@/components/ui/card";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { ArrowLeft, ArrowRight, MessageSquare, UserCircle2, Zap } from "lucide-react";
+import { ArrowLeft, ArrowRight, BookOpen, MessageSquare, UserCircle2, Zap } from "lucide-react";
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { FanIcon as MaleIcon } from "lucide-react";
 import { FanIcon as FemaleIcon } from "lucide-react";
 import { BotProfile } from "@/lib/types";
@@ -106,7 +107,32 @@ export const BotProfilesPhase: React.FC<BotProfilesPhaseProps> = ({
                 </CardHeader>
                 <CardContent className="pt-2">
                   <p className="text-sm text-gray-500 dark:text-gray-400 mb-2">{bot.education_level}</p>
-                  <p className="text-sm text-gray-600 dark:text-gray-300 mb-4">{bot.bio}</p>
+                  <p className="text-sm text-gray-600 dark:text-gray-300 mb-2">{bot.bio}</p>
+
+                  {bot.backstory && (
+                    <Dialog>
+                      <DialogTrigger asChild>
+                        <Button
+                          variant="link"
+                          className="text-purple-600 dark:text-purple-400 hover:text-purple-800 p-0 h-auto font-semibold text-xs mb-4 flex items-center gap-1"
+                        >
+                          <BookOpen className="h-3 w-3" />
+                          Ver historia de fondo
+                        </Button>
+                      </DialogTrigger>
+                      <DialogContent className="max-w-md md:max-w-lg bg-white dark:bg-gray-950 border dark:border-gray-800 text-gray-900 dark:text-gray-100">
+                        <DialogHeader>
+                          <DialogTitle>Historia de fondo: {bot.name}</DialogTitle>
+                          <DialogDescription className="text-gray-500 dark:text-gray-400">
+                            Detalles sobre la experiencia, intereses y motivaciones del usuario.
+                          </DialogDescription>
+                        </DialogHeader>
+                        <div className="mt-4 text-sm text-gray-600 dark:text-gray-300 leading-relaxed max-h-[60vh] overflow-y-auto pr-2">
+                          {bot.backstory}
+                        </div>
+                      </DialogContent>
+                    </Dialog>
+                  )}
 
                   <div className="space-y-2">
                     <h4 className="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">

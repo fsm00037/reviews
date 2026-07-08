@@ -318,7 +318,7 @@ def run_phase2(num_reviewers: int, profile_parameters: Union[Dict[str, Any], str
             - backstory: historia detallada del usuario con su experiencia, intereses y motivaciones.
             """
             try:
-                profile_dict = call_llm_json(prompt, BotProfile, model_name=model_name)
+                profile_dict = call_llm_json(prompt, BotProfile, model_name=model_name, temperature=1.2)
                 with db_lock:
                     profiles.append(profile_dict)
                     # Ordenar perfiles por id
@@ -435,6 +435,30 @@ def run_phase4(model_name: str = None, session_dir: str = None, reviews: List[Di
     """
     
     analysis_dict = call_llm_json(prompt, AnalysisResult, model_name=model_name)
+    
+    # Calcular promedio y distribución de calificaciones programáticamente para máxima precisión
+    if reviews:
+        ratings = [r.get('rating', 0) for r in reviews if r.get('rating') is not None]
+        avg_rating = round(sum(ratings) / len(ratings), 2) if ratings else 0.0
+        dist = {
+            "one_star": ratings.count(1),
+            "two_stars": ratings.count(2),
+            "three_stars": ratings.count(3),
+            "four_stars": ratings.count(4),
+            "five_stars": ratings.count(5)
+        }
+    else:
+        avg_rating = 0.0
+        dist = {
+            "one_star": 0,
+            "two_stars": 0,
+            "three_stars": 0,
+            "four_stars": 0,
+            "five_stars": 0
+        }
+        
+    analysis_dict["average_rating"] = avg_rating
+    analysis_dict["rating_distribution"] = dist
     
     return LiteLLMResult(analysis_dict)
     
