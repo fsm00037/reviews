@@ -194,6 +194,12 @@ export const ProductService = {
     fetchAPI<Product>('/product', {
       method: 'PUT',
       body: JSON.stringify(product),
+    }),
+
+  // Duplicar producto/sesión completo
+  duplicateProduct: (sessionId: string) =>
+    fetchAPI<{ status: string; message: string; session_id: string }>(`/sessions/${sessionId}/duplicate`, {
+      method: 'POST'
     })
 };
 
@@ -538,11 +544,14 @@ export const SavedPopulationService = {
 };
 
 export const CompareService = {
-  compareSessions: (sessionId1: string, sessionId2: string) =>
-    fetchAPI<any>('/compare', {
+  startComparison: (sessionId1: string, sessionId2: string) =>
+    fetchAPI<{job_id: string; status: string}>('/compare', {
       method: 'POST',
       body: JSON.stringify({ session_id_1: sessionId1, session_id_2: sessionId2 })
-    })
+    }),
+  
+  getComparisonResult: (jobId: string) =>
+    fetchAPI<any>(`/compare/${jobId}`)
 };
 
 export const ImprovementService = {

@@ -176,6 +176,28 @@ def get_product():
         
     return jsonify(product_info)
 
+@reviews_bp.route('/product', methods=['PUT'])
+def update_product_endpoint():
+    """Actualizar la información del producto de la sesión"""
+    session_id = get_session_id()
+    user_id_header = request.headers.get("X-User-Id")
+    user_id = None
+    if user_id_header:
+        try:
+            user_id = int(user_id_header)
+        except ValueError:
+            pass
+            
+    product_data = request.json
+    if not product_data:
+        return jsonify({"error": "Se requieren los datos del producto"}), 400
+        
+    try:
+        db.save_product(session_id, product_data, user_id=user_id)
+        return jsonify(product_data), 200
+    except Exception as e:
+        return jsonify({"error": f"Error al guardar los cambios del producto: {str(e)}"}), 500
+
 @reviews_bp.route('/reviewers', methods=['GET'])
 def get_reviewers():
     """Obtener perfiles de los reseñadores"""
@@ -197,6 +219,142 @@ def get_session_reviewers(session_id):
     """Obtener perfiles de los reseñadores de una sesión específica"""
     reviewers = get_reviewer_profiles(session_id)
     return jsonify(reviewers)
+
+@reviews_bp.route('/sessions/<session_id>/duplicate', methods=['POST'])
+def duplicate_session(session_id):
+    """Duplicar un experimento completo (producto, reviewers, reviews, análisis)"""
+    import uuid
+    user_id_header = request.headers.get("X-User-Id")
+    user_id = None
+    if user_id_header:
+        try:
+            user_id = int(user_id_header)
+        except ValueError:
+            pass
+
+    # Generar un nuevo ID de sesión
+    new_session_id = f"copy-{uuid.uuid4().hex[:12]}"
+    
+    conn = db.get_connection()
+    cursor = conn.cursor()
+    try:
+        # 1. Obtener la sesión original
+        cursor.execute("SELECT * FROM sessions WHERE session_id = ?", (session_id,))
+        session_row = cursor.fetchone()
+        if not session_row:
+            return jsonify({"error": "Sesión original no encontrada"}), 404
+            
+        # 2. Insertar nueva sesión (como hijo del experimento que estamos duplicando)
+        parent_id = session_id
+        cursor.execute("""
+        INSERT INTO sessions (session_id, user_id, parent_session_id)
+        VALUES (?, ?, ?)
+        """, (new_session_id, user_id, parent_id))
+        
+        # 3. Duplicar Producto
+        cursor.execute("SELECT * FROM products WHERE session_id = ?", (session_id,))
+        p_row = cursor.fetchone()
+        if p_row:
+            original_name = p_row["name"] or "Producto"
+            copied_name = f"{original_name} (copia)"
+            cursor.execute("""
+            INSERT INTO products (session_id, name, description, price, image, category, main_features, technical_specs)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+            """, (
+                new_session_id,
+                copied_name,
+                p_row["description"],
+                p_row["price"],
+                p_row["image"],
+                p_row["category"],
+                p_row["main_features"],
+                p_row["technical_specs"]
+            ))
+            
+        # 4. Duplicar Reviewers
+        cursor.execute("SELECT * FROM reviewers WHERE session_id = ?", (session_id,))
+        rev_rows = cursor.fetchall()
+        for r in rev_rows:
+            cursor.execute("""
+            INSERT INTO reviewers (session_id, id, name, avatar, bio, age, location, gender, education_level, personality, backstory)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+            """, (
+                new_session_id,
+                r["id"],
+                r["name"],
+                r["avatar"],
+                r["bio"],
+                r["age"],
+                r["location"],
+                r["gender"],
+                r["education_level"],
+                r["personality"],
+                r["backstory"]
+            ))
+            
+        # 5. Duplicar Reviews
+        cursor.execute("SELECT * FROM reviews WHERE session_id = ?", (session_id,))
+        revw_rows = cursor.fetchall()
+        for rw in revw_rows:
+            cursor.execute("""
+            INSERT INTO reviews (session_id, id, bot_id, product_id, rating, title, content)
+            VALUES (?, ?, ?, ?, ?, ?, ?)
+            """, (
+                new_session_id,
+                rw["id"],
+                rw["bot_id"],
+                rw["product_id"],
+                rw["rating"],
+                rw["title"],
+                rw["content"]
+            ))
+            
+        # 6. Duplicar Análisis
+        cursor.execute("SELECT * FROM analysis WHERE session_id = ?", (session_id,))
+        an_row = cursor.fetchone()
+        if an_row:
+            cursor.execute("""
+            INSERT INTO analysis (session_id, average_rating, rating_distribution, positive_points, negative_points, keyword_analysis, demographic_insights)
+            VALUES (?, ?, ?, ?, ?, ?, ?)
+            """, (
+                new_session_id,
+                an_row["average_rating"],
+                an_row["rating_distribution"],
+                an_row["positive_points"],
+                an_row["negative_points"],
+                an_row["keyword_analysis"],
+                an_row["demographic_insights"]
+            ))
+            
+        # 7. Duplicar task_status
+        cursor.execute("SELECT * FROM task_status WHERE session_id = ?", (session_id,))
+        ts_rows = cursor.fetchall()
+        for ts in ts_rows:
+            cursor.execute("""
+            INSERT INTO task_status (session_id, phase, status, error)
+            VALUES (?, ?, ?, ?)
+            """, (new_session_id, ts["phase"], ts["status"], ts["error"]))
+            
+        # 8. Duplicar product_improvements
+        cursor.execute("SELECT * FROM product_improvements WHERE session_id = ?", (session_id,))
+        imp_row = cursor.fetchone()
+        if imp_row:
+            cursor.execute("""
+            INSERT INTO product_improvements (session_id, improvements_report)
+            VALUES (?, ?)
+            """, (new_session_id, imp_row["improvements_report"]))
+            
+        conn.commit()
+        return jsonify({
+            "status": "success",
+            "message": "Experimento duplicado correctamente",
+            "session_id": new_session_id
+        }), 200
+    except Exception as e:
+        conn.rollback()
+        return jsonify({"error": f"Error al duplicar la sesión: {str(e)}"}), 500
+    finally:
+        conn.close()
 
 @reviews_bp.route('/reviews', methods=['GET'])
 def get_all_reviews():

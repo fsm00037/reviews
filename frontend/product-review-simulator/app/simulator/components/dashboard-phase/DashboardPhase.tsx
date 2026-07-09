@@ -18,9 +18,107 @@ import {
   Rocket,
   TrendingUp,
   TrendingDown,
+  Lightbulb,
+  Target,
+  Megaphone,
+  Wrench,
+  ShieldCheck,
+  PackageOpen,
 } from "lucide-react";
 import { Product, AnalysisResult, KeywordAnalysis } from "@/lib/types";
 import { getSessionId, ImprovementService } from "@/lib/api-services";
+
+// ── Parser de secciones del informe de mejora ────────────────────────────
+interface ImprovementCard {
+  title: string;
+  bullets: string[];
+  rawEmoji: string;
+}
+
+const CARD_COLORS = [
+  { bg: "bg-indigo-50 dark:bg-indigo-950/30", border: "border-indigo-200 dark:border-indigo-900", badge: "bg-indigo-100 dark:bg-indigo-950 text-indigo-600 dark:text-indigo-300", dot: "bg-indigo-400" },
+  { bg: "bg-purple-50 dark:bg-purple-950/30", border: "border-purple-200 dark:border-purple-900", badge: "bg-purple-100 dark:bg-purple-950 text-purple-600 dark:text-purple-300", dot: "bg-purple-400" },
+  { bg: "bg-emerald-50 dark:bg-emerald-950/30", border: "border-emerald-200 dark:border-emerald-900", badge: "bg-emerald-100 dark:bg-emerald-950 text-emerald-600 dark:text-emerald-300", dot: "bg-emerald-400" },
+  { bg: "bg-amber-50 dark:bg-amber-950/30", border: "border-amber-200 dark:border-amber-900", badge: "bg-amber-100 dark:bg-amber-950 text-amber-600 dark:text-amber-300", dot: "bg-amber-400" },
+  { bg: "bg-rose-50 dark:bg-rose-950/30", border: "border-rose-200 dark:border-rose-900", badge: "bg-rose-100 dark:bg-rose-950 text-rose-600 dark:text-rose-300", dot: "bg-rose-400" },
+  { bg: "bg-cyan-50 dark:bg-cyan-950/30", border: "border-cyan-200 dark:border-cyan-900", badge: "bg-cyan-100 dark:bg-cyan-950 text-cyan-600 dark:text-cyan-300", dot: "bg-cyan-400" },
+];
+
+function parseSections(markdown: string): ImprovementCard[] {
+  if (!markdown) return [];
+  const lines = markdown.split("\n");
+  const sections: ImprovementCard[] = [];
+  let current: ImprovementCard | null = null;
+
+  for (const raw of lines) {
+    const line = raw.trim();
+    // Detectar cabeceras ##, ###, ####
+    if (/^#{1,4}\s/.test(line)) {
+      if (current && current.bullets.length > 0) sections.push(current);
+      const title = line.replace(/^#+\s+/, "").replace(/[*_`]/g, "").trim();
+      const emojiMatch = title.match(/\p{Emoji_Presentation}|\p{Extended_Pictographic}/u);
+      current = { title, bullets: [], rawEmoji: emojiMatch ? emojiMatch[0] : "" };
+    } else if (/^[-*+]\s/.test(line) && current) {
+      const bullet = line.replace(/^[-*+]\s+/, "").replace(/\*\*([^*]+)\*\*/g, "$1").trim();
+      if (bullet) current.bullets.push(bullet);
+    } else if (/^\d+\.\s/.test(line) && current) {
+      const bullet = line.replace(/^\d+\.\s+/, "").replace(/\*\*([^*]+)\*\*/g, "$1").trim();
+      if (bullet) current.bullets.push(bullet);
+    }
+  }
+  if (current && current.bullets.length > 0) sections.push(current);
+  return sections;
+}
+
+function ImprovementsGrid({ text }: { text: string }) {
+  const sections = parseSections(text);
+  if (sections.length === 0) return (
+    <p className="text-sm text-gray-400 text-center py-8">No hay propuestas disponibles aún.</p>
+  );
+
+  return (
+    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+      {sections.map((section, idx) => {
+        const c = CARD_COLORS[idx % CARD_COLORS.length];
+        const top3 = section.bullets.slice(0, 3);
+        return (
+          <motion.div
+            key={idx}
+            initial={{ opacity: 0, y: 12 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: idx * 0.07 }}
+            className={`rounded-2xl border ${c.border} ${c.bg} p-4 flex flex-col gap-3`}
+          >
+            {/* Header */}
+            <div className="flex items-start gap-3">
+              <span className="text-2xl leading-none mt-0.5 flex-shrink-0">
+                {section.rawEmoji || "💡"}
+              </span>
+              <p className={`text-[11px] font-bold uppercase tracking-wide leading-tight ${c.badge.split(" ").slice(-2).join(" ")} break-words`}>
+                {section.title.replace(/^[\p{Emoji_Presentation}\p{Extended_Pictographic}]\s*/u, "")}
+              </p>
+            </div>
+            {/* Bullets */}
+            <ul className="space-y-2">
+              {top3.map((b, bIdx) => (
+                <li key={bIdx} className="flex items-start gap-2">
+                  <span className={`w-1.5 h-1.5 rounded-full ${c.dot} mt-1.5 flex-shrink-0`} />
+                  <span className="text-xs text-gray-700 dark:text-gray-300 leading-snug">{b}</span>
+                </li>
+              ))}
+            </ul>
+            {section.bullets.length > 3 && (
+              <span className={`text-[10px] font-semibold ${c.badge.split(" ").slice(-2).join(" ")} self-start px-1.5 py-0.5 rounded-full`}>
+                +{section.bullets.length - 3} más
+              </span>
+            )}
+          </motion.div>
+        );
+      })}
+    </div>
+  );
+}
+
 
 interface DashboardPhaseProps {
   product: Product;
@@ -253,58 +351,6 @@ const KeywordCloud = ({ keywords }: { keywords: KeywordAnalysis[] }) => {
   );
 };
 
-interface ImprovementSection {
-  title: string;
-  icon: string;
-  content: string[];
-}
-
-function parseImprovements(markdown: string): ImprovementSection[] {
-  if (!markdown) return [];
-  
-  const sections: ImprovementSection[] = [];
-  
-  // Dividir por cabeceras que contengan números o emojis
-  const parts = markdown.split(/(?=###?\s+\d*\.?\s*[\uD800-\uDBFF\uDC00-\uDFFF])|(?=###?\s+\d*\.)|(?=##\s+\d*\.?)/g);
-  
-  const finalParts = parts.length > 1 ? parts : markdown.split("\n\n");
-  
-  finalParts.forEach(part => {
-    const lines = part.split('\n').map(l => l.trim()).filter(Boolean);
-    if (lines.length === 0) return;
-    
-    // El primer renglón es el título
-    const titleLine = lines[0].replace(/[#\d\.*\-]/g, '').trim();
-    
-    // Intentar extraer el emoji
-    const emojiMatch = lines[0].match(/[\uD800-\uDBFF\uDC00-\uDFFF]/);
-    const icon = emojiMatch ? emojiMatch[0] : "💡";
-    
-    // El contenido son las líneas siguientes
-    const contentLines = lines.slice(1).map(l => {
-      return l.replace(/^[-*+]\s+/, '').trim();
-    }).filter(Boolean);
-    
-    if (titleLine && contentLines.length > 0) {
-      sections.push({
-        title: titleLine,
-        icon,
-        content: contentLines
-      });
-    }
-  });
-  
-  if (sections.length === 0) {
-    const paragraphs = markdown.split('\n\n').map(p => p.trim()).filter(Boolean);
-    sections.push({
-      title: "Plan Estratégico",
-      icon: "💡",
-      content: paragraphs
-    });
-  }
-  
-  return sections;
-}
 
 export const DashboardPhase: React.FC<DashboardPhaseProps> = ({
   product,
@@ -880,38 +926,7 @@ export const DashboardPhase: React.FC<DashboardPhaseProps> = ({
                   <p className="text-sm text-gray-500 dark:text-gray-400">El consultor IA está redactando el plan estratégico...</p>
                 </div>
               ) : (
-                <div className="space-y-6">
-                  {/* Grid de Tarjetas de Recomendación */}
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                    {parseImprovements(improvements).map((section, idx) => (
-                      <Card 
-                        key={idx} 
-                        className="border-purple-100/70 dark:border-gray-800 bg-purple-500/[0.01] hover:border-purple-300 hover:shadow-md transition-all duration-300 flex flex-col justify-between"
-                      >
-                        <div>
-                          <CardHeader className="pb-2 flex flex-row items-center space-y-0 gap-3">
-                            <div className="h-9 w-9 rounded-full bg-purple-100 dark:bg-purple-950/60 flex items-center justify-center text-lg shadow-sm">
-                              {section.icon}
-                            </div>
-                            <CardTitle className="text-sm font-bold text-gray-800 dark:text-gray-200 leading-tight">
-                              {section.title}
-                            </CardTitle>
-                          </CardHeader>
-                          <CardContent className="pt-2">
-                            <ul className="space-y-2 text-xs text-gray-600 dark:text-gray-300">
-                              {section.content.map((point, pIdx) => (
-                                <li key={pIdx} className="flex items-start gap-2 leading-relaxed">
-                                  <span className="text-purple-500 dark:text-purple-400 text-sm mt-0.5">•</span>
-                                  <span>{point}</span>
-                                </li>
-                              ))}
-                            </ul>
-                          </CardContent>
-                        </div>
-                      </Card>
-                    ))}
-                  </div>
-                </div>
+                <ImprovementsGrid text={improvements} />
               )}
             </div>
           )}

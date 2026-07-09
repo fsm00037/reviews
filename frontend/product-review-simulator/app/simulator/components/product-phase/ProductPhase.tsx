@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useState } from "react";
 import { motion } from "framer-motion";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -27,6 +27,30 @@ export const ProductPhase: React.FC<ProductPhaseProps> = ({
   setIsGeneratingBots,
   setError,
 }) => {
+  const [isSaving, setIsSaving] = useState(false);
+
+  const handleContinue = async () => {
+    setError(null);
+    setIsSaving(true);
+    try {
+      await ProductService.updateProduct(product);
+      setActiveStep(1);
+    } catch (err) {
+      console.error("Error al guardar los cambios del producto:", err);
+      if ((err as APIError).status !== undefined) {
+        setError(err as APIError);
+      } else {
+        setError({
+          status: 500,
+          message: `Error inesperado: ${(err as Error).message || 'Desconocido'}`,
+          details: 'No se pudieron guardar los cambios del producto'
+        });
+      }
+    } finally {
+      setIsSaving(false);
+    }
+  };
+
   const handleProductSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError(null);
@@ -277,17 +301,20 @@ export const ProductPhase: React.FC<ProductPhaseProps> = ({
             
             <motion.div whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }}>
               <Button
-                onClick={() => setActiveStep(1)}
+                onClick={handleContinue}
+                disabled={isSaving}
                 className="bg-gradient-to-r from-indigo-500 via-purple-500 to-pink-500 text-white hover:opacity-90 transition-opacity"
                 type="button"
               >
-                Continuar a configuración de bots
-                <motion.div
-                  animate={{ x: [0, 5, 0] }}
-                  transition={{ repeat: Number.POSITIVE_INFINITY, duration: 1.5 }}
-                >
-                  <ArrowRight className="ml-2 h-4 w-4" />
-                </motion.div>
+                {isSaving ? "Guardando cambios..." : "Continuar a configuración de bots"}
+                {!isSaving && (
+                  <motion.div
+                    animate={{ x: [0, 5, 0] }}
+                    transition={{ repeat: Number.POSITIVE_INFINITY, duration: 1.5 }}
+                  >
+                    <ArrowRight className="ml-2 h-4 w-4" />
+                  </motion.div>
+                )}
               </Button>
             </motion.div>
           </div>
