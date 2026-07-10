@@ -92,6 +92,18 @@ export const ConfigPhase: React.FC<ConfigPhaseProps> = ({
           }).catch(() => {});
         } catch (e) {}
       }
+
+      // Check if there is a population configuration sent from the experiments page
+      const pendingPop = sessionStorage.getItem("review_simulator_load_population");
+      if (pendingPop) {
+        try {
+          const pop = JSON.parse(pendingPop);
+          handleLoadUserPopulation(pop);
+          sessionStorage.removeItem("review_simulator_load_population");
+        } catch (e) {
+          console.error("Error loading pending population from experiments page:", e);
+        }
+      }
     }
   }, []);
 
