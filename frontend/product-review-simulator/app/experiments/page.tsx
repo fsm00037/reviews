@@ -115,23 +115,23 @@ const TreeNodeComponent = ({
   return (
     <div className="flex flex-col relative pl-6 md:pl-8">
       {/* Linea conectora horizontal a este nodo */}
-      <div className="absolute left-0 top-[28px] w-6 md:w-8 h-px bg-purple-200 dark:bg-gray-800" />
+      <div className="absolute left-0 top-[28px] w-6 md:w-8 h-px bg-border" />
       
       {/* Linea conectora vertical (se dibuja si no es el ultimo hijo) */}
       {!isLastChild && (
-        <div className="absolute left-0 top-[28px] w-px h-full bg-purple-200 dark:bg-gray-800" />
+        <div className="absolute left-0 top-[28px] w-px h-full bg-border" />
       )}
 
       {/* Tarjeta del nodo */}
       <div className="flex items-center gap-4 my-2 min-w-0">
         <div
           onClick={() => onSelect(node.session_id)}
-          className={`flex-1 min-w-0 flex flex-col md:flex-row md:items-center justify-between p-4 bg-white/85 dark:bg-gray-950/85 backdrop-blur-sm border rounded-xl cursor-pointer hover:shadow-md transition-all duration-300 ${
+          className={`flex-1 min-w-0 flex flex-col md:flex-row md:items-center justify-between p-4 bg-card/65 backdrop-blur-sm border rounded-2xl cursor-pointer hover:shadow-md transition-all duration-300 ${
             isSelected
-              ? "border-purple-500 ring-2 ring-purple-500/10 shadow-purple-500/5 bg-purple-500/5 dark:bg-purple-950/10"
+              ? "border-primary ring-2 ring-primary/10 shadow-primary/5 bg-primary/5"
               : isMatch
               ? "border-yellow-400 dark:border-yellow-600 bg-yellow-500/[0.02]"
-              : "border-purple-100 dark:border-gray-800 hover:border-purple-300 dark:hover:border-purple-900"
+              : "border-border hover:border-primary/30"
           }`}
         >
           <div className="flex-1 min-w-0 pr-4">
@@ -139,7 +139,7 @@ const TreeNodeComponent = ({
               <span className={`text-[9px] font-bold px-2 py-0.5 rounded-full uppercase tracking-wider ${
                 node.parent_session_id 
                   ? "text-emerald-600 dark:text-emerald-400 bg-emerald-100 dark:bg-emerald-950/50" 
-                  : "text-purple-600 dark:text-purple-400 bg-purple-100 dark:bg-purple-950/50"
+                  : "text-primary bg-primary/10"
               }`}>
                 {node.parent_session_id ? "Mejora" : "Original (v1)"}
               </span>
@@ -150,11 +150,11 @@ const TreeNodeComponent = ({
               )}
             </div>
 
-            <h4 className="font-bold text-sm text-gray-800 dark:text-gray-200 mt-1.5 truncate">
+            <h4 className="font-bold text-sm text-foreground mt-1.5 truncate">
               {node.product_name}
             </h4>
 
-            <div className="flex items-center gap-3 text-[10px] text-gray-400 mt-1">
+            <div className="flex items-center gap-3 text-[10px] text-muted-foreground mt-1">
               <span className="flex items-center gap-1">
                 <Clock className="h-3 w-3" />
                 {new Date(node.created_at).toLocaleDateString('es-ES', { day: '2-digit', month: 'short' })}
@@ -176,7 +176,7 @@ const TreeNodeComponent = ({
               size="icon"
               variant="outline"
               title="Duplicar Experimento"
-              className="h-7 w-7 border-purple-200/50 text-purple-600 dark:text-purple-400 hover:bg-purple-50 dark:hover:bg-gray-900"
+              className="h-7 w-7 border-border text-foreground hover:bg-accent rounded-lg"
             >
               <Copy className="h-3.5 w-3.5" />
             </Button>
@@ -187,7 +187,7 @@ const TreeNodeComponent = ({
               }}
               size="sm"
               variant="outline"
-              className="text-xs font-semibold px-2.5 py-1 h-7 border-purple-200/50 text-purple-600 dark:text-purple-400 hover:bg-purple-50 dark:hover:bg-gray-800"
+              className="text-xs font-semibold px-2.5 py-1 h-7 border-border text-foreground hover:bg-accent rounded-lg"
             >
               Cargar
             </Button>
@@ -195,7 +195,7 @@ const TreeNodeComponent = ({
               variant="ghost"
               size="icon"
               onClick={(e) => onDelete(node.session_id, e)}
-              className="text-gray-400 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-950/20 rounded-full h-7 w-7"
+              className="text-muted-foreground hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-950/20 rounded-full h-7 w-7"
             >
               <Trash2 className="h-3.5 w-3.5" />
             </Button>
@@ -207,7 +207,7 @@ const TreeNodeComponent = ({
       {hasChildren && (
         <div className="relative flex flex-col">
           {/* Linea vertical para conectar con los hijos */}
-          <div className="absolute left-0 top-0 bottom-[28px] w-px bg-purple-200 dark:bg-gray-800" />
+          <div className="absolute left-0 top-0 bottom-[28px] w-px bg-border" />
           
           {node.children.map((child, index) => (
             <TreeNodeComponent
@@ -246,25 +246,23 @@ const TreeRoot = ({
   searchQuery: string;
 }) => {
   const isSelected = selectedSessions.includes(node.session_id);
-  const isMatch = searchQuery ? node.product_name.toLowerCase().includes(searchQuery.toLowerCase()) : false;
-
-  return (
-    <div className="mb-6 p-4 rounded-2xl border border-purple-100/50 dark:border-gray-800 bg-white/40 dark:bg-gray-950/40 backdrop-blur-sm shadow-sm hover:shadow-md transition-shadow">
+  const isMatch = searchQuery ? node.product_name.toLowerCase().includes(searchQuery.toLowerCase()) : false;  return (
+    <div className="mb-6 p-4 rounded-2xl border border-border bg-card/40 backdrop-blur-sm shadow-sm hover:shadow-md transition-shadow">
       {/* Fila del nodo raiz */}
       <div className="flex items-center gap-4 min-w-0">
         <div
           onClick={() => handleSelectSession(node.session_id)}
-          className={`flex-1 min-w-0 flex flex-col md:flex-row md:items-center justify-between p-4 bg-white/90 dark:bg-gray-950/90 border rounded-xl cursor-pointer hover:shadow-sm transition-all duration-300 ${
+          className={`flex-1 min-w-0 flex flex-col md:flex-row md:items-center justify-between p-4 bg-card/90 border rounded-xl cursor-pointer hover:shadow-sm transition-all duration-300 ${
             isSelected
-              ? "border-purple-500 ring-2 ring-purple-500/10 shadow-purple-500/5 bg-purple-500/5 dark:bg-purple-950/10"
+              ? "border-primary ring-2 ring-primary/10 shadow-primary/5 bg-primary/5"
               : isMatch
               ? "border-yellow-400 dark:border-yellow-600 bg-yellow-500/[0.02]"
-              : "border-purple-100/70 dark:border-gray-800/80 hover:border-purple-300"
+              : "border-border hover:border-primary/30"
           }`}
         >
           <div className="flex-1 min-w-0 pr-4">
             <div className="flex items-center gap-2">
-              <span className="text-[9px] font-bold text-purple-700 dark:text-purple-300 bg-purple-100 dark:bg-purple-950/60 px-2 py-0.5 rounded-full uppercase tracking-wider">
+              <span className="text-[9px] font-bold text-primary bg-primary/10 px-2 py-0.5 rounded-full uppercase tracking-wider">
                 Raiz (Original)
               </span>
               {node.average_rating && (
@@ -273,10 +271,10 @@ const TreeRoot = ({
                 </span>
               )}
             </div>
-            <h3 className="font-bold text-base text-gray-800 dark:text-gray-200 mt-1.5 truncate">
+            <h3 className="font-bold text-base text-foreground mt-1.5 truncate">
               {node.product_name}
             </h3>
-            <div className="flex items-center gap-2 text-xs text-gray-400 mt-1">
+            <div className="flex items-center gap-2 text-xs text-muted-foreground mt-1">
               <Clock className="h-3.5 w-3.5" />
               <span>
                 Creado el {new Date(node.created_at).toLocaleDateString('es-ES', { day: '2-digit', month: 'long', year: 'numeric' })}
@@ -293,7 +291,7 @@ const TreeRoot = ({
               size="icon"
               variant="outline"
               title="Duplicar Experimento"
-              className="h-8 w-8 border-purple-200/50 text-purple-600 dark:text-purple-400 hover:bg-purple-50 dark:hover:bg-gray-900"
+              className="h-8 w-8 border-border text-foreground hover:bg-accent rounded-lg"
             >
               <Copy className="h-4 w-4" />
             </Button>
@@ -304,7 +302,7 @@ const TreeRoot = ({
               }}
               size="sm"
               variant="outline"
-              className="text-xs font-semibold px-3 py-1.5 h-8 border-purple-200/50 text-purple-600 dark:text-purple-400 hover:bg-purple-50 dark:hover:bg-gray-900"
+              className="text-xs font-semibold px-3 py-1.5 h-8 border-border text-foreground hover:bg-accent rounded-lg"
             >
               Cargar
             </Button>
@@ -312,7 +310,7 @@ const TreeRoot = ({
               variant="ghost"
               size="icon"
               onClick={(e) => handleDeleteSession(node.session_id, e)}
-              className="text-gray-400 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-950/20 rounded-full h-8 w-8"
+              className="text-muted-foreground hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-950/20 rounded-full h-8 w-8"
             >
               <Trash2 className="h-4 w-4" />
             </Button>
@@ -324,7 +322,7 @@ const TreeRoot = ({
       {node.children.length > 0 && (
         <div className="relative mt-2 flex flex-col">
           {/* Linea vertical para conectar raiz con el primer nivel de hijos */}
-          <div className="absolute left-[12px] top-0 bottom-[28px] w-px bg-purple-200 dark:bg-gray-800" />
+          <div className="absolute left-[12px] top-0 bottom-[28px] w-px bg-border" />
           
           {node.children.map((child, index) => (
             <TreeNodeComponent
@@ -363,23 +361,23 @@ const PopulationCard = ({
   return (
     <motion.div
       whileHover={{ y: -3 }}
-      className="relative flex flex-col justify-between p-6 bg-white/80 dark:bg-gray-950/80 backdrop-blur-sm border border-purple-100 dark:border-gray-800 hover:border-purple-300 dark:hover:border-purple-900 rounded-2xl hover:shadow-lg transition-all duration-300"
+      className="relative flex flex-col justify-between p-6 bg-card/85 backdrop-blur-sm border border-border hover:border-primary/30 rounded-2xl hover:shadow-lg transition-all duration-300"
     >
       {/* Header */}
       <div className="flex justify-between items-start gap-4">
         <div className="flex-1 min-w-0">
           <div className="flex items-center gap-2">
-            <span className="text-[10px] font-bold text-indigo-600 dark:text-indigo-400 bg-indigo-100 dark:bg-indigo-950/50 px-2 py-0.5 rounded-full uppercase tracking-wider">
+            <span className="text-[10px] font-bold text-primary bg-primary/10 px-2 py-0.5 rounded-full uppercase tracking-wider">
               Población
             </span>
-            <span className="text-[10px] font-bold text-purple-600 dark:text-purple-400 bg-purple-100 dark:bg-purple-950/50 px-2 py-0.5 rounded-full">
+            <span className="text-[10px] font-bold text-muted-foreground bg-muted px-2 py-0.5 rounded-full">
               {pop.num_reviewers} Bots
             </span>
           </div>
-          <h3 className="font-bold text-base text-gray-800 dark:text-gray-200 mt-2 truncate">
+          <h3 className="font-bold text-base text-foreground mt-2 truncate">
             {pop.name}
           </h3>
-          <p className="text-xs text-gray-500 dark:text-gray-400 line-clamp-2 mt-1 min-h-[32px]">
+          <p className="text-xs text-muted-foreground line-clamp-2 mt-1 min-h-[32px] leading-relaxed">
             {pop.description || "Sin descripción"}
           </p>
         </div>
@@ -387,7 +385,7 @@ const PopulationCard = ({
           variant="ghost"
           size="icon"
           onClick={(e) => onDelete(pop.id, e)}
-          className="text-gray-400 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-950/20 rounded-full h-8 w-8 flex-shrink-0"
+          className="text-muted-foreground hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-950/20 rounded-full h-8 w-8 flex-shrink-0"
         >
           <Trash2 className="h-4 w-4" />
         </Button>
@@ -395,7 +393,7 @@ const PopulationCard = ({
 
       {/* Demographics / Parameters Summary */}
       {demographics && (
-        <div className="mt-4 pt-4 border-t border-purple-50 dark:border-gray-800/80 space-y-2">
+        <div className="mt-4 pt-4 border-t border-border/60 space-y-2">
           <div className="flex flex-wrap gap-1.5">
             <span className="text-[10px] font-medium bg-gray-100 dark:bg-gray-900 text-gray-600 dark:text-gray-300 px-2 py-0.5 rounded">
               Edad: {demographics.age_range?.[0]} - {demographics.age_range?.[1]} años
@@ -929,18 +927,18 @@ export default function ExperimentsPage() {
     <div className="flex flex-col min-h-screen">
       <AnimatedBackground />
 
-      <header className="px-4 lg:px-6 h-16 flex items-center backdrop-blur-md bg-white/70 dark:bg-gray-950/70 border-b border-purple-100 dark:border-gray-800 sticky top-0 z-50">
-        <Link className="flex items-center justify-center" href="/">
-          <div className="mr-2 bg-gradient-to-r from-indigo-500 via-purple-500 to-pink-500 rounded-lg p-1.5">
-            <Sparkles className="h-5 w-5 text-white" />
+      <header className="px-4 lg:px-6 h-16 flex items-center backdrop-blur-md bg-background/70 border-b border-border/60 sticky top-0 z-50">
+        <Link className="flex items-center justify-center gap-2" href="/">
+          <div className="bg-primary/10 rounded-lg p-1.5 border border-primary/20 animate-pulse">
+            <Sparkles className="h-4.5 w-4.5 text-primary" />
           </div>
-          <span className="font-bold text-xl bg-clip-text text-transparent bg-gradient-to-r from-indigo-500 via-purple-500 to-pink-500">
-            ReviewSim 2025
+          <span className="font-extrabold text-lg tracking-tight text-foreground">
+            reviewsim.ai
           </span>
         </Link>
         <nav className="ml-auto flex gap-4 sm:gap-6 items-center">
           <Link
-            className="text-sm font-semibold hover:text-purple-600 dark:hover:text-purple-400 transition-colors"
+            className="text-xs font-bold uppercase tracking-wider text-muted-foreground hover:text-primary transition-colors"
             href="/"
           >
             Inicio
@@ -961,11 +959,11 @@ export default function ExperimentsPage() {
       <main className="flex-1 relative z-10 container mx-auto py-8 px-4">
         {!currentUser ? (
           <div className="flex flex-col items-center justify-center py-20 text-center max-w-md mx-auto">
-            <div className="mb-4 bg-purple-100 dark:bg-purple-950/50 p-4 rounded-full border border-purple-200 dark:border-purple-900/50">
-              <AlertCircle className="h-10 w-10 text-purple-500" />
+            <div className="mb-4 bg-primary/5 p-4 rounded-full border border-primary/10">
+              <AlertCircle className="h-10 w-10 text-primary" />
             </div>
-            <h2 className="text-2xl font-bold mb-2">Inicia sesión requerida</h2>
-            <p className="text-sm text-gray-500 dark:text-gray-400 mb-6">
+            <h2 className="text-xl font-bold mb-2">Inicia sesión requerida</h2>
+            <p className="text-xs text-muted-foreground mb-6 leading-relaxed">
               Debes iniciar sesión con tu cuenta para visualizar tus experimentos, guardar poblaciones y comparar productos.
             </p>
             <AuthModal onStateChange={() => window.location.reload()} />
@@ -977,23 +975,23 @@ export default function ExperimentsPage() {
                 <Button
                   variant="outline"
                   size="icon"
-                  className="rounded-full border-purple-200 dark:border-gray-700 hover:bg-purple-100 dark:hover:bg-gray-800 transition-colors"
+                  className="rounded-full border-border hover:bg-accent transition-colors h-9 w-9"
                 >
                   <ArrowLeft className="h-4 w-4" />
                 </Button>
               </Link>
               <div>
-                <h1 className="text-3xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-indigo-500 via-purple-500 to-pink-500">
+                <h1 className="text-2xl font-extrabold text-foreground tracking-tight">
                   Mis Experimentos
                 </h1>
-                <p className="text-sm text-gray-500 dark:text-gray-400">
+                <p className="text-xs text-muted-foreground mt-0.5">
                   Administra, visualiza e innova tus productos simulados
                 </p>
               </div>
             </div>
 
             {/* Tab Selector */}
-            <div className="flex border-b border-purple-100 dark:border-gray-800 mb-8 mt-6">
+            <div className="flex border-b border-border/60 mb-8 mt-6">
               {[
                 { id: "experiments", label: "Mis Simulaciones", icon: <TrendingUp className="h-4 w-4" /> },
                 { id: "populations", label: "Poblaciones Guardadas", icon: <Users className="h-4 w-4" /> },
@@ -1004,10 +1002,10 @@ export default function ExperimentsPage() {
                     key={tab.id}
                     type="button"
                     onClick={() => setActiveTab(tab.id as "experiments" | "populations")}
-                    className={`flex items-center gap-2 px-6 py-3 text-sm font-semibold transition-all border-b-2 -mb-px ${
+                    className={`flex items-center gap-2 px-5 py-3 text-xs font-semibold uppercase tracking-wider transition-all border-b-2 -mb-px ${
                       active
-                        ? "border-purple-500 text-purple-700 dark:text-purple-300 bg-purple-50/20 dark:bg-purple-950/10 font-bold"
-                        : "border-transparent text-gray-500 hover:text-purple-600 dark:hover:text-purple-300"
+                        ? "border-primary text-foreground bg-primary/[0.02]"
+                        : "border-transparent text-muted-foreground hover:text-primary"
                     }`}
                   >
                     {tab.icon}
@@ -1024,13 +1022,13 @@ export default function ExperimentsPage() {
                   <motion.div
                     initial={{ opacity: 0, y: 15 }}
                     animate={{ opacity: 1, y: 0 }}
-                    className="mb-6 p-4 rounded-xl border border-purple-200/50 dark:border-purple-900 bg-purple-500/5 dark:bg-purple-950/20 backdrop-blur-sm flex flex-col sm:flex-row items-center justify-between gap-4"
+                    className="mb-6 p-4 rounded-xl border border-primary/10 bg-primary/[0.03] backdrop-blur-sm flex flex-col sm:flex-row items-center justify-between gap-4"
                   >
                     <div className="flex flex-col text-left">
-                      <span className="text-xs font-semibold text-purple-600 dark:text-purple-400">
+                      <span className="text-xs font-bold text-primary uppercase tracking-wider">
                         Comparación Side-by-Side ({selectedSessions.length}/2)
                       </span>
-                      <p className="text-xs text-gray-500 dark:text-gray-400">
+                      <p className="text-xs text-muted-foreground mt-1">
                         {selectedSessions.length === 1 
                           ? "Selecciona otra simulación para iniciar la comparación de productos con IA"
                           : "Tienes 2 productos seleccionados para comparar sus feedback con IA"}
@@ -1041,17 +1039,17 @@ export default function ExperimentsPage() {
                         onClick={() => setSelectedSessions([])}
                         variant="ghost"
                         size="sm"
-                        className="text-xs hover:bg-purple-500/10"
+                        className="text-xs hover:bg-primary/10 rounded-xl"
                       >
                         Limpiar selección
                       </Button>
                       <Button
                         onClick={handleCompare}
                         disabled={selectedSessions.length !== 2}
-                        className="bg-gradient-to-r from-indigo-500 via-purple-500 to-pink-500 text-white hover:opacity-90 gap-1.5 text-xs font-semibold"
+                        className="bg-primary text-primary-foreground hover:bg-primary/95 transition-all font-semibold rounded-xl text-xs px-4 h-9 shadow-sm shadow-primary/10"
                         size="sm"
                       >
-                        <GitCompare className="h-3.5 w-3.5" />
+                        <GitCompare className="h-3.5 w-3.5 mr-1.5" />
                         Comparar Productos con IA
                       </Button>
                     </div>
@@ -1061,21 +1059,21 @@ export default function ExperimentsPage() {
                 {/* Search and Filters */}
                 <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-6 mt-6">
                   <div className="relative w-full sm:max-w-md">
-                    <Search className="absolute left-3 top-2.5 h-4 w-4 text-gray-400" />
+                    <Search className="absolute left-3 top-2.5 h-4 w-4 text-muted-foreground/60" />
                     <input
                       type="text"
                       placeholder="Buscar por nombre de producto..."
                       value={searchQuery}
                       onChange={(e) => setSearchQuery(e.target.value)}
-                      className="w-full pl-9 pr-4 py-2 text-sm bg-white/70 dark:bg-gray-950/70 border border-purple-100 dark:border-gray-800 rounded-xl focus:outline-none focus:ring-1 focus:ring-purple-500"
+                      className="w-full pl-9 pr-4 py-2 text-xs bg-background/50 border border-border rounded-xl focus:outline-none focus:ring-1 focus:ring-primary leading-relaxed"
                     />
                   </div>
-                  <div className="flex items-center gap-2 bg-purple-500/5 border border-purple-200/30 dark:border-purple-900/30 p-1 rounded-xl shrink-0">
+                  <div className="flex items-center gap-2 bg-primary/5 border border-primary/10 p-1 rounded-xl shrink-0">
                     <Button
                       variant={viewMode === 'grid' ? 'secondary' : 'ghost'}
                       size="sm"
                       onClick={() => setViewMode('grid')}
-                      className="text-xs font-semibold px-3 py-1.5 h-auto rounded-lg"
+                      className="text-[10px] font-bold uppercase tracking-wider px-3 py-1.5 h-auto rounded-lg"
                     >
                       Vista Cuadrícula
                     </Button>
@@ -1083,7 +1081,7 @@ export default function ExperimentsPage() {
                       variant={viewMode === 'tree' ? 'secondary' : 'ghost'}
                       size="sm"
                       onClick={() => setViewMode('tree')}
-                      className="text-xs font-semibold px-3 py-1.5 h-auto rounded-lg gap-1.5"
+                      className="text-[10px] font-bold uppercase tracking-wider px-3 py-1.5 h-auto rounded-lg gap-1.5"
                     >
                       <TrendingUp className="h-3.5 w-3.5 rotate-90" />
                       Vista Árbol (Linaje)
@@ -1093,17 +1091,17 @@ export default function ExperimentsPage() {
 
                 {loading ? (
                   <div className="flex items-center justify-center py-20">
-                    <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-purple-500" />
+                    <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary" />
                   </div>
                 ) : filteredSessions.length === 0 ? (
-                  <div className="flex flex-col items-center justify-center py-16 text-center bg-white/40 dark:bg-gray-950/40 rounded-xl border border-purple-100 dark:border-gray-800">
-                    <HelpCircle className="h-10 w-10 text-purple-400 mb-2" />
-                    <h3 className="font-bold text-lg">No se encontraron experimentos</h3>
-                    <p className="text-sm text-gray-500 dark:text-gray-400 max-w-xs mt-1">
+                  <div className="flex flex-col items-center justify-center py-16 text-center bg-card/40 rounded-2xl border border-border">
+                    <HelpCircle className="h-10 w-10 text-muted-foreground/40 mb-2 animate-bounce" />
+                    <h3 className="font-bold text-sm">No se encontraron experimentos</h3>
+                    <p className="text-xs text-muted-foreground max-w-xs mt-1">
                       Aún no has creado simulaciones para esta cuenta o no coinciden con la búsqueda.
                     </p>
                     <Link href="/simulator" className="mt-4">
-                      <Button className="bg-gradient-to-r from-indigo-500 via-purple-500 to-pink-500 text-white" size="sm">
+                      <Button className="bg-primary text-primary-foreground hover:bg-primary/95 shadow-sm shadow-primary/10 rounded-xl font-semibold text-xs h-9 px-4" size="sm">
                         Crear Nueva Simulación
                       </Button>
                     </Link>

@@ -855,32 +855,33 @@ export default function SimulatorPage() {
   return (
     <div className="flex flex-col min-h-screen">
       <AnimatedBackground />
-      <SpaceStars />
       {showConfetti && <Confetti />}
 
-      <div className="container mx-auto py-6 px-4 relative z-10">
+      <div className="container mx-auto py-8 px-6 max-w-5xl relative z-10">
         <motion.div
           initial={{ opacity: 0, y: -10 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.3 }}
-          className="flex items-center mb-6"
+          className="flex items-center mb-8 border-b border-border/40 pb-5"
         >
           <Link href="/" className="mr-4">
             <Button
               variant="outline"
               size="icon"
-              className="rounded-full border-purple-200 dark:border-gray-700 hover:bg-purple-100 dark:hover:bg-gray-800 transition-colors"
+              className="rounded-xl border-border bg-background/50 hover:bg-accent transition-colors"
             >
               <ArrowLeft className="h-4 w-4" />
             </Button>
           </Link>
-          <h1 className="text-2xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-indigo-500 via-purple-500 to-pink-500">
-            Product Review Simulator
-          </h1>
-          <div className="ml-auto flex items-center gap-3">
+          <Link className="flex items-center justify-center gap-2" href="/">
+            <span className="font-bold text-lg tracking-tight">
+              reviewsim<span className="text-primary font-extrabold">.ai</span>
+            </span>
+          </Link>
+          <div className="ml-auto flex items-center gap-4">
             {currentUser && (
               <Link
-                className="text-sm font-semibold text-purple-600 dark:text-purple-400 hover:text-purple-800 transition-colors"
+                className="text-sm font-medium text-muted-foreground hover:text-foreground transition-colors"
                 href="/experiments"
               >
                 Mis Experimentos

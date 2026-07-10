@@ -161,48 +161,48 @@ export default function Home() {
     } finally {
       setIsAnalyzing(false)
     }
-  }
+  };
 
   return (
     <div className="flex flex-col min-h-screen">
       <AnimatedBackground />
 
-      <header className="px-4 lg:px-6 h-16 flex items-center backdrop-blur-md bg-white/70 dark:bg-gray-950/70 border-b border-purple-100 dark:border-gray-800 sticky top-0 z-50">
-        <Link className="flex items-center justify-center" href="#">
+      <header className="px-6 h-16 flex items-center backdrop-blur-md bg-background/50 dark:bg-background/40 border-b border-border/60 sticky top-0 z-50 transition-colors">
+        <Link className="flex items-center justify-center gap-2.5" href="#">
           <motion.div
             initial={{ scale: 0.9, opacity: 0 }}
             animate={{ scale: 1, opacity: 1 }}
             transition={{ type: "spring", stiffness: 260, damping: 20 }}
-            className="mr-2 bg-gradient-to-r from-indigo-500 via-purple-500 to-pink-500 rounded-lg p-1.5"
+            className="bg-primary shadow-lg shadow-primary/25 rounded-xl p-1.5"
           >
-            <Sparkles className="h-5 w-5 text-white" />
+            <Sparkles className="h-4.5 w-4.5 text-white" />
           </motion.div>
           <motion.span
             initial={{ x: -10, opacity: 0 }}
             animate={{ x: 0, opacity: 1 }}
             transition={{ delay: 0.1 }}
-            className="font-bold text-xl bg-clip-text text-transparent bg-gradient-to-r from-indigo-500 via-purple-500 to-pink-500"
+            className="font-bold text-lg tracking-tight bg-clip-text text-transparent bg-gradient-to-r from-foreground to-foreground/80"
           >
-            ReviewSim 2025
+            reviewsim<span className="text-primary font-extrabold">.ai</span>
           </motion.span>
         </Link>
-        <nav className="ml-auto flex gap-4 sm:gap-6 items-center">
+        <nav className="ml-auto flex gap-6 items-center">
           {currentUser && (
             <Link
-              className="text-sm font-semibold text-purple-600 dark:text-purple-400 hover:text-purple-800 transition-colors"
+              className="text-sm font-medium text-muted-foreground hover:text-foreground transition-colors"
               href="/experiments"
             >
               Mis Experimentos
             </Link>
           )}
           <Link
-            className="text-sm font-medium hover:text-purple-600 dark:hover:text-purple-400 transition-colors"
+            className="text-sm font-medium text-muted-foreground hover:text-foreground transition-colors"
             href="#"
           >
             About
           </Link>
           <Link
-            className="text-sm font-medium hover:text-purple-600 dark:hover:text-purple-400 transition-colors"
+            className="text-sm font-medium text-muted-foreground hover:text-foreground transition-colors"
             href="#"
           >
             Help
@@ -218,37 +218,40 @@ export default function Home() {
           }} />
         </nav>
       </header>
+
       <main className="flex-1 relative z-10">
-        <section className="w-full py-12 md:py-24 lg:py-32 overflow-hidden">
-          <div className="container px-4 md:px-6 relative">
+        <section className="w-full py-16 md:py-28 lg:py-36 overflow-hidden">
+          <div className="container px-6 relative max-w-5xl">
             <motion.div
               initial="hidden"
               animate="show"
               variants={container}
-              className="flex flex-col items-center justify-center space-y-8 text-center relative z-10"
+              className="flex flex-col items-center justify-center space-y-10 text-center relative z-10"
             >
-              <motion.div variants={item} className="space-y-4">
+              <motion.div variants={item} className="space-y-5">
                 <motion.div
-                  initial={{ opacity: 0, scale: 0.8 }}
+                  initial={{ opacity: 0, scale: 0.95 }}
                   animate={{ opacity: 1, scale: 1 }}
                   transition={{ type: "spring", stiffness: 300, damping: 20, delay: 0.2 }}
-                  className="inline-block bg-gradient-to-r from-indigo-500 via-purple-500 to-pink-500 p-1 rounded-lg mb-4"
+                  className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold border border-primary/20 bg-primary/5 text-primary shadow-sm shadow-primary/5 mb-3"
                 >
-                  <span className="bg-white dark:bg-gray-950 rounded-md px-3 py-1 text-sm font-medium block">
-                    Simulación de Reseñas de Próxima Generación
-                  </span>
+                  <Sparkles className="h-3 w-3 animate-pulse" />
+                  <span>Simulación de Reseñas por IA de Próxima Generación</span>
                 </motion.div>
+                
                 <motion.h1
                   variants={item}
-                  className="text-4xl font-bold tracking-tighter sm:text-5xl md:text-6xl bg-clip-text text-transparent bg-gradient-to-r from-indigo-500 via-purple-500 to-pink-500"
+                  className="text-5xl font-extrabold tracking-tight sm:text-6xl md:text-7xl bg-clip-text text-transparent bg-gradient-to-b from-foreground to-foreground/75"
                 >
-                  Simulador de Reseñas de Productos
+                  Diseña productos óptimos a través de <span className="bg-clip-text text-transparent bg-gradient-to-r from-indigo-500 via-primary to-cyan-500">reseñas sintéticas</span>
                 </motion.h1>
-                <motion.p variants={item} className="mx-auto max-w-[700px] text-gray-600 dark:text-gray-300 md:text-xl">
-                  Genera reseñas de productos con perfiles de bots impulsados por IA
+                
+                <motion.p variants={item} className="mx-auto max-w-[620px] text-muted-foreground md:text-xl leading-relaxed">
+                  Genera comentarios honestos de consumidores simulados mediante perfiles de bots de IA sumamente realistas antes del lanzamiento.
                 </motion.p>
               </motion.div>
-              <motion.div variants={item} className="w-full max-w-sm space-y-2">
+
+              <motion.div variants={item} className="w-full max-w-md space-y-3">
                 {analyzeError && (
                   <ApiErrorAlert 
                     error={analyzeError} 
@@ -257,18 +260,18 @@ export default function Home() {
                 )}
                 <form onSubmit={handleQuickAnalysis} className="flex flex-col space-y-2 sm:flex-row sm:space-y-0 sm:space-x-2">
                   <Input
-                    className="max-w-lg flex-1 bg-white/80 dark:bg-gray-800/80 backdrop-blur-sm border-purple-200 dark:border-gray-700 focus-visible:ring-purple-500"
-                    placeholder="Ingresa URL del producto para iniciar el análisis"
+                    className="max-w-lg flex-1 bg-background/50 border-border focus-visible:ring-primary backdrop-blur-md rounded-xl h-11"
+                    placeholder="Ingresa la URL del producto (ej. Amazon)"
                     type="text"
                     name="productUrl"
                     ref={urlInputRef}
                     disabled={isAnalyzing}
                     required
                   />
-                  <motion.div whileHover={{ scale: isAnalyzing ? 1 : 1.05 }} whileTap={{ scale: isAnalyzing ? 1 : 0.95 }}>
+                  <motion.div whileHover={{ scale: isAnalyzing ? 1 : 1.02 }} whileTap={{ scale: isAnalyzing ? 1 : 0.98 }}>
                     <Button
                       type="submit"
-                      className="bg-gradient-to-r from-indigo-500 via-purple-500 to-pink-500 text-white hover:opacity-90 transition-opacity w-full sm:w-auto"
+                      className="bg-primary text-primary-foreground hover:bg-primary/90 transition-all font-semibold rounded-xl h-11 px-6 shadow-md shadow-primary/10 hover:shadow-lg hover:shadow-primary/20 w-full sm:w-auto"
                       onMouseEnter={() => setHovered(true)}
                       onMouseLeave={() => setHovered(false)}
                       disabled={isAnalyzing}
@@ -279,7 +282,7 @@ export default function Home() {
                         <>
                           <span>Iniciar análisis</span>
                           <motion.div
-                            animate={{ x: hovered ? 5 : 0 }}
+                            animate={{ x: hovered ? 3 : 0 }}
                             transition={{ type: "spring", stiffness: 400, damping: 10 }}
                           >
                             <ArrowRight className="ml-2 h-4 w-4" />
@@ -289,33 +292,32 @@ export default function Home() {
                     </Button>
                   </motion.div>
                 </form>
-                <p className="text-xs text-center mt-2 text-gray-500 dark:text-gray-400">
-                  El análisis se realizará paso a paso en la página del simulador
+                <p className="text-xs text-center text-muted-foreground/80">
+                  Nuestra IA escaneará y estructurará el producto automáticamente paso a paso.
                 </p>
               </motion.div>
 
               {recentSessions.length > 0 && (
                 <motion.div
                   variants={item}
-                  className="w-full max-w-4xl mt-12 text-left"
+                  className="w-full mt-16 text-left"
                 >
-                  <h3 className="text-xl font-bold mb-6 text-center bg-clip-text text-transparent bg-gradient-to-r from-indigo-500 to-purple-500">
+                  <h3 className="text-sm font-semibold mb-6 text-center text-muted-foreground uppercase tracking-widest">
                     Simulaciones Recientes
                   </h3>
-                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
                     {recentSessions.map((session) => (
                       <motion.div
                         key={session.session_id}
-                        whileHover={{ y: -4, scale: 1.02 }}
-                        whileTap={{ scale: 0.98 }}
+                        whileHover={{ y: -3 }}
                         onClick={() => handleSelectRecentSession(session.session_id)}
-                        className="cursor-pointer p-4 bg-white/70 dark:bg-gray-900/70 backdrop-blur-sm border border-purple-100 dark:border-gray-800 rounded-xl hover:border-purple-300 dark:hover:border-purple-900 transition-all flex flex-col justify-between h-36 shadow-sm hover:shadow-md"
+                        className="cursor-pointer p-5 bg-card/40 hover:bg-card/75 backdrop-blur-md border border-border rounded-2xl hover:border-primary/30 transition-all flex flex-col justify-between h-40 shadow-sm hover:shadow-md glow-card-hover"
                       >
                         <div>
-                          <h4 className="font-bold text-sm text-gray-800 dark:text-gray-200 line-clamp-2">
+                          <h4 className="font-bold text-sm text-foreground line-clamp-2 leading-snug">
                             {session.product_name}
                           </h4>
-                          <span className="text-xs text-gray-400 block mt-1">
+                          <span className="text-[11px] text-muted-foreground block mt-1.5 font-medium">
                             {new Date(session.created_at).toLocaleDateString('es-ES', {
                               day: '2-digit',
                               month: 'short',
@@ -325,20 +327,20 @@ export default function Home() {
                             })}
                           </span>
                         </div>
-                        <div className="flex items-center justify-between mt-4 pt-2 border-t border-purple-50 dark:border-gray-800">
+                        <div className="flex items-center justify-between mt-4 pt-3.5 border-t border-border/60">
                           {session.average_rating ? (
                             <div className="flex items-center space-x-1">
-                              <span className="text-amber-500 font-bold text-sm">★</span>
-                              <span className="text-sm font-semibold text-gray-700 dark:text-gray-300">
+                              <span className="text-amber-500 text-sm">★</span>
+                              <span className="text-xs font-bold text-foreground">
                                 {session.average_rating.toFixed(1)} / 5.0
                               </span>
                             </div>
                           ) : (
-                            <span className="text-xs font-medium text-purple-600 dark:text-purple-400 bg-purple-50 dark:bg-purple-900/30 px-2 py-0.5 rounded">
+                            <span className="text-[10px] font-semibold text-primary bg-primary/10 px-2 py-0.5 rounded-full">
                               En progreso...
                             </span>
                           )}
-                          <span className="text-xs text-purple-600 dark:text-purple-400 font-semibold flex items-center gap-1">
+                          <span className="text-xs text-primary font-semibold flex items-center gap-1.5">
                             Ver simulación <ArrowRight className="h-3 w-3" />
                           </span>
                         </div>
@@ -350,30 +352,28 @@ export default function Home() {
             </motion.div>
           </div>
         </section>
-        <section className="w-full py-12 md:py-24 lg:py-32 backdrop-blur-sm bg-white/30 dark:bg-gray-900/30 relative z-10">
-          <div className="container px-4 md:px-6">
+
+        <section className="w-full py-16 md:py-28 border-t border-border/40 backdrop-blur-sm bg-background/20 relative z-10">
+          <div className="container px-6 max-w-5xl">
             <motion.div
               initial={{ opacity: 0, y: 20 }}
               whileInView={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.5 }}
               viewport={{ once: true }}
-              className="mx-auto grid max-w-5xl items-center gap-6 lg:grid-cols-2 lg:gap-12"
+              className="grid gap-12 lg:grid-cols-2 lg:gap-16 items-start"
             >
-              <div className="space-y-4">
-                <div className="inline-block bg-gradient-to-r from-indigo-500 via-purple-500 to-pink-500 p-1 rounded-lg">
-                  <span className="bg-white dark:bg-gray-950 rounded-md px-3 py-1 text-sm font-medium block">
-                    Cómo funciona
-                  </span>
+              <div className="space-y-5 lg:sticky lg:top-24">
+                <div className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-semibold border border-primary/20 bg-primary/5 text-primary w-max">
+                  <span>Cómo funciona</span>
                 </div>
-                <h2 className="text-3xl font-bold tracking-tighter sm:text-4xl bg-clip-text text-transparent bg-gradient-to-r from-indigo-500 via-purple-500 to-pink-500">
-                  Simula reseñas de productos en cinco simples pasos
+                <h2 className="text-3xl font-extrabold tracking-tight sm:text-4xl bg-clip-text text-transparent bg-gradient-to-b from-foreground to-foreground/85">
+                  Simulación completa en cinco simples pasos
                 </h2>
-                <p className="max-w-[600px] text-gray-600 dark:text-gray-300 md:text-xl/relaxed lg:text-base/relaxed xl:text-xl/relaxed">
-                  Nuestra plataforma te permite generar reseñas realistas de productos con perfiles de bots personalizables y
-                  proporciona un análisis integral para mejorar tu producto.
+                <p className="text-muted-foreground md:text-lg leading-relaxed">
+                  Desde la ingestión del producto hasta la obtención de retroalimentación procesable mediante el análisis de cohortes de compradores simulados.
                 </p>
               </div>
-              <div className="grid gap-4">
+              <div className="grid gap-5">
                 {[
                   {
                     icon: <Sparkles className="h-5 w-5 text-indigo-500" />,
@@ -413,21 +413,23 @@ export default function Home() {
                 ].map((item, index) => (
                   <motion.div
                     key={index}
-                    initial={{ opacity: 0, y: 20 }}
+                    initial={{ opacity: 0, y: 15 }}
                     whileInView={{ opacity: 1, y: 0 }}
-                    transition={{ duration: 0.5, delay: index * 0.1 }}
+                    transition={{ duration: 0.4, delay: index * 0.08 }}
                     viewport={{ once: true }}
                   >
-                    <Card className="overflow-hidden border-purple-200 dark:border-gray-800 bg-white/80 dark:bg-gray-950/80 backdrop-blur-sm hover:shadow-lg hover:shadow-purple-200/20 dark:hover:shadow-purple-900/20 transition-all duration-300">
-                      <CardHeader className="bg-gradient-to-r from-indigo-500/5 via-purple-500/5 to-pink-500/5">
-                        <CardTitle className="text-lg font-bold flex items-center gap-2">
-                          {item.icon}
-                          {item.title}
+                    <Card className="overflow-hidden border-border/80 bg-card/30 backdrop-blur-md hover:bg-card/50 transition-all duration-300 rounded-2xl glow-card-hover">
+                      <CardHeader className="pb-3 border-b border-border/40 bg-muted/10">
+                        <CardTitle className="text-base font-bold flex items-center gap-2.5">
+                          <span className="p-1 rounded-lg bg-background border border-border shadow-sm">
+                            {item.icon}
+                          </span>
+                          <span>{item.title}</span>
                         </CardTitle>
-                        <CardDescription>{item.description}</CardDescription>
+                        <CardDescription className="text-xs text-muted-foreground mt-1">{item.description}</CardDescription>
                       </CardHeader>
-                      <CardContent>
-                        <p className="text-sm text-gray-600 dark:text-gray-400">{item.content}</p>
+                      <CardContent className="pt-4">
+                        <p className="text-xs text-muted-foreground/90 leading-relaxed">{item.content}</p>
                       </CardContent>
                     </Card>
                   </motion.div>
@@ -437,18 +439,19 @@ export default function Home() {
           </div>
         </section>
       </main>
-      <footer className="bg-white/80 dark:bg-gray-950/80 backdrop-blur-md border-t border-purple-100 dark:border-gray-800 relative z-10">
-        <div className="container flex flex-col gap-2 sm:flex-row py-6 px-4 md:px-6">
-          <p className="text-xs text-gray-500 dark:text-gray-400">© 2025 ReviewSim. Todos los derechos reservados.</p>
-          <nav className="sm:ml-auto flex gap-4 sm:gap-6">
+
+      <footer className="bg-background/40 backdrop-blur-md border-t border-border/60 relative z-10">
+        <div className="container flex flex-col gap-3 sm:flex-row py-6 px-6 max-w-5xl text-center sm:text-left">
+          <p className="text-xs text-muted-foreground">© 2026 reviewsim.ai. Todos los derechos reservados.</p>
+          <nav className="sm:ml-auto flex gap-5 justify-center">
             <Link
-              className="text-xs text-gray-500 hover:text-purple-600 dark:text-gray-400 dark:hover:text-purple-400 transition-colors"
+              className="text-xs text-muted-foreground hover:text-foreground transition-colors"
               href="#"
             >
               Términos de Servicio
             </Link>
             <Link
-              className="text-xs text-gray-500 hover:text-purple-600 dark:text-gray-400 dark:hover:text-purple-400 transition-colors"
+              className="text-xs text-muted-foreground hover:text-foreground transition-colors"
               href="#"
             >
               Privacidad
@@ -457,6 +460,6 @@ export default function Home() {
         </div>
       </footer>
     </div>
-  )
+  );
 }
 

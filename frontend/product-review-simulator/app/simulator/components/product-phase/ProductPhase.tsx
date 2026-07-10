@@ -92,36 +92,34 @@ export const ProductPhase: React.FC<ProductPhaseProps> = ({
       !cleanUrl.includes("placeholder.svg")
     );
   };
-
-  return (
-    <Card className="border-purple-200 dark:border-gray-800 bg-white/80 dark:bg-gray-950/80 backdrop-blur-sm overflow-hidden">
-      <CardHeader className="bg-gradient-to-r from-indigo-500/10 via-purple-500/10 to-pink-500/10">
-        <CardTitle className="flex items-center gap-2">
-          <Sparkles className="h-5 w-5 text-purple-500" />
+  return (
+    <Card className="border-border bg-card/60 backdrop-blur-md overflow-hidden rounded-2xl shadow-lg shadow-black/[0.03]">
+      <CardHeader className="border-b border-border/60 bg-muted/10 pb-5">
+        <CardTitle className="flex items-center gap-2.5 text-lg font-bold">
+          <Sparkles className="h-5 w-5 text-primary" />
           Información del producto
         </CardTitle>
-        <CardDescription>Ingresa la URL de un producto o proporciona detalles para una nueva simulación</CardDescription>
+        <CardDescription className="text-xs text-muted-foreground mt-1">Ingresa la URL de un producto o proporciona detalles para una nueva simulación</CardDescription>
       </CardHeader>
       <CardContent className="p-6">
-        <form onSubmit={handleProductSubmit} className="space-y-4">
+        <form onSubmit={handleProductSubmit} className="space-y-6">
           
-
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
             <div className="lg:col-span-2 space-y-4">
               <div className="space-y-2">
-                <Label htmlFor="productName" className="text-sm font-medium">
+                <Label htmlFor="productName" className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
                   Nombre del producto
                 </Label>
                 <Input
                   id="productName"
                   value={product.name}
                   onChange={(e) => setProduct({ ...product, name: e.target.value })}
-                  className="bg-white/70 dark:bg-gray-800/70 border-purple-200 dark:border-gray-700 focus-visible:ring-purple-500"
+                  className="bg-background/50 border-border focus-visible:ring-primary rounded-xl"
                 />
               </div>
 
               <div className="space-y-2">
-                <Label htmlFor="productDescription" className="text-sm font-medium">
+                <Label htmlFor="productDescription" className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
                   Descripción del producto
                 </Label>
                 <Textarea
@@ -129,60 +127,60 @@ export const ProductPhase: React.FC<ProductPhaseProps> = ({
                   rows={4}
                   value={product.description}
                   onChange={(e) => setProduct({ ...product, description: e.target.value })}
-                  className="bg-white/70 dark:bg-gray-800/70 border-purple-200 dark:border-gray-700 focus-visible:ring-purple-500 min-h-[120px]"
+                  className="bg-background/50 border-border focus-visible:ring-primary rounded-xl min-h-[120px] leading-relaxed"
                 />
               </div>
 
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div className="space-y-2">
-                  <Label htmlFor="productPrice" className="text-sm font-medium">
+                  <Label htmlFor="productPrice" className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
                     Precio
                   </Label>
                   <Input
                     id="productPrice"
                     value={product.price}
                     onChange={(e) => setProduct({ ...product, price: e.target.value })}
-                    className="bg-white/70 dark:bg-gray-800/70 border-purple-200 dark:border-gray-700 focus-visible:ring-purple-500"
+                    className="bg-background/50 border-border focus-visible:ring-primary rounded-xl"
                   />
                 </div>
                 <div className="space-y-2">
-                  <Label htmlFor="productCategory" className="text-sm font-medium">
+                  <Label htmlFor="productCategory" className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
                     Categoría
                   </Label>
                   <Input
                     id="productCategory"
                     value={product.category}
                     onChange={(e) => setProduct({ ...product, category: e.target.value })}
-                    className="bg-white/70 dark:bg-gray-800/70 border-purple-200 dark:border-gray-700 focus-visible:ring-purple-500"
+                    className="bg-background/50 border-border focus-visible:ring-primary rounded-xl"
                   />
                 </div>
               </div>
             </div>
 
             {/* Columna derecha: Imagen del producto */}
-            <div className="flex flex-col items-stretch justify-start p-4 bg-purple-500/5 rounded-xl border border-purple-200/50 dark:border-gray-800 backdrop-blur-sm">
-              <Label className="text-sm font-medium mb-3">
+            <div className="flex flex-col items-stretch justify-start p-5 bg-muted/20 rounded-2xl border border-border/80 backdrop-blur-sm">
+              <Label className="text-xs font-semibold uppercase tracking-wider text-muted-foreground mb-3">
                 Imagen del producto
               </Label>
-              <div className="relative w-full h-[200px] bg-white dark:bg-gray-900 rounded-lg overflow-hidden border border-purple-200/30 dark:border-gray-800 flex items-center justify-center group shadow-inner">
+              <div className="relative w-full h-[200px] bg-background/80 dark:bg-background/50 rounded-xl overflow-hidden border border-border flex items-center justify-center group shadow-sm">
                 {isValidImageUrl(product.image) ? (
                   <img
                     src={product.image}
                     alt={product.name}
-                    className="max-w-full max-h-full object-contain p-2 transition-transform duration-300 group-hover:scale-105"
+                    className="max-w-full max-h-full object-contain p-3 transition-transform duration-300 group-hover:scale-105"
                     onError={(e) => {
                       (e.currentTarget as HTMLImageElement).src = "/placeholder.svg?height=300&width=300";
                     }}
                   />
                 ) : (
-                  <div className="flex flex-col items-center text-center p-6 text-gray-400 dark:text-gray-600">
-                    <Sparkles className="h-10 w-10 mb-2 stroke-1 text-purple-400 dark:text-purple-600 animate-pulse" />
-                    <span className="text-xs text-gray-500">Imagen no disponible</span>
+                  <div className="flex flex-col items-center text-center p-6 text-muted-foreground">
+                    <Sparkles className="h-9 w-9 mb-2 stroke-[1.5] text-primary/60 animate-pulse" />
+                    <span className="text-[11px] font-medium text-muted-foreground/80">Imagen no disponible</span>
                   </div>
                 )}
               </div>
               <div className="w-full mt-4">
-                <Label htmlFor="productImage" className="text-xs font-medium text-gray-500 dark:text-gray-400">
+                <Label htmlFor="productImage" className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wider">
                   URL de la imagen
                 </Label>
                 <Input
@@ -190,44 +188,43 @@ export const ProductPhase: React.FC<ProductPhaseProps> = ({
                   value={product.image || ""}
                   onChange={(e) => setProduct({ ...product, image: e.target.value })}
                   placeholder="https://..."
-                  className="bg-white/70 dark:bg-gray-800/70 border-purple-200/40 dark:border-gray-800/40 focus-visible:ring-purple-500 text-xs h-8 mt-1"
+                  className="bg-background/50 border-border focus-visible:ring-primary text-xs h-9 mt-1 rounded-lg"
                 />
               </div>
             </div>
           </div>
 
           {/* Características principales */}
-          <div className="mt-6 bg-blue-50/50 dark:bg-blue-900/20 p-4 rounded-lg">
-            <h3 className="text-lg font-semibold mb-3 text-blue-700 dark:text-blue-400 flex items-center">
-              <Sparkles className="h-4 w-4 mr-2" />
+          <div className="mt-6 bg-muted/25 dark:bg-muted/10 p-5 rounded-2xl border border-border/60">
+            <h3 className="text-sm font-bold mb-4 text-foreground flex items-center gap-2">
+              <Sparkles className="h-4 w-4 text-primary" />
               Características principales
             </h3>
             
             {product.main_features && product.main_features.length > 0 ? (
-              <div className="space-y-2">
+              <div className="space-y-3">
                 {product.main_features.map((feature, index) => (
-                  <div key={index} className="grid grid-cols-1 md:grid-cols-3 gap-2 items-center border-b border-blue-100 dark:border-blue-800 pb-2 last:border-0">
-                    <div className="font-medium text-sm text-blue-800 dark:text-blue-300">
+                  <div key={index} className="grid grid-cols-1 md:grid-cols-3 gap-3 items-center border-b border-border/40 pb-3 last:border-0 last:pb-0">
+                    <div className="font-semibold text-xs text-foreground/80">
                       {feature.feature}:
                     </div>
-                    <div className="col-span-2 text-sm text-gray-700 dark:text-gray-300">
+                    <div className="col-span-2 text-sm text-foreground">
                       <Input
                         value={feature.value || feature.description || ""}
                         onChange={(e) => {
                           const newFeatures = [...(product.main_features || [])];
-                          // Asignar a ambas propiedades para asegurar compatibilidad
                           newFeatures[index].value = e.target.value;
                           newFeatures[index].description = e.target.value;
                           setProduct({ ...product, main_features: newFeatures });
                         }}
-                        className="bg-white/70 dark:bg-gray-800/70 border-blue-200 dark:border-blue-900 focus-visible:ring-blue-500 h-8"
+                        className="bg-background/50 border-border focus-visible:ring-primary h-9 rounded-lg"
                       />
                     </div>
                   </div>
                 ))}
               </div>
             ) : (
-              <div className="text-sm text-gray-500 dark:text-gray-400 italic">
+              <div className="text-xs text-muted-foreground italic">
                 No hay características disponibles. Se añadirán al obtener información del producto.
               </div>
             )}
@@ -240,44 +237,44 @@ export const ProductPhase: React.FC<ProductPhaseProps> = ({
               }}
               variant="outline"
               size="sm"
-              className="mt-3 border-blue-200 dark:border-blue-900 hover:bg-blue-100 dark:hover:bg-blue-900/50 text-xs"
+              className="mt-4 border-border hover:bg-accent text-xs rounded-lg px-3.5 h-8 font-medium"
+              type="button"
             >
               + Añadir característica
             </Button>
           </div>
 
           {/* Especificaciones técnicas */}
-          <div className="mt-4 bg-purple-50/50 dark:bg-purple-900/20 p-4 rounded-lg">
-            <h3 className="text-lg font-semibold mb-3 text-purple-700 dark:text-purple-400 flex items-center">
-              <Zap className="h-4 w-4 mr-2" />
+          <div className="mt-4 bg-muted/25 dark:bg-muted/10 p-5 rounded-2xl border border-border/60">
+            <h3 className="text-sm font-bold mb-4 text-foreground flex items-center gap-2">
+              <Zap className="h-4 w-4 text-primary" />
               Especificaciones técnicas
             </h3>
             
             {product.technical_specs && product.technical_specs.length > 0 ? (
-              <div className="space-y-2">
+              <div className="space-y-3">
                 {product.technical_specs.map((spec, index) => (
-                  <div key={index} className="grid grid-cols-1 md:grid-cols-3 gap-2 items-center border-b border-purple-100 dark:border-purple-800 pb-2 last:border-0">
-                    <div className="font-medium text-sm text-purple-800 dark:text-purple-300">
+                  <div key={index} className="grid grid-cols-1 md:grid-cols-3 gap-3 items-center border-b border-border/40 pb-3 last:border-0 last:pb-0">
+                    <div className="font-semibold text-xs text-foreground/80">
                       {spec.spec}
                     </div>
-                    <div className="col-span-2 text-sm text-gray-700 dark:text-gray-300">
+                    <div className="col-span-2 text-sm text-foreground">
                       <Input
                         value={spec.value || spec.description || ""}
                         onChange={(e) => {
                           const newSpecs = [...(product.technical_specs || [])];
-                          // Asignar a ambas propiedades para asegurar compatibilidad
                           newSpecs[index].value = e.target.value;
                           newSpecs[index].description = e.target.value;
                           setProduct({ ...product, technical_specs: newSpecs });
                         }}
-                        className="bg-white/70 dark:bg-gray-800/70 border-purple-200 dark:border-purple-900 focus-visible:ring-purple-500 h-8"
+                        className="bg-background/50 border-border focus-visible:ring-primary h-9 rounded-lg"
                       />
                     </div>
                   </div>
                 ))}
               </div>
             ) : (
-              <div className="text-sm text-gray-500 dark:text-gray-400 italic">
+              <div className="text-xs text-muted-foreground italic">
                 No hay especificaciones técnicas disponibles. Se añadirán al obtener información del producto.
               </div>
             )}
@@ -290,26 +287,26 @@ export const ProductPhase: React.FC<ProductPhaseProps> = ({
               }}
               variant="outline"
               size="sm"
-              className="mt-3 border-purple-200 dark:border-purple-900 hover:bg-purple-100 dark:hover:bg-purple-900/50 text-xs"
+              className="mt-4 border-border hover:bg-accent text-xs rounded-lg px-3.5 h-8 font-medium"
+              type="button"
             >
               + Añadir especificación
             </Button>
           </div>
+        </form>
 
-          <div className="flex justify-end mt-6">
-          
-            
+        <div className="flex justify-end mt-8 border-t border-border/60 pt-5">
             <motion.div whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }}>
               <Button
                 onClick={handleContinue}
                 disabled={isSaving}
-                className="bg-gradient-to-r from-indigo-500 via-purple-500 to-pink-500 text-white hover:opacity-90 transition-opacity"
+                className="bg-primary text-primary-foreground hover:bg-primary/95 transition-all font-semibold rounded-xl px-5 h-10 shadow-sm shadow-primary/10"
                 type="button"
               >
                 {isSaving ? "Guardando cambios..." : "Continuar a configuración de bots"}
                 {!isSaving && (
                   <motion.div
-                    animate={{ x: [0, 5, 0] }}
+                    animate={{ x: [0, 3, 0] }}
                     transition={{ repeat: Number.POSITIVE_INFINITY, duration: 1.5 }}
                   >
                     <ArrowRight className="ml-2 h-4 w-4" />
@@ -318,7 +315,6 @@ export const ProductPhase: React.FC<ProductPhaseProps> = ({
               </Button>
             </motion.div>
           </div>
-        </form>
       </CardContent>
     </Card>
   );

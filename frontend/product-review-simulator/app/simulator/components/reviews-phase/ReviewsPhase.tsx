@@ -3,9 +3,8 @@ import { motion, AnimatePresence } from "framer-motion";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { ArrowLeft, ArrowRight, BarChart3, MessageSquare, Star, ThumbsUp, Zap, Sparkles } from "lucide-react";
-import { FanIcon as MaleIcon } from "lucide-react";
-import { FanIcon as FemaleIcon } from "lucide-react";
+import { ArrowLeft, ArrowRight, BarChart3, MessageSquare, Star, Zap, Sparkles } from "lucide-react";
+import { User as MaleIcon, User as FemaleIcon } from "lucide-react";
 import { Product, BotProfile, Review } from "@/lib/types";
 
 interface ReviewsPhaseProps {
@@ -32,49 +31,51 @@ export const ReviewsPhase: React.FC<ReviewsPhaseProps> = ({
   const [showProductDetails, setShowProductDetails] = useState(false);
 
   return (
-    <Card className="border-purple-200 dark:border-gray-800 bg-white/80 dark:bg-gray-950/80 backdrop-blur-sm overflow-hidden">
-      <CardHeader className="bg-gradient-to-r from-indigo-500/10 via-purple-500/10 to-pink-500/10">
-        <CardTitle className="flex items-center gap-2">
-          <MessageSquare className="h-5 w-5 text-purple-500" />
+    <Card className="border-border bg-card/60 backdrop-blur-md overflow-hidden rounded-2xl shadow-lg shadow-black/[0.03]">
+      <CardHeader className="border-b border-border/60 bg-muted/10 pb-5">
+        <CardTitle className="flex items-center gap-2.5 text-lg font-bold">
+          <MessageSquare className="h-5 w-5 text-primary" />
           Reseñas generadas
         </CardTitle>
-        <CardDescription>Reseñas generadas por los perfiles de bot según tu configuración</CardDescription>
+        <CardDescription className="text-xs text-muted-foreground mt-1">Reseñas generadas por los perfiles de bot según tu configuración</CardDescription>
       </CardHeader>
       <CardContent className="p-6">
-        <div className="flex flex-col md:flex-row gap-6 mb-6 pb-6 border-b border-purple-100 dark:border-gray-800">
-          
-          
+        <div className="flex flex-col md:flex-row gap-6 mb-6 pb-6 border-b border-border/60">
           <div>
-            <h3 className="text-xl font-bold mb-1">{product.name}</h3>
-            <p className="text-sm text-gray-600 dark:text-gray-300 mb-2">{product.description}</p>
-            <p className="text-lg font-bold mb-2 bg-clip-text text-transparent bg-gradient-to-r from-indigo-500 via-purple-500 to-pink-500">
-              {product.price}
-            </p>
-            <p className="text-sm text-gray-500 dark:text-gray-400 mb-2">Categoría: {product.category}</p>
+            <h3 className="text-lg font-extrabold mb-1">{product.name}</h3>
+            <p className="text-xs text-muted-foreground mb-3 leading-relaxed">{product.description}</p>
+            <div className="flex items-center gap-3.5 mb-3">
+              <span className="text-base font-bold text-foreground bg-muted/40 px-3 py-1 rounded-lg border border-border">
+                {product.price}
+              </span>
+              <span className="text-xs text-muted-foreground font-semibold">Categoría: {product.category}</span>
+            </div>
 
             <div className="flex items-center gap-1">
               {[1, 2, 3, 4, 5].map((star) => {
-                const averageRating = reviews.reduce((sum, review) => sum + review.rating, 0) / reviews.length;
+                const averageRating = reviews.length > 0 
+                  ? reviews.reduce((sum, review) => sum + review.rating, 0) / reviews.length 
+                  : 0;
                 return (
                   <motion.div
                     key={star}
                     initial={{ scale: 0, rotate: -30 }}
                     animate={{ scale: 1, rotate: 0 }}
-                    transition={{ delay: star * 0.1, type: "spring" }}
+                    transition={{ delay: star * 0.05, type: "spring" }}
                   >
                     <Star
-                      className={`h-5 w-5 ${star <= Math.round(averageRating) ? "fill-yellow-400 text-yellow-400" : "text-gray-300 dark:text-gray-600"}`}
+                      className={`h-4.5 w-4.5 ${star <= Math.round(averageRating) ? "fill-yellow-400 text-yellow-400" : "text-border"}`}
                     />
                   </motion.div>
                 );
               })}
-              <span className="ml-2 text-sm font-medium">
+              <span className="ml-2 text-xs font-bold text-foreground">
                 {reviews.length > 0
                   ? (reviews.reduce((sum, review) => sum + review.rating, 0) / reviews.length).toFixed(1)
                   : "0.0"}{" "}
                 de 5
               </span>
-              <span className="ml-2 text-sm text-gray-500 dark:text-gray-400">
+              <span className="ml-1.5 text-xs text-muted-foreground">
                 ({reviews.length} reseñas)
               </span>
             </div>
@@ -83,7 +84,7 @@ export const ReviewsPhase: React.FC<ReviewsPhaseProps> = ({
             <Button
               variant="outline"
               size="sm"
-              className="mt-3 text-xs border-purple-200 dark:border-gray-700 hover:bg-purple-50 dark:hover:bg-gray-800"
+              className="mt-4 text-[11px] font-semibold h-8 rounded-lg border-border hover:bg-accent"
               onClick={() => setShowProductDetails(prevState => !prevState)}
             >
               {showProductDetails ? 'Ocultar detalles' : 'Ver detalles del producto'}
@@ -92,19 +93,19 @@ export const ReviewsPhase: React.FC<ReviewsPhaseProps> = ({
         </div>
 
         {isGeneratingReviews && populationSize > 0 && (
-          <div className="mb-6 p-4 bg-purple-500/5 rounded-xl border border-purple-200/50 dark:border-gray-800 backdrop-blur-sm">
+          <div className="mb-6 p-5 bg-primary/5 rounded-2xl border border-primary/10 backdrop-blur-sm">
             <div className="flex items-center justify-between mb-2">
-              <span className="text-xs font-semibold text-purple-700 dark:text-purple-400 flex items-center gap-1.5">
-                <MessageSquare className="h-3.5 w-3.5 text-purple-500 animate-pulse" />
+              <span className="text-xs font-semibold text-primary flex items-center gap-1.5">
+                <MessageSquare className="h-3.5 w-3.5 text-primary animate-pulse" />
                 Redactando reseñas en tiempo real...
               </span>
-              <span className="text-xs font-bold text-purple-900 dark:text-purple-300">
+              <span className="text-xs font-bold text-foreground">
                 {reviews.length} de {populationSize} completadas
               </span>
             </div>
-            <div className="w-full bg-purple-100 dark:bg-gray-800 rounded-full h-1.5 overflow-hidden">
+            <div className="w-full bg-muted rounded-full h-1.5 overflow-hidden">
               <motion.div
-                className="bg-gradient-to-r from-indigo-500 via-purple-500 to-pink-500 h-full"
+                className="bg-primary h-full shadow-[0_0_8px_rgba(99,102,241,0.5)]"
                 initial={{ width: 0 }}
                 animate={{ width: `${(reviews.length / populationSize) * 100}%` }}
                 transition={{ duration: 0.3 }}
@@ -118,12 +119,12 @@ export const ReviewsPhase: React.FC<ReviewsPhaseProps> = ({
             <motion.div
               animate={{ rotate: 360 }}
               transition={{ duration: 2, repeat: Number.POSITIVE_INFINITY, ease: "linear" }}
-              className="mb-4 bg-purple-100 dark:bg-purple-950/50 p-3 rounded-full"
+              className="mb-4 bg-primary/10 p-3 rounded-full"
             >
-              <Zap className="h-8 w-8 text-purple-600 dark:text-purple-400" />
+              <Zap className="h-8 w-8 text-primary" />
             </motion.div>
-            <h3 className="font-bold text-lg text-gray-800 dark:text-gray-200">Redactando reseñas de usuarios</h3>
-            <p className="text-sm text-gray-500 dark:text-gray-400 max-w-sm mt-1">
+            <h3 className="font-bold text-base text-foreground">Redactando reseñas de usuarios</h3>
+            <p className="text-xs text-muted-foreground max-w-xs mt-1">
               Los agentes críticos de producto están evaluando las características del producto según sus perfiles...
             </p>
           </div>
@@ -141,54 +142,54 @@ export const ReviewsPhase: React.FC<ReviewsPhaseProps> = ({
             >
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 {/* Características principales */}
-                <div className="bg-blue-50/50 dark:bg-blue-900/20 p-4 rounded-lg">
-                  <h4 className="text-md font-semibold mb-3 text-blue-700 dark:text-blue-400 flex items-center">
-                    <Sparkles className="h-4 w-4 mr-2" />
+                <div className="bg-muted/15 p-4 rounded-xl border border-border/60">
+                  <h4 className="text-xs font-bold mb-3 text-foreground flex items-center gap-1.5">
+                    <Sparkles className="h-4 w-4 text-primary" />
                     Características principales
                   </h4>
                   
                   {product.main_features && product.main_features.length > 0 ? (
                     <div className="space-y-2">
                       {product.main_features.map((feature, index) => (
-                        <div key={index} className="grid grid-cols-1 md:grid-cols-3 gap-2 items-center border-b border-blue-100 dark:border-blue-800 pb-2 last:border-0">
-                          <div className="font-medium text-sm text-blue-800 dark:text-blue-300">
+                        <div key={index} className="grid grid-cols-1 md:grid-cols-3 gap-2 items-center border-b border-border/40 pb-2 last:border-0 last:pb-0">
+                          <div className="font-semibold text-xs text-foreground/80">
                             {feature.feature}:
                           </div>
-                          <div className="col-span-2 text-sm text-gray-700 dark:text-gray-300">
+                          <div className="col-span-2 text-xs text-muted-foreground">
                             {feature.value || feature.description || ""}
                           </div>
                         </div>
                       ))}
                     </div>
                   ) : (
-                    <div className="text-sm text-gray-500 dark:text-gray-400 italic">
+                    <div className="text-xs text-muted-foreground italic">
                       No hay características disponibles. Se añadirán al obtener información del producto.
                     </div>
                   )}
                 </div>
                 
                 {/* Especificaciones técnicas */}
-                <div className="bg-purple-50/50 dark:bg-purple-900/20 p-4 rounded-lg">
-                  <h4 className="text-md font-semibold mb-3 text-purple-700 dark:text-purple-400 flex items-center">
-                    <Zap className="h-4 w-4 mr-2" />
+                <div className="bg-muted/15 p-4 rounded-xl border border-border/60">
+                  <h4 className="text-xs font-bold mb-3 text-foreground flex items-center gap-1.5">
+                    <Zap className="h-4 w-4 text-primary animate-pulse" />
                     Especificaciones técnicas
                   </h4>
                   
                   {product.technical_specs && product.technical_specs.length > 0 ? (
                     <div className="space-y-2">
                       {product.technical_specs.map((spec, index) => (
-                        <div key={index} className="grid grid-cols-1 md:grid-cols-3 gap-2 items-center border-b border-purple-100 dark:border-purple-800 pb-2 last:border-0">
-                          <div className="font-medium text-sm text-purple-800 dark:text-purple-300">
+                        <div key={index} className="grid grid-cols-1 md:grid-cols-3 gap-2 items-center border-b border-border/40 pb-2 last:border-0 last:pb-0">
+                          <div className="font-semibold text-xs text-foreground/80">
                             {spec.spec}
                           </div>
-                          <div className="col-span-2 text-sm text-gray-700 dark:text-gray-300">
+                          <div className="col-span-2 text-xs text-muted-foreground">
                             {spec.value || spec.description || ""}
                           </div>
                         </div>
                       ))}
                     </div>
                   ) : (
-                    <div className="text-sm text-gray-500 dark:text-gray-400 italic">
+                    <div className="text-xs text-muted-foreground italic">
                       No hay especificaciones técnicas disponibles. Se añadirán al obtener información del producto.
                     </div>
                   )}
@@ -198,66 +199,67 @@ export const ReviewsPhase: React.FC<ReviewsPhaseProps> = ({
           )}
         </AnimatePresence>
 
-        <div className="space-y-6 max-h-[600px] overflow-y-auto pr-2">
+        <div className="space-y-4 max-h-[600px] overflow-y-auto pr-2">
           {reviews.map((review, index) => {
             const bot = bots.find((b) => b.id === review.bot_id);
             return (
               <motion.div
                 key={review.id}
-                className="border-b border-purple-100 dark:border-gray-800 pb-6 last:border-0"
-                initial={{ opacity: 0, y: 20 }}
+                className="p-4 rounded-xl border border-border bg-background/30 shadow-sm transition-all"
+                initial={{ opacity: 0, y: 15 }}
                 animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: index * 0.1 }}
+                transition={{ delay: index * 0.05 }}
               >
-                <div className="flex items-center gap-2 mb-2">
-                  <Avatar className="h-8 w-8 border-2 border-purple-200 dark:border-gray-700">
-                    <AvatarImage src={bot?.avatar?.includes('dicebear') ? bot.avatar : `https://api.dicebear.com/10.x/croodles-neutral/svg?mouthVariant=variant01,variant02,variant03,variant04,variant05,variant06,variant07,variant09,variant10,variant11,variant12,variant13,variant14,variant15,variant16,variant17,variant18&seed=${encodeURIComponent(bot?.name || 'avatar')}`} alt={bot?.name} />
-                    <AvatarFallback
-                      className={`${bot?.gender === "Male" ? "bg-gradient-to-br from-blue-500 to-indigo-500" : "bg-gradient-to-br from-pink-500 to-purple-500"} text-white flex items-center justify-center`}
-                    >
-                      {bot?.gender === "Male" ? (
-                        <MaleIcon className="h-4 w-4" />
-                      ) : (
-                        <FemaleIcon className="h-4 w-4" />
-                      )}
-                    </AvatarFallback>
-                  </Avatar>
-                  <span className="font-medium text-gray-900 dark:text-gray-100">{bot?.name}</span>
+                <div className="flex items-center justify-between mb-2">
+                  <div className="flex items-center gap-2">
+                    <Avatar className="h-7 w-7 border border-border shadow-sm shrink-0">
+                      <AvatarImage src={bot?.avatar?.includes('dicebear') ? bot.avatar : `https://api.dicebear.com/10.x/croodles-neutral/svg?mouthVariant=variant01,variant02,variant03,variant04,variant05,variant06,variant07,variant09,variant10,variant11,variant12,variant13,variant14,variant15,variant16,variant17,variant18&seed=${encodeURIComponent(bot?.name || 'avatar')}`} alt={bot?.name} />
+                      <AvatarFallback
+                        className={`${bot?.gender === "Male" ? "bg-gradient-to-br from-indigo-500 to-indigo-600" : "bg-gradient-to-br from-pink-500 to-purple-600"} text-white flex items-center justify-center`}
+                      >
+                        {bot?.gender === "Male" ? (
+                          <MaleIcon className="h-4 w-4" />
+                        ) : (
+                          <FemaleIcon className="h-4 w-4" />
+                        )}
+                      </AvatarFallback>
+                    </Avatar>
+                    <span className="font-semibold text-xs text-foreground">{bot?.name}</span>
+                  </div>
+
+                  <div className="flex items-center gap-0.5">
+                    {[1, 2, 3, 4, 5].map((star) => (
+                      <Star
+                        key={star}
+                        className={`h-3.5 w-3.5 ${star <= review.rating ? "fill-yellow-400 text-yellow-400" : "text-border"}`}
+                      />
+                    ))}
+                  </div>
                 </div>
 
-                <div className="flex items-center gap-1 mb-2">
-                  {[1, 2, 3, 4, 5].map((star) => (
-                    <Star
-                      key={star}
-                      className={`h-4 w-4 ${star <= review.rating ? "fill-yellow-400 text-yellow-400" : "text-gray-300 dark:text-gray-600"}`}
-                    />
-                  ))}
-                </div>
-
-                <h4 className="font-semibold mb-1 text-gray-900 dark:text-gray-100">{review.title}</h4>
-                <p className="text-sm text-gray-600 dark:text-gray-300">{review.content}</p>
-
+                <h4 className="font-bold text-xs mb-1 text-foreground">{review.title}</h4>
+                <p className="text-xs text-muted-foreground leading-relaxed">{review.content}</p>
               </motion.div>
             );
           })}
         </div>
 
-        <div className="flex justify-between mt-8">
-          <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
+        <div className="flex justify-between mt-8 border-t border-border/60 pt-5">
+          <motion.div whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }}>
             <Button
               onClick={() => setActiveStep(2)}
               variant="outline"
-              className="border-purple-200 dark:border-gray-700 hover:bg-purple-50 dark:hover:bg-gray-800 transition-colors"
+              className="border-border hover:bg-accent rounded-xl text-xs font-semibold px-4 h-10 transition-colors"
               disabled={isGeneratingReviews}
             >
               <ArrowLeft className="mr-2 h-4 w-4" />
               Volver a perfiles
             </Button>
           </motion.div>
-          <motion.div whileHover={{ scale: (isGeneratingAnalysis || isGeneratingReviews) ? 1 : 1.05 }} whileTap={{ scale: (isGeneratingAnalysis || isGeneratingReviews) ? 1 : 0.95 }}>
+          <motion.div whileHover={{ scale: (isGeneratingAnalysis || isGeneratingReviews) ? 1 : 1.02 }} whileTap={{ scale: (isGeneratingAnalysis || isGeneratingReviews) ? 1 : 0.98 }}>
             <Button
               onClick={generateAnalysis}
-              className="bg-gradient-to-r from-indigo-500 via-purple-500 to-pink-500 text-white hover:opacity-90 transition-opacity"
+              className="bg-primary text-primary-foreground hover:bg-primary/95 transition-all font-semibold rounded-xl px-5 h-10 shadow-sm shadow-primary/10"
               disabled={isGeneratingAnalysis || isGeneratingReviews}
             >
               {isGeneratingAnalysis ? (
@@ -285,7 +287,7 @@ export const ReviewsPhase: React.FC<ReviewsPhaseProps> = ({
               ) : (
                 <>
                   <BarChart3 className="mr-2 h-4 w-4" />
-                  Generar dashboard
+                  <span>Generar dashboard</span>
                   <ArrowRight className="ml-2 h-4 w-4" />
                 </>
               )}
@@ -295,4 +297,4 @@ export const ReviewsPhase: React.FC<ReviewsPhaseProps> = ({
       </CardContent>
     </Card>
   );
-}; 
+};
