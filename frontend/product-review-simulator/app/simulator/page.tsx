@@ -15,6 +15,7 @@ import { ApiErrorAlert } from "@/components/api-error-alert"
 import { SimulatorService } from "@/lib/api-services"
 import { APIError } from "@/lib/types"
 import { AuthModal } from "@/components/auth-modal"
+import { mockExampleSessions } from "@/lib/mock-examples"
 
 // Importar servicios API y tipos
 import { ProductService, BotService, ReviewService, AnalysisService, getSessionId } from "@/lib/api-services"
@@ -843,6 +844,22 @@ export default function SimulatorPage() {
 
   // Añadir useEffect para cargar los resultados al iniciar y limpiar SSE al desmontar
   useEffect(() => {
+    if (typeof window !== "undefined") {
+      const exampleKey = sessionStorage.getItem("review_simulator_example_key");
+      if (exampleKey && mockExampleSessions[exampleKey]) {
+        const mockData = mockExampleSessions[exampleKey];
+        setProduct(mockData.product);
+        setBots(mockData.reviewers);
+        setReviews(mockData.reviews);
+        setAnalysisResult(mockData.analysis);
+        setPopulationSize(mockData.reviewers.length);
+        setActiveStep(4); // Go straight to Dashboard phase!
+        setCheckpointStep(4);
+        sessionStorage.removeItem("review_simulator_example_key");
+        return;
+      }
+    }
+
     loadCurrentResults();
     return () => {
       if (eventSourceRef.current) {

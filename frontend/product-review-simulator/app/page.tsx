@@ -30,6 +30,43 @@ export default function Home() {
   const [isLoadingSessions, setIsLoadingSessions] = useState(true)
   const [currentUser, setCurrentUser] = useState<{ id: number; username: string } | null>(null)
 
+  const exampleProducts = [
+    {
+      key: "headphones",
+      name: "Auriculares Pro ANC-X1",
+      description: "Auriculares inalámbricos de alta gama con cancelación activa de ruido híbrida de 40dB y sonido espacial.",
+      category: "Electrónica",
+      price: "$189.99",
+      rating: 4.7,
+      icon: "🎧",
+    },
+    {
+      key: "coffee",
+      name: "Smart Cafetera Precision Brew",
+      description: "Cafetera inteligente programable con molinillo integrado de acero y control de temperatura PID.",
+      category: "Hogar y Cocina",
+      price: "$249.99",
+      rating: 3.7,
+      icon: "☕",
+    },
+    {
+      key: "smartwatch",
+      name: "FitTrack Watch Elite",
+      description: "Smartwatch deportivo premium con pantalla AMOLED Always-On, GPS multisistema y monitor de salud PPG.",
+      category: "Accesorios Deportivos",
+      price: "$159.99",
+      rating: 4.7,
+      icon: "⌚",
+    }
+  ];
+
+  const handleSelectExampleProduct = (key: string) => {
+    if (typeof window !== 'undefined') {
+      sessionStorage.setItem('review_simulator_example_key', key);
+      router.push('/simulator');
+    }
+  };
+
   useEffect(() => {
     if (typeof window !== "undefined") {
       const stored = localStorage.getItem("review_simulator_user")
@@ -297,58 +334,50 @@ export default function Home() {
                 </p>
               </motion.div>
 
-              {recentSessions.length > 0 && (
-                <motion.div
-                  variants={item}
-                  className="w-full mt-16 text-left"
-                >
-                  <h3 className="text-sm font-semibold mb-6 text-center text-muted-foreground uppercase tracking-widest">
-                    Simulaciones Recientes
-                  </h3>
-                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
-                    {recentSessions.map((session) => (
-                      <motion.div
-                        key={session.session_id}
-                        whileHover={{ y: -3 }}
-                        onClick={() => handleSelectRecentSession(session.session_id)}
-                        className="cursor-pointer p-5 bg-card/40 hover:bg-card/75 backdrop-blur-md border border-border rounded-2xl hover:border-primary/30 transition-all flex flex-col justify-between h-40 shadow-sm hover:shadow-md glow-card-hover"
-                      >
-                        <div>
-                          <h4 className="font-bold text-sm text-foreground line-clamp-2 leading-snug">
-                            {session.product_name}
-                          </h4>
-                          <span className="text-[11px] text-muted-foreground block mt-1.5 font-medium">
-                            {new Date(session.created_at).toLocaleDateString('es-ES', {
-                              day: '2-digit',
-                              month: 'short',
-                              year: 'numeric',
-                              hour: '2-digit',
-                              minute: '2-digit'
-                            })}
+              <motion.div
+                variants={item}
+                className="w-full mt-16 text-left"
+              >
+                <h3 className="text-xs font-bold mb-6 text-center text-muted-foreground uppercase tracking-widest">
+                  Simulaciones de Prueba Prehechas
+                </h3>
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
+                  {exampleProducts.map((prod) => (
+                    <motion.div
+                      key={prod.key}
+                      whileHover={{ y: -3 }}
+                      onClick={() => handleSelectExampleProduct(prod.key)}
+                      className="cursor-pointer p-5 bg-card/40 hover:bg-card/75 backdrop-blur-md border border-border rounded-2xl hover:border-primary/30 transition-all flex flex-col justify-between h-44 shadow-sm hover:shadow-md glow-card-hover"
+                    >
+                      <div>
+                        <div className="flex justify-between items-start mb-2">
+                          <span className="text-2xl">{prod.icon}</span>
+                          <span className="text-[10px] font-bold text-primary bg-primary/10 px-2 py-0.5 rounded-full uppercase tracking-wider">
+                            {prod.category}
                           </span>
                         </div>
-                        <div className="flex items-center justify-between mt-4 pt-3.5 border-t border-border/60">
-                          {session.average_rating ? (
-                            <div className="flex items-center space-x-1">
-                              <span className="text-amber-500 text-sm">★</span>
-                              <span className="text-xs font-bold text-foreground">
-                                {session.average_rating.toFixed(1)} / 5.0
-                              </span>
-                            </div>
-                          ) : (
-                            <span className="text-[10px] font-semibold text-primary bg-primary/10 px-2 py-0.5 rounded-full">
-                              En progreso...
-                            </span>
-                          )}
-                          <span className="text-xs text-primary font-semibold flex items-center gap-1.5">
-                            Ver simulación <ArrowRight className="h-3 w-3" />
+                        <h4 className="font-bold text-sm text-foreground leading-snug">
+                          {prod.name}
+                        </h4>
+                        <p className="text-[11px] text-muted-foreground mt-1 line-clamp-2 leading-relaxed">
+                          {prod.description}
+                        </p>
+                      </div>
+                      <div className="flex items-center justify-between mt-4 pt-3 border-t border-border/60">
+                        <div className="flex items-center space-x-1">
+                          <span className="text-amber-500 text-sm">★</span>
+                          <span className="text-xs font-bold text-foreground">
+                            {prod.rating.toFixed(1)} / 5.0
                           </span>
                         </div>
-                      </motion.div>
-                    ))}
-                  </div>
-                </motion.div>
-              )}
+                        <span className="text-xs text-primary font-semibold flex items-center gap-1">
+                          Probar demo <ArrowRight className="h-3 w-3" />
+                        </span>
+                      </div>
+                    </motion.div>
+                  ))}
+                </div>
+              </motion.div>
             </motion.div>
           </div>
         </section>
