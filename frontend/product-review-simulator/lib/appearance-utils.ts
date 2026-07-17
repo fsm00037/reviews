@@ -242,36 +242,250 @@ export function resolveAppearance(bot: BotProfile): ResolvedAppearance {
   }
 }
 
-/**
- * Posición en el mapa de personalidad (formación):
- * - Eje X: Introvertido (izq) → Extrovertido (der)
- * - Eje Z: Novato tech (atrás) → Experto tech (delante)
- * Jitter mínimo por id para no solaparse sin salir de la zona.
- */
-export function personalityPosition(bot: BotProfile, index: number, total: number): [number, number, number] {
+const MAP_HALF = 5.0 // mitad del mapa de personalidad (metros)
+
+/** Claves de personalidad usadas en los mapas 3D */
+export type PersonalityAxisKey = keyof BotPersonality
+
+export type PersonalityMapDef = {
+  id: string
+  /** Etiqueta corta del botón / HUD */
+  shortLabel: string
+  /** Eje X: izq → der */
+  xKey: PersonalityAxisKey
+  xLeft: string
+  xRight: string
+  /** Eje Z: atrás → delante (en el suelo) */
+  zKey: PersonalityAxisKey
+  zBack: string
+  zFront: string
+  /** Etiquetas de cuadrantes (opcional, se generan si faltan) */
+  qNW?: string
+  qNE?: string
+  qSW?: string
+  qSE?: string
+}
+
+/** Mapas alternables en modo Personalidad */
+export const PERSONALITY_MAPS: PersonalityMapDef[] = [
+  {
+    id: "social_tech",
+    shortLabel: "Social × Tech",
+    xKey: "introvert_extrovert",
+    xLeft: "Introvertido",
+    xRight: "Extrovertido",
+    zKey: "tech_novice_expert",
+    zBack: "Novato tech",
+    zFront: "Experto tech",
+    qNW: "Intro · Novato",
+    qNE: "Extro · Novato",
+    qSW: "Intro · Experto",
+    qSE: "Extro · Experto",
+  },
+  {
+    id: "social_risk",
+    shortLabel: "Social × Riesgo",
+    xKey: "introvert_extrovert",
+    xLeft: "Introvertido",
+    xRight: "Extrovertido",
+    zKey: "safe_risky",
+    zBack: "Prudente",
+    zFront: "Arriesgado",
+    qNW: "Intro · Prudente",
+    qNE: "Extro · Prudente",
+    qSW: "Intro · Arriesgado",
+    qSE: "Extro · Arriesgado",
+  },
+  {
+    id: "mind_price",
+    shortLabel: "Mente × Precio",
+    xKey: "analytical_creative",
+    xLeft: "Analítico",
+    xRight: "Creativo",
+    zKey: "price_sensitive_premium",
+    zBack: "Sensible precio",
+    zFront: "Premium",
+    qNW: "Analítico · Precio",
+    qNE: "Creativo · Precio",
+    qSW: "Analítico · Premium",
+    qSE: "Creativo · Premium",
+  },
+  {
+    id: "time_order",
+    shortLabel: "Tiempo × Orden",
+    xKey: "busy_free_time",
+    xLeft: "Ocupado",
+    xRight: "Tiempo libre",
+    zKey: "disorganized_organized",
+    zBack: "Desorganizado",
+    zFront: "Organizado",
+    qNW: "Ocupado · Caos",
+    qNE: "Libre · Caos",
+    qSW: "Ocupado · Orden",
+    qSE: "Libre · Orden",
+  },
+  {
+    id: "loyalty_skept",
+    shortLabel: "Marca × Actitud",
+    xKey: "brand_loyal_explorer",
+    xLeft: "Fiel a marcas",
+    xRight: "Explorador",
+    zKey: "skeptic_enthusiast",
+    zBack: "Escéptico",
+    zFront: "Entusiasta",
+    qNW: "Fiel · Escéptico",
+    qNE: "Explora · Escéptico",
+    qSW: "Fiel · Entusiasta",
+    qSE: "Explora · Entusiasta",
+  },
+  {
+    id: "coop_eco",
+    shortLabel: "Grupo × Eco",
+    xKey: "independent_cooperative",
+    xLeft: "Independiente",
+    xRight: "Cooperativo",
+    zKey: "environmentalist",
+    zBack: "Poco eco",
+    zFront: "Ecologista",
+    qNW: "Indep · Poco eco",
+    qNE: "Coop · Poco eco",
+    qSW: "Indep · Eco",
+    qSE: "Coop · Eco",
+  },
+]
+
+export function getPersonalityMap(index: number): PersonalityMapDef {
+  const i = ((index % PERSONALITY_MAPS.length) + PERSONALITY_MAPS.length) % PERSONALITY_MAPS.length
+  return PERSONALITY_MAPS[i]
+}
+
+function axisValue(bot: BotProfile, key: PersonalityAxisKey): number {
   const p = bot.personality || ({} as BotPersonality)
-  const seed = Math.abs((bot.id ?? index) * 2654435761) >>> 0
+  const v = p[key]
+  if (typeof v === "number" && !Number.isNaN(v)) return Math.max(0, Math.min(100, v))
+  // Fallbacks suaves si falta un eje
+  if (key === "tech_novice_expert" && typeof p.analytical_creative === "number") {
+    return p.analytical_creative
+  }
+  return 50
+}
 
-  const introExt = p.introvert_extrovert ?? 50
-  const tech = p.tech_novice_expert ?? p.analytical_creative ?? 50
+/**
+ * Normaliza un valor respecto al resto de la población (min–max).
+ * Si todos son iguales, usa el rank por índice para no amontonar.
+ * Combina posición relativa en la muestra + valor absoluto 0–100.
+ */
+function representativeNorm(
+  value: number,
+  peers: number[],
+  index: number,
+  total: number
+): number {
+  const min = Math.min(...peers)
+  const max = Math.max(...peers)
+  let relative: number
+  if (max - min < 0.5) {
+    relative = total <= 1 ? 0.5 : index / (total - 1)
+  } else {
+    relative = (value - min) / (max - min)
+  }
+  const absolute = Math.max(0, Math.min(1, value / 100))
+  return relative * 0.72 + absolute * 0.28
+}
 
-  // Mapa centrado ~±4.6 (dentro del patio)
-  const xBase = (introExt / 100) * 9.2 - 4.6
-  const zBase = (tech / 100) * 9.2 - 4.6
+/**
+ * Posición en el mapa de personalidad (formación) según un par de ejes.
+ * Si se pasa `allBots`, la posición es relativa a la población.
+ */
+export function personalityPosition(
+  bot: BotProfile,
+  index: number,
+  total: number,
+  allBots?: BotProfile[],
+  mapDef: PersonalityMapDef = PERSONALITY_MAPS[0]
+): [number, number, number] {
+  const peers = allBots && allBots.length > 0 ? allBots : [bot]
+  const xPeers = peers.map((b) => axisValue(b, mapDef.xKey))
+  const zPeers = peers.map((b) => axisValue(b, mapDef.zKey))
 
-  // Separación local pequeña (0–0.35) para evitar solapes exactos
-  const jitterR = 0.12 + (seed % 24) / 100
+  const xv = axisValue(bot, mapDef.xKey)
+  const zv = axisValue(bot, mapDef.zKey)
+
+  const nx = representativeNorm(xv, xPeers, index, total)
+  const nz = representativeNorm(zv, zPeers, index, total)
+
+  let x = nx * (MAP_HALF * 2) - MAP_HALF
+  let z = nz * (MAP_HALF * 2) - MAP_HALF
+
+  const seed = Math.abs((bot.id ?? index) * 2654435761 + mapDef.id.length * 97) >>> 0
+  const jitterR = 0.08 + (seed % 18) / 120
   const jitterA = ((seed % 360) * Math.PI) / 180
-  // Empuje radial suave si hay muchos en el mismo cuadrante
-  const crowd = Math.min(0.25, total * 0.008)
-  const x = xBase + Math.cos(jitterA) * (jitterR + crowd)
-  const z = zBase + Math.sin(jitterA) * (jitterR + crowd)
+  x += Math.cos(jitterA) * jitterR
+  z += Math.sin(jitterA) * jitterR
 
+  const dist = Math.hypot(x, z)
+  if (dist < 0.45 && total > 3) {
+    const push = 0.35 + (index % 5) * 0.12
+    const a = (index / Math.max(total, 1)) * Math.PI * 2
+    x += Math.cos(a) * push
+    z += Math.sin(a) * push
+  }
+
+  const clamp = MAP_HALF + 0.15
   return [
-    Math.max(-5.1, Math.min(5.1, x)),
+    Math.max(-clamp, Math.min(clamp, x)),
     0,
-    Math.max(-5.1, Math.min(5.1, z)),
+    Math.max(-clamp, Math.min(clamp, z)),
   ]
+}
+
+/** Calcula todas las plazas y aplica separación mínima (repulsión simple). */
+export function personalityPositions(
+  bots: BotProfile[],
+  mapDef: PersonalityMapDef = PERSONALITY_MAPS[0]
+): Map<number | string, [number, number, number]> {
+  const n = bots.length
+  const raw = bots.map((bot, i) => personalityPosition(bot, i, n, bots, mapDef))
+  const minDist = Math.max(0.85, Math.min(1.35, 1.55 - n * 0.02))
+
+  for (let pass = 0; pass < 3; pass++) {
+    for (let i = 0; i < n; i++) {
+      for (let j = i + 1; j < n; j++) {
+        const a = raw[i]
+        const b = raw[j]
+        let dx = b[0] - a[0]
+        let dz = b[2] - a[2]
+        let d = Math.hypot(dx, dz)
+        if (d < 1e-4) {
+          const ang = ((i * 37 + j * 11) % 360) * (Math.PI / 180)
+          dx = Math.cos(ang)
+          dz = Math.sin(ang)
+          d = 0.01
+        }
+        if (d < minDist) {
+          const push = ((minDist - d) / 2) * 0.85
+          const ux = dx / d
+          const uz = dz / d
+          a[0] -= ux * push
+          a[2] -= uz * push
+          b[0] += ux * push
+          b[2] += uz * push
+        }
+      }
+    }
+  }
+
+  const clamp = MAP_HALF + 0.2
+  const map = new Map<number | string, [number, number, number]>()
+  bots.forEach((bot, i) => {
+    const p = raw[i]
+    map.set(bot.id ?? i, [
+      Math.max(-clamp, Math.min(clamp, p[0])),
+      0,
+      Math.max(-clamp, Math.min(clamp, p[2])),
+    ])
+  })
+  return map
 }
 
 export function bodyScale(bodyType: string): {

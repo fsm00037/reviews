@@ -9,13 +9,12 @@ import dynamic from "next/dynamic"
 
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
-import { ThemeToggle } from "@/components/theme-toggle"
 import { SimulatorService } from "@/lib/api-services"
 import { ApiErrorAlert } from "@/components/api-error-alert"
 import { LoadingSpinner } from "@/components/loading-spinner"
 import { APIError } from "@/lib/types"
 import { ProductService } from "@/lib/api-services"
-import { AuthModal } from "@/components/auth-modal"
+import { AppHeader } from "@/components/app-header"
 
 const LandingMiiParadeLazy = dynamic(() => import("@/components/landing-mii-parade"), {
   ssr: false,
@@ -162,75 +161,13 @@ export default function Home() {
 
   return (
     <div className="flex min-h-screen flex-col bg-background text-foreground">
-      {/* Header */}
-      <header className="sticky top-0 z-50">
-        <div className="border-b border-border/40 bg-background/75 backdrop-blur-2xl supports-[backdrop-filter]:bg-background/65">
-          <div className="mx-auto flex h-16 max-w-6xl items-center gap-6 px-5 md:px-8">
-            <Link href="/" className="group flex shrink-0 items-center gap-2.5">
-              <span className="relative flex h-9 w-9 items-center justify-center rounded-xl bg-gradient-to-br from-indigo-500 to-violet-600 shadow-md shadow-primary/30 ring-1 ring-white/20 transition-transform group-hover:scale-[1.03]">
-                <Sparkles className="h-4 w-4 text-white" />
-              </span>
-              <div className="flex flex-col leading-none">
-                <span className="text-[13px] font-semibold tracking-tight">
-                  PreMarket<span className="text-primary"> Lab</span>
-                </span>
-                <span className="mt-0.5 hidden text-[10px] font-medium text-muted-foreground sm:block">
-                  Market simulation
-                </span>
-              </div>
-            </Link>
-
-            <nav className="ml-2 hidden items-center gap-0.5 md:flex">
-              <a
-                href="#features"
-                className="rounded-lg px-3 py-2 text-[13px] font-medium text-muted-foreground transition-colors hover:bg-accent/80 hover:text-foreground"
-              >
-                Producto
-              </a>
-              <a
-                href="#demos"
-                className="rounded-lg px-3 py-2 text-[13px] font-medium text-muted-foreground transition-colors hover:bg-accent/80 hover:text-foreground"
-              >
-                Demos
-              </a>
-              <a
-                href="#flujo"
-                className="rounded-lg px-3 py-2 text-[13px] font-medium text-muted-foreground transition-colors hover:bg-accent/80 hover:text-foreground"
-              >
-                Cómo funciona
-              </a>
-              {currentUser && (
-                <Link
-                  href="/experiments"
-                  className="rounded-lg px-3 py-2 text-[13px] font-medium text-muted-foreground transition-colors hover:bg-accent/80 hover:text-foreground"
-                >
-                  Experimentos
-                </Link>
-              )}
-            </nav>
-
-            <div className="ml-auto flex items-center gap-2">
-              <ThemeToggle />
-              <AuthModal
-                onStateChange={() => {
-                  const stored = localStorage.getItem("review_simulator_user")
-                  setCurrentUser(stored ? JSON.parse(stored) : null)
-                }}
-              />
-              <Button
-                asChild
-                size="sm"
-                className="hidden h-9 rounded-xl px-4 text-xs font-semibold shadow-sm shadow-primary/20 sm:inline-flex"
-              >
-                <Link href="/simulator">
-                  Simulador
-                  <ArrowRight className="ml-1 h-3.5 w-3.5" />
-                </Link>
-              </Button>
-            </div>
-          </div>
-        </div>
-      </header>
+      <AppHeader
+        variant="marketing"
+        onAuthChange={() => {
+          const stored = localStorage.getItem("review_simulator_user")
+          setCurrentUser(stored ? JSON.parse(stored) : null)
+        }}
+      />
 
       <main className="flex-1">
         {/* Hero */}

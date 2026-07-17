@@ -1,18 +1,30 @@
 "use client"
 
 import React, { useState, useEffect } from "react"
-import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog"
+import Link from "next/link"
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@/components/ui/dialog"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
-import { LogIn, UserPlus, LogOut, User, Sparkles, Loader2 } from "lucide-react"
-import { motion, AnimatePresence } from "framer-motion"
+import { LogIn, UserPlus, LogOut, User, Sparkles, Loader2, FlaskConical } from "lucide-react"
 
 interface AuthModalProps {
   onStateChange?: () => void
+  /** Incluye acceso a Experimentos en el bloque de usuario (landing, etc.) */
+  showExperimentsLink?: boolean
 }
 
-export const AuthModal: React.FC<AuthModalProps> = ({ onStateChange }) => {
+export const AuthModal: React.FC<AuthModalProps> = ({
+  onStateChange,
+  showExperimentsLink = false,
+}) => {
   const [isOpen, setIsOpen] = useState(false)
   const [isLogin, setIsLogin] = useState(true)
   const [username, setUsername] = useState("")
@@ -38,7 +50,6 @@ export const AuthModal: React.FC<AuthModalProps> = ({ onStateChange }) => {
   const handleLogout = () => {
     if (typeof window !== "undefined") {
       localStorage.removeItem("review_simulator_user")
-      // Limpiar también session ID para empezar limpios
       sessionStorage.removeItem("review_simulator_session_id")
       setUser(null)
       if (onStateChange) onStateChange()
@@ -58,7 +69,7 @@ export const AuthModal: React.FC<AuthModalProps> = ({ onStateChange }) => {
       const res = await fetch(endpoint, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ username, password })
+        body: JSON.stringify({ username, password }),
       })
 
       const data = await res.json()
@@ -88,125 +99,153 @@ export const AuthModal: React.FC<AuthModalProps> = ({ onStateChange }) => {
     }
   }
 
-  return (
-    <div>
-      {user ? (
-        <div className="flex items-center gap-3">
-          <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-purple-500/10 text-purple-700 dark:text-purple-300 border border-purple-500/20 text-xs font-semibold">
-            <User className="h-3.5 w-3.5" />
-            <span>{user.username}</span>
-          </div>
-          <Button
+  const initials = (user?.username || "?").slice(0, 2).toUpperCase()
+
+  // —— Usuario autenticado ——
+  if (user) {
+    return (
+      <div
+        className="flex items-center gap-1 sm:gap-2"
+        role="group"
+        aria-label={`Cuenta de ${user.username}`}
+      >
+        {showExperimentsLink && (
+          <Link
+            href="/experiments"
+            className="inline-flex h-8 items-center gap-1.5 rounded-md px-2 text-[12px] font-medium text-muted-foreground transition-colors hover:bg-muted hover:text-foreground sm:px-2.5"
+            title="Experimentos"
+          >
+            <FlaskConical className="h-3.5 w-3.5 sm:hidden" />
+            <span className="hidden sm:inline">Experimentos</span>
+          </Link>
+        )}
+
+        <div className="flex items-center gap-1.5 rounded-full border border-border/60 bg-card py-0.5 pl-0.5 pr-0.5 shadow-sm sm:gap-2 sm:pr-1">
+          <span
+            className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-indigo-500 to-violet-600 text-[10px] font-semibold text-white"
+            aria-hidden
+          >
+            {initials}
+          </span>
+          <span className="hidden max-w-[7rem] truncate text-[12px] font-medium text-foreground sm:inline lg:max-w-[10rem]">
+            {user.username}
+          </span>
+          <button
+            type="button"
             onClick={handleLogout}
-            variant="ghost"
-            size="sm"
-            className="text-red-500 hover:text-red-600 hover:bg-red-50 dark:hover:bg-red-950/30 gap-1.5 text-xs font-semibold"
+            className="inline-flex h-7 w-7 shrink-0 items-center justify-center rounded-full text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
+            title="Cerrar sesión"
+            aria-label="Cerrar sesión"
           >
             <LogOut className="h-3.5 w-3.5" />
-            Salir
-          </Button>
+          </button>
         </div>
-      ) : (
-        <Dialog open={isOpen} onOpenChange={setIsOpen}>
-          <DialogTrigger asChild>
-            <Button
-              className="bg-gradient-to-r from-indigo-500 via-purple-500 to-pink-500 text-white hover:opacity-90 transition-opacity gap-1.5 text-xs font-semibold shadow-md shadow-purple-500/10"
-              size="sm"
+      </div>
+    )
+  }
+
+  // —— Invitado ——
+  return (
+    <Dialog open={isOpen} onOpenChange={setIsOpen}>
+      <DialogTrigger asChild>
+        <Button
+          variant="ghost"
+          size="sm"
+          className="h-8 gap-1.5 rounded-full px-3 text-[12px] font-medium text-muted-foreground hover:bg-muted hover:text-foreground"
+        >
+          <User className="h-3.5 w-3.5" />
+          <span className="hidden sm:inline">Iniciar sesión</span>
+          <span className="sm:hidden">Entrar</span>
+        </Button>
+      </DialogTrigger>
+      <DialogContent className="max-w-sm border bg-card text-foreground">
+        <DialogHeader>
+          <DialogTitle className="flex items-center gap-2 text-lg font-semibold">
+            <span className="flex h-8 w-8 items-center justify-center rounded-lg bg-gradient-to-br from-indigo-500 to-violet-600">
+              <Sparkles className="h-4 w-4 text-white" />
+            </span>
+            {isLogin ? "Bienvenido de nuevo" : "Crea tu cuenta"}
+          </DialogTitle>
+          <DialogDescription className="text-muted-foreground">
+            {isLogin
+              ? "Inicia sesión para guardar simulaciones y poblaciones."
+              : "Regístrate para empezar a guardar tus experimentos."}
+          </DialogDescription>
+        </DialogHeader>
+
+        <form onSubmit={handleSubmit} className="mt-2 space-y-4">
+          {error && (
+            <div className="rounded-lg border border-red-200 bg-red-50 p-3 text-xs text-red-600 dark:border-red-900 dark:bg-red-950/30 dark:text-red-400">
+              {error}
+            </div>
+          )}
+          {success && (
+            <div className="rounded-lg border border-emerald-200 bg-emerald-50 p-3 text-xs text-emerald-700 dark:border-emerald-900 dark:bg-emerald-950/30 dark:text-emerald-400">
+              {success}
+            </div>
+          )}
+
+          <div className="space-y-1.5">
+            <Label htmlFor="username">Nombre de usuario</Label>
+            <Input
+              id="username"
+              type="text"
+              placeholder="ej. felipe_dev"
+              value={username}
+              onChange={(e) => setUsername(e.target.value)}
+              className="rounded-xl"
+              required
+            />
+          </div>
+
+          <div className="space-y-1.5">
+            <Label htmlFor="password">Contraseña</Label>
+            <Input
+              id="password"
+              type="password"
+              placeholder="••••••••"
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              className="rounded-xl"
+              required
+            />
+          </div>
+
+          <Button
+            type="submit"
+            className="mt-2 w-full gap-1.5 rounded-xl bg-gradient-to-r from-indigo-500 to-violet-600 text-white"
+            disabled={loading}
+          >
+            {loading ? (
+              <Loader2 className="h-4 w-4 animate-spin" />
+            ) : isLogin ? (
+              <>
+                <LogIn className="h-4 w-4" />
+                Iniciar sesión
+              </>
+            ) : (
+              <>
+                <UserPlus className="h-4 w-4" />
+                Registrarse
+              </>
+            )}
+          </Button>
+
+          <div className="text-center">
+            <button
+              type="button"
+              onClick={() => {
+                setIsLogin(!isLogin)
+                setError("")
+                setSuccess("")
+              }}
+              className="text-xs font-semibold text-primary hover:underline"
             >
-              <LogIn className="h-3.5 w-3.5" />
-              Iniciar Sesión
-            </Button>
-          </DialogTrigger>
-          <DialogContent className="max-w-sm bg-white dark:bg-gray-950 border dark:border-gray-800 text-gray-900 dark:text-gray-100">
-            <DialogHeader>
-              <DialogTitle className="flex items-center gap-2 text-xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-indigo-500 via-purple-500 to-pink-500">
-                <Sparkles className="h-5 w-5 text-purple-500" />
-                {isLogin ? "Bienvenido de nuevo" : "Crea tu cuenta"}
-              </DialogTitle>
-              <DialogDescription className="text-gray-500 dark:text-gray-400">
-                {isLogin
-                  ? "Inicia sesión para guardar tus simulaciones y poblaciones."
-                  : "Regístrate para comenzar a guardar tus experimentos."}
-              </DialogDescription>
-            </DialogHeader>
-
-            <form onSubmit={handleSubmit} className="space-y-4 mt-2">
-              {error && (
-                <div className="p-3 text-xs text-red-600 dark:text-red-400 bg-red-50 dark:bg-red-950/30 border border-red-200 dark:border-red-900 rounded-lg">
-                  {error}
-                </div>
-              )}
-              {success && (
-                <div className="p-3 text-xs text-green-600 dark:text-green-400 bg-green-50 dark:bg-green-950/30 border border-green-200 dark:border-green-900 rounded-lg">
-                  {success}
-                </div>
-              )}
-
-              <div className="space-y-1.5">
-                <Label htmlFor="username">Nombre de usuario</Label>
-                <Input
-                  id="username"
-                  type="text"
-                  placeholder="ej. felipe_dev"
-                  value={username}
-                  onChange={(e) => setUsername(e.target.value)}
-                  className="bg-white/50 dark:bg-gray-900/50 border-purple-100 dark:border-gray-800 focus-visible:ring-purple-500"
-                  required
-                />
-              </div>
-
-              <div className="space-y-1.5">
-                <Label htmlFor="password">Contraseña</Label>
-                <Input
-                  id="password"
-                  type="password"
-                  placeholder="••••••••"
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
-                  className="bg-white/50 dark:bg-gray-900/50 border-purple-100 dark:border-gray-800 focus-visible:ring-purple-500"
-                  required
-                />
-              </div>
-
-              <Button
-                type="submit"
-                className="w-full bg-gradient-to-r from-indigo-500 via-purple-500 to-pink-500 text-white hover:opacity-90 gap-1.5 mt-2"
-                disabled={loading}
-              >
-                {loading ? (
-                  <Loader2 className="h-4 w-4 animate-spin" />
-                ) : isLogin ? (
-                  <>
-                    <LogIn className="h-4 w-4" />
-                    Iniciar Sesión
-                  </>
-                ) : (
-                  <>
-                    <UserPlus className="h-4 w-4" />
-                    Registrarse
-                  </>
-                )}
-              </Button>
-
-              <div className="text-center mt-4">
-                <button
-                  type="button"
-                  onClick={() => {
-                    setIsLogin(!isLogin)
-                    setError("")
-                    setSuccess("")
-                  }}
-                  className="text-xs text-purple-600 dark:text-purple-400 hover:underline font-semibold"
-                >
-                  {isLogin
-                    ? "¿No tienes una cuenta? Regístrate"
-                    : "¿Ya tienes cuenta? Inicia sesión"}
-                </button>
-              </div>
-            </form>
-          </DialogContent>
-        </Dialog>
-      )}
-    </div>
+              {isLogin ? "¿No tienes cuenta? Regístrate" : "¿Ya tienes cuenta? Inicia sesión"}
+            </button>
+          </div>
+        </form>
+      </DialogContent>
+    </Dialog>
   )
 }

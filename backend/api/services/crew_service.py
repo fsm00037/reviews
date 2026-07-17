@@ -110,13 +110,33 @@ def _bg_phase2(num_reviewers: int, profile_parameters: Dict[str, Any], model_nam
         
         # Asegurar que se guarda el listado definitivo
         profiles = []
-        if phase2_results and "profiles" in phase2_results:
-            profiles = phase2_results["profiles"]
-            db.save_reviewers(session_id, profiles)
+        resolved_params = profile_parameters
+        if phase2_results:
+            data = phase2_results.to_dict() if hasattr(phase2_results, "to_dict") else (
+                phase2_results if isinstance(phase2_results, dict) else {}
+            )
+            if "profiles" in data:
+                profiles = data["profiles"]
+                db.save_reviewers(session_id, profiles)
+            if data.get("profile_parameters"):
+                resolved_params = data["profile_parameters"]
             
         db.set_task_status(session_id, 'phase2', 'completed')
-        pubsub.publish(session_id, 'phase2_completed', {'total': len(profiles)})
+        # Incluir config resuelta (rangos del agente) para el cliente
+        pubsub.publish(session_id, 'phase2_completed', {
+            'total': len(profiles),
+            'profile_parameters': resolved_params,
+            'agent_configured_from_prompt': bool(
+                isinstance(resolved_params, dict)
+                and resolved_params.get('agent_configured_from_prompt')
+            ),
+        })
         print(f"✅ Fase 2 completada para sesión {session_id}")
+        if isinstance(resolved_params, dict) and resolved_params.get('agent_configured_from_prompt'):
+            print(
+                f"   ↳ Config agente aplicada: edad={resolved_params.get('resolved_age_range')}, "
+                f"edu={((resolved_params.get('demographics') or {}).get('education_level'))}"
+            )
     except Exception as e:
         error_trace = traceback.format_exc()
         db.set_task_status(session_id, 'phase2', 'failed', error=f"{str(e)}\n{error_trace}")

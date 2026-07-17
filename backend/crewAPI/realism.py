@@ -293,6 +293,45 @@ def sample_location(demographics: Dict[str, Any], seed: str) -> str:
     return rng.choice(cities)
 
 
+def _pair_bounds(pair: Any, default: Tuple[int, int] = (0, 100)) -> Tuple[int, int]:
+    if isinstance(pair, (list, tuple)) and len(pair) >= 2:
+        try:
+            lo, hi = int(pair[0]), int(pair[1])
+            if lo > hi:
+                lo, hi = hi, lo
+            return lo, hi
+        except (TypeError, ValueError):
+            pass
+    return default
+
+
+def clamp_personality_to_population(
+    personality: Dict[str, Any],
+    profile_parameters: Dict[str, Any],
+    seed: str,
+) -> Dict[str, int]:
+    """
+    Ajusta la personalidad al rango de población configurado (agente o sliders).
+    Si el LLM se sale del rango, se recorta; si falta un eje, se muestrea dentro del rango.
+    """
+    sampled = sample_personality(profile_parameters, seed)
+    cfg = profile_parameters.get("personality") or {}
+    keys = list(sampled.keys())
+    result: Dict[str, int] = {}
+    for key in keys:
+        lo, hi = _pair_bounds(cfg.get(key), (0, 100))
+        raw = personality.get(key) if personality else None
+        if raw is None:
+            result[key] = sampled[key]
+            continue
+        try:
+            val = int(raw)
+        except (TypeError, ValueError):
+            val = sampled[key]
+        result[key] = max(lo, min(hi, val))
+    return result
+
+
 def enrich_profile(
     profile: Dict[str, Any],
     profile_parameters: Dict[str, Any],
@@ -301,13 +340,18 @@ def enrich_profile(
     """Completa apariencia, estilo de reseña y defaults de consumidor de forma determinista."""
     seed = f"{profile.get('name', 'bot')}-{index}"
     demographics = profile_parameters.get("demographics") or {}
+    force_ranges = bool(
+        profile_parameters.get("agent_configured_from_prompt")
+        or profile_parameters.get("enforce_population_ranges")
+    )
 
-    # Personality fill defaults for new axes
-    personality = profile.get("personality") or {}
-    sampled = sample_personality(profile_parameters, seed)
-    for k, v in sampled.items():
-        if k not in personality or personality[k] is None:
-            personality[k] = v
+    # Personalidad: rellenar huecos y SIEMPRE respetar rangos de población
+    personality_in = profile.get("personality") or {}
+    if force_ranges:
+        # Usar muestreo dentro de los rangos del agente (fuente de verdad)
+        personality = sample_personality(profile_parameters, seed)
+    else:
+        personality = clamp_personality_to_population(personality_in, profile_parameters, seed)
     profile["personality"] = personality
 
     if not profile.get("age"):
@@ -316,6 +360,13 @@ def enrich_profile(
         profile["education_level"] = sample_education(demographics, seed)
     if not profile.get("location"):
         profile["location"] = sample_location(demographics, seed)
+
+    # Renta alineada con demografía de población si el agente la fijó
+    forced_income = demographics.get("income_level")
+    if forced_income and forced_income != "Mixed":
+        consumer = profile.get("consumer") or {}
+        consumer["income_level"] = forced_income
+        profile["consumer"] = consumer
 
     appearance = profile.get("appearance") or build_appearance(
         name=profile.get("name", f"bot{index}"),
@@ -326,11 +377,14 @@ def enrich_profile(
     )
     profile["appearance"] = appearance
 
-    review_style = profile.get("review_style") or sample_review_style(profile_parameters, seed, personality)
-    profile["review_style"] = review_style
+    # Estilo de reseña: siempre desde rangos de población (positivity/verbosity/detail)
+    # El LLM no debe sobreescribir los sesgos de la población configurada
+    profile["review_style"] = sample_review_style(profile_parameters, seed, personality)
 
     consumer = profile.get("consumer") or {}
-    if not consumer.get("income_level"):
+    if not consumer.get("income_level") or consumer.get("income_level") not in (
+        "low", "medium", "high", "very_high"
+    ):
         consumer["income_level"] = sample_income(demographics, seed, profile.get("education_level", ""))
     if not consumer.get("occupation"):
         consumer["occupation"] = "Profesional"

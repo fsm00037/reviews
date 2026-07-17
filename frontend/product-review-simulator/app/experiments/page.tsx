@@ -33,10 +33,13 @@ import {
   Link2,
   Package,
   Loader2,
+  LayoutGrid,
+  Network,
+  FlaskConical,
+  ArrowRight,
 } from "lucide-react"
-import AnimatedBackground from "@/components/animated-background"
-import { ThemeToggle } from "@/components/theme-toggle"
 import { AuthModal } from "@/components/auth-modal"
+import { AppHeader } from "@/components/app-header"
 import { RecentSession, DemographicConfig, PersonalityConfig } from "@/lib/types"
 import { SimulatorService, CompareService, ProductService, SavedPopulationService, BotService, getSessionId } from "@/lib/api-services"
 import { MarkdownReport } from "@/components/markdown-report"
@@ -251,18 +254,19 @@ const TreeRoot = ({
   searchQuery: string;
 }) => {
   const isSelected = selectedSessions.includes(node.session_id);
-  const isMatch = searchQuery ? node.product_name.toLowerCase().includes(searchQuery.toLowerCase()) : false;  return (
-    <div className="mb-6 p-4 rounded-2xl border border-border bg-card/40 backdrop-blur-sm shadow-sm hover:shadow-md transition-shadow">
+  const isMatch = searchQuery ? node.product_name.toLowerCase().includes(searchQuery.toLowerCase()) : false;
+  return (
+    <div className="mb-5 rounded-2xl border border-border/70 bg-card/70 p-4 shadow-sm backdrop-blur-sm transition-shadow hover:shadow-md">
       {/* Fila del nodo raiz */}
-      <div className="flex items-center gap-4 min-w-0">
+      <div className="flex min-w-0 items-center gap-4">
         <div
           onClick={() => handleSelectSession(node.session_id)}
-          className={`flex-1 min-w-0 flex flex-col md:flex-row md:items-center justify-between p-4 bg-card/90 border rounded-xl cursor-pointer hover:shadow-sm transition-all duration-300 ${
+          className={`flex min-w-0 flex-1 cursor-pointer flex-col justify-between rounded-xl border bg-card/90 p-4 transition-all duration-300 md:flex-row md:items-center ${
             isSelected
-              ? "border-primary ring-2 ring-primary/10 shadow-primary/5 bg-primary/5"
+              ? "border-primary/40 bg-primary/[0.04] ring-2 ring-primary/15"
               : isMatch
-              ? "border-yellow-400 dark:border-yellow-600 bg-yellow-500/[0.02]"
-              : "border-border hover:border-primary/30"
+              ? "border-amber-400/50 bg-amber-500/[0.03]"
+              : "border-border/70 hover:border-primary/30"
           }`}
         >
           <div className="flex-1 min-w-0 pr-4">
@@ -348,118 +352,196 @@ const TreeRoot = ({
   );
 };
 
+const eduLabel = (level?: string) => {
+  if (level === "Low") return "Baja"
+  if (level === "Medium") return "Media"
+  if (level === "High") return "Alta"
+  return "Mixta"
+}
+
+const genderLabel = (ratio?: string) => {
+  if (ratio === "Male") return "Hombres"
+  if (ratio === "Female") return "Mujeres"
+  return "Mixto"
+}
+
 const PopulationCard = ({
   pop,
   onDelete,
   onUse,
-  onViewReviewers
+  onViewReviewers,
 }: {
-  pop: any;
-  onDelete: (id: number, e: React.MouseEvent) => void;
-  onUse: (pop: any) => void;
-  onViewReviewers: (pop: any) => void;
+  pop: any
+  onDelete: (id: number, e: React.MouseEvent) => void
+  onUse: (pop: any) => void
+  onViewReviewers: (pop: any) => void
 }) => {
-  const demographics = pop.profile_parameters?.demographics;
-  const personality = pop.profile_parameters?.personality;
-  const populationPrompt = pop.profile_parameters?.population_prompt;
+  const demographics = pop.profile_parameters?.demographics
+  const populationPrompt = pop.profile_parameters?.population_prompt
+  const resolvedAge = pop.profile_parameters?.resolved_age_range
+  const ageLo = resolvedAge?.[0] ?? demographics?.age_range?.[0]
+  const ageHi = resolvedAge?.[1] ?? demographics?.age_range?.[1]
+  const previewBots: any[] = Array.isArray(pop.reviewers) ? pop.reviewers.slice(0, 5) : []
+  const extraBots = Math.max(0, (pop.num_reviewers || 0) - previewBots.length)
+  const created = pop.created_at
+    ? new Date(pop.created_at).toLocaleDateString("es-ES", {
+        day: "2-digit",
+        month: "short",
+        year: "numeric",
+      })
+    : null
 
   return (
     <motion.div
       whileHover={{ y: -3 }}
-      className="relative flex flex-col justify-between p-6 bg-card/85 backdrop-blur-sm border border-border hover:border-primary/30 rounded-2xl hover:shadow-lg transition-all duration-300"
+      className="group relative flex h-full flex-col overflow-hidden rounded-2xl border border-border/70 bg-card shadow-sm shadow-black/[0.03] transition-all duration-300 hover:border-primary/30 hover:shadow-lg hover:shadow-primary/8"
     >
-      {/* Header */}
-      <div className="flex justify-between items-start gap-4">
-        <div className="flex-1 min-w-0">
-          <div className="flex items-center gap-2">
-            <span className="text-[10px] font-bold text-primary bg-primary/10 px-2 py-0.5 rounded-full uppercase tracking-wider">
+      {/* Header visual */}
+      <div className="relative h-[88px] overflow-hidden">
+        <div className="absolute inset-0 bg-gradient-to-br from-indigo-500/90 via-primary/85 to-violet-600/90" />
+        <div className="absolute inset-0 bg-[radial-gradient(ellipse_80%_80%_at_20%_20%,rgba(255,255,255,0.22),transparent_55%)]" />
+        <div className="absolute -right-6 -top-6 h-28 w-28 rounded-full bg-white/10 blur-2xl" />
+        <div className="absolute -bottom-8 left-1/3 h-24 w-24 rounded-full bg-violet-300/20 blur-2xl" />
+
+        <div className="relative flex h-full items-start justify-between p-4">
+          <div className="flex flex-col gap-2">
+            <span className="inline-flex w-fit items-center gap-1 rounded-full bg-white/15 px-2 py-0.5 text-[10px] font-semibold text-white ring-1 ring-white/25 backdrop-blur-sm">
+              <Users className="h-3 w-3" />
               Población
             </span>
-            <span className="text-[10px] font-bold text-muted-foreground bg-muted px-2 py-0.5 rounded-full">
-              {pop.num_reviewers} Bots
-            </span>
+            {/* Stack de avatares preview */}
+            <div className="flex items-center">
+              {previewBots.length > 0 ? (
+                <div className="flex -space-x-2.5">
+                  {previewBots.map((bot, i) => (
+                    <Avatar
+                      key={bot.id ?? i}
+                      className="h-8 w-8 border-2 border-white/40 shadow-sm ring-0"
+                      style={{ zIndex: previewBots.length - i }}
+                    >
+                      <AvatarImage src={getBotAvatarUrl(bot)} alt={bot.name || ""} />
+                      <AvatarFallback className="bg-white/20 text-[9px] font-bold text-white">
+                        {(bot.name || "?").slice(0, 2).toUpperCase()}
+                      </AvatarFallback>
+                    </Avatar>
+                  ))}
+                  {extraBots > 0 && (
+                    <span className="relative z-10 flex h-8 w-8 items-center justify-center rounded-full border-2 border-white/40 bg-white/20 text-[10px] font-bold text-white backdrop-blur-sm">
+                      +{extraBots}
+                    </span>
+                  )}
+                </div>
+              ) : (
+                <div className="flex h-8 items-center gap-1.5 rounded-full bg-white/15 px-2.5 text-[11px] font-semibold text-white ring-1 ring-white/20 backdrop-blur-sm">
+                  <UserCircle2 className="h-3.5 w-3.5" />
+                  {pop.num_reviewers ?? 0} reseñadores
+                </div>
+              )}
+            </div>
           </div>
-          <h3 className="font-bold text-base text-foreground mt-2 truncate">
-            {pop.name}
-          </h3>
-          <p className="text-xs text-muted-foreground line-clamp-2 mt-1 min-h-[32px] leading-relaxed">
-            {pop.description || "Sin descripción"}
-          </p>
+
+          <Button
+            variant="ghost"
+            size="icon"
+            onClick={(e) => onDelete(pop.id, e)}
+            className="h-8 w-8 shrink-0 rounded-xl bg-white/10 text-white/90 opacity-80 ring-1 ring-white/15 backdrop-blur-sm hover:bg-red-500/90 hover:text-white hover:opacity-100 group-hover:opacity-100"
+          >
+            <Trash2 className="h-3.5 w-3.5" />
+          </Button>
         </div>
-        <Button
-          variant="ghost"
-          size="icon"
-          onClick={(e) => onDelete(pop.id, e)}
-          className="text-muted-foreground hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-950/20 rounded-full h-8 w-8 flex-shrink-0"
-        >
-          <Trash2 className="h-4 w-4" />
-        </Button>
       </div>
 
-      {/* Demographics / Parameters Summary */}
-      {demographics && (
-        <div className="mt-4 pt-4 border-t border-border/60 space-y-2">
-          <div className="flex flex-wrap gap-1.5">
-            <span className="text-[10px] font-medium bg-gray-100 dark:bg-gray-900 text-gray-600 dark:text-gray-300 px-2 py-0.5 rounded">
-              Edad: {demographics.age_range?.[0]} - {demographics.age_range?.[1]} años
-            </span>
-            <span className="text-[10px] font-medium bg-gray-100 dark:bg-gray-900 text-gray-600 dark:text-gray-300 px-2 py-0.5 rounded">
-              Educación: {
-                demographics.education_level === "Mixed" ? "Mixta" :
-                demographics.education_level === "Low" ? "Baja" :
-                demographics.education_level === "Medium" ? "Media" : "Alta"
-              }
-            </span>
-            <span className="text-[10px] font-medium bg-gray-100 dark:bg-gray-900 text-gray-600 dark:text-gray-300 px-2 py-0.5 rounded">
-              Género: {
-                demographics.gender_ratio === "Male&Female" ? "Mixto" :
-                demographics.gender_ratio === "Male" ? "Hombres" : "Mujeres"
-              }
+      {/* Body */}
+      <div className="flex flex-1 flex-col p-4 pt-3.5">
+        <div className="min-w-0">
+          <div className="flex items-start justify-between gap-2">
+            <h3 className="truncate text-[15px] font-semibold tracking-tight text-foreground">
+              {pop.name}
+            </h3>
+            <span className="shrink-0 rounded-lg bg-primary/10 px-2 py-0.5 text-[10px] font-bold tabular-nums text-primary">
+              {pop.num_reviewers}
+              <span className="ml-0.5 font-semibold text-primary/70">bots</span>
             </span>
           </div>
-        </div>
-      )}
-
-      {/* Prompt / Custom personality info */}
-      {populationPrompt && (
-        <div className="mt-3 bg-purple-500/5 dark:bg-purple-950/20 rounded-xl p-2.5 border border-purple-500/10">
-          <span className="text-[9px] font-bold uppercase tracking-wider text-purple-500 block mb-1">
-            Prompt de Población
-          </span>
-          <p className="text-[10px] text-gray-500 dark:text-gray-400 italic line-clamp-2 leading-relaxed">
-            "{populationPrompt}"
+          <p className="mt-1 line-clamp-2 min-h-[2.25rem] text-xs leading-relaxed text-muted-foreground">
+            {pop.description?.trim() || "Sin descripción"}
           </p>
         </div>
-      )}
 
-      {/* Footer / Action */}
-      <div className="flex items-center justify-between mt-6 pt-4 border-t border-purple-50 dark:border-gray-800 gap-2">
-        <span className="text-[10px] text-gray-400">
-          Creada el {new Date(pop.created_at).toLocaleDateString('es-ES', { day: '2-digit', month: 'short' })}
-        </span>
-        <div className="flex gap-2">
-          <Button
-            variant="outline"
-            onClick={(e) => {
-              e.stopPropagation();
-              onViewReviewers(pop);
-            }}
-            className="border-purple-200 dark:border-gray-800 text-purple-600 dark:text-purple-400 hover:bg-purple-50 dark:hover:bg-purple-950/20 text-xs font-semibold px-3 py-1.5 h-8 rounded-xl transition-colors"
-          >
-            Ver Reseñadores
-          </Button>
-          <Button
-            onClick={() => onUse(pop)}
-            className="bg-gradient-to-r from-indigo-500 to-purple-600 hover:from-indigo-600 hover:to-purple-700 text-white gap-1.5 text-xs font-semibold px-4 py-1.5 h-8 rounded-xl shadow-sm hover:shadow transition-all"
-          >
-            <Sparkles className="h-3.5 w-3.5" />
-            Usar en Simulador
-          </Button>
+        {/* Stats row */}
+        <div className="mt-3.5 grid grid-cols-3 gap-1.5">
+          <div className="rounded-xl border border-border/60 bg-muted/30 px-2 py-2 text-center">
+            <p className="text-[9px] font-medium uppercase tracking-wider text-muted-foreground">
+              Edad
+            </p>
+            <p className="mt-0.5 text-[11px] font-semibold tabular-nums text-foreground">
+              {ageLo != null || ageHi != null ? `${ageLo ?? "?"}–${ageHi ?? "?"}` : "—"}
+            </p>
+          </div>
+          <div className="rounded-xl border border-border/60 bg-muted/30 px-2 py-2 text-center">
+            <p className="text-[9px] font-medium uppercase tracking-wider text-muted-foreground">
+              Educación
+            </p>
+            <p className="mt-0.5 truncate text-[11px] font-semibold text-foreground">
+              {eduLabel(demographics?.education_level)}
+            </p>
+          </div>
+          <div className="rounded-xl border border-border/60 bg-muted/30 px-2 py-2 text-center">
+            <p className="text-[9px] font-medium uppercase tracking-wider text-muted-foreground">
+              Género
+            </p>
+            <p className="mt-0.5 truncate text-[11px] font-semibold text-foreground">
+              {genderLabel(demographics?.gender_ratio)}
+            </p>
+          </div>
+        </div>
+
+        {populationPrompt && (
+          <div className="mt-3 rounded-xl border border-border/50 bg-gradient-to-br from-primary/[0.05] to-violet-500/[0.04] px-3 py-2.5">
+            <div className="mb-1 flex items-center gap-1.5">
+              <Zap className="h-3 w-3 text-primary" />
+              <span className="text-[9px] font-semibold uppercase tracking-wider text-primary/90">
+                Prompt de población
+              </span>
+            </div>
+            <p className="line-clamp-2 text-[11px] leading-relaxed text-muted-foreground">
+              {populationPrompt}
+            </p>
+          </div>
+        )}
+
+        {/* Footer actions */}
+        <div className="mt-auto flex flex-col gap-3 border-t border-border/50 pt-3.5 sm:flex-row sm:items-center sm:justify-between">
+          <span className="inline-flex items-center gap-1 text-[10px] text-muted-foreground">
+            <Clock className="h-3 w-3" />
+            {created || "—"}
+          </span>
+          <div className="flex gap-2">
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={(e) => {
+                e.stopPropagation()
+                onViewReviewers(pop)
+              }}
+              className="h-8 flex-1 rounded-xl border-border/80 text-xs font-semibold sm:flex-none"
+            >
+              Reseñadores
+            </Button>
+            <Button
+              size="sm"
+              onClick={() => onUse(pop)}
+              className="h-8 flex-1 gap-1.5 rounded-xl bg-gradient-to-r from-indigo-500 to-violet-600 text-xs font-semibold text-white shadow-sm shadow-primary/25 sm:flex-none"
+            >
+              <Sparkles className="h-3.5 w-3.5" />
+              Usar
+            </Button>
+          </div>
         </div>
       </div>
     </motion.div>
-  );
-};
+  )
+}
 
 export default function ExperimentsPage() {
   const router = useRouter()
@@ -665,17 +747,20 @@ export default function ExperimentsPage() {
     }
 
     return withTempSession(async () => {
+      const popPrompt = pop.profile_parameters?.population_prompt
+      const popManual = !!pop.profile_parameters?.use_custom_config
       await BotService.generateBots(
         targetCount,
         [targetCount, targetCount],
-        [0, 100],
-        [0, 100],
-        [0, 100],
+        pop.profile_parameters?.positivity_bias || [0, 100],
+        pop.profile_parameters?.verbosity || [0, 100],
+        pop.profile_parameters?.detail_level || [0, 100],
         formattedDemographics,
         pop.profile_parameters?.personality,
         false,
         undefined,
-        pop.profile_parameters?.population_prompt
+        popPrompt,
+        popManual || !popPrompt
       )
 
       let profiles: any[] = []
@@ -930,6 +1015,13 @@ export default function ExperimentsPage() {
     let fallbackScheduled = false;
     let generationStarted = false;
     let latestProfiles: any[] = [];
+    // Config resuelta por el agente (si modo prompt) — se guarda con la población
+    let resolvedProfileParameters: any = {
+      demographics: createDemographics,
+      personality: createPersonality,
+      population_prompt: createUseCustomConfig ? undefined : createPopulationPrompt,
+      use_custom_config: createUseCustomConfig,
+    };
     
     // Fallback polling for profile generation (same as simulator)
     let attemptCount = 0;
@@ -997,6 +1089,8 @@ export default function ExperimentsPage() {
         if (done && profiles.length > 0) {
           finished = true;
           sseSource?.close();
+          // Intentar recuperar config del agente desde el último mensaje SSE no siempre
+          // está disponible en polling; se conserva resolvedProfileParameters si ya llegó.
           await savePopulationData(profiles);
           return;
         }
@@ -1041,9 +1135,24 @@ export default function ExperimentsPage() {
           createDescription,
           createPopulationSize,
           {
-            demographics: createDemographics,
-            personality: createPersonality,
-            population_prompt: createPopulationPrompt
+            ...resolvedProfileParameters,
+            demographics:
+              resolvedProfileParameters?.demographics || createDemographics,
+            personality:
+              resolvedProfileParameters?.personality || createPersonality,
+            population_prompt: createUseCustomConfig
+              ? undefined
+              : createPopulationPrompt || resolvedProfileParameters?.population_prompt,
+            use_custom_config: createUseCustomConfig,
+            agent_configured_from_prompt:
+              !!resolvedProfileParameters?.agent_configured_from_prompt,
+            resolved_age_range: resolvedProfileParameters?.resolved_age_range,
+            agent_config_rationale:
+              resolvedProfileParameters?.agent_config_rationale ||
+              resolvedProfileParameters?.resolved_age_rationale,
+            positivity_bias: resolvedProfileParameters?.positivity_bias,
+            verbosity: resolvedProfileParameters?.verbosity,
+            detail_level: resolvedProfileParameters?.detail_level,
           },
           reviewers
         );
@@ -1105,9 +1214,12 @@ export default function ExperimentsPage() {
               return next;
             });
           } else if (message.type === 'phase2_completed') {
-            console.log('[SSE] Phase 2 completed');
+            console.log('[SSE] Phase 2 completed', message.data);
             finished = true;
             sseSource?.close();
+            if (message.data?.profile_parameters) {
+              resolvedProfileParameters = message.data.profile_parameters;
+            }
             let finalProfiles = latestProfiles;
             try {
               const res = await BotService.getReviewerProfiles();
@@ -1151,7 +1263,8 @@ export default function ExperimentsPage() {
         createPersonality,
         false,
         undefined,
-        createPopulationPrompt
+        createUseCustomConfig ? undefined : createPopulationPrompt,
+        createUseCustomConfig
       );
 
       // Si SSE no conecta en ~4s, activar polling de todas formas
@@ -1278,188 +1391,232 @@ export default function ExperimentsPage() {
     s.product_name.toLowerCase().includes(searchQuery.toLowerCase())
   )
 
+  const completedCount = sessions.filter((s) => s.average_rating != null).length
+
   return (
-    <div className="flex flex-col min-h-screen">
-      <AnimatedBackground />
+    <div className="flex min-h-screen flex-col bg-background text-foreground">
+      <div className="pointer-events-none fixed inset-0 -z-10">
+        <div className="absolute inset-0 bg-gradient-to-b from-accent/30 via-background to-background" />
+        <div className="absolute inset-0 bg-[radial-gradient(ellipse_70%_45%_at_50%_-10%,hsl(var(--primary)/0.1),transparent_55%)]" />
+      </div>
 
-      <header className="px-4 lg:px-6 h-16 flex items-center backdrop-blur-md bg-background/70 border-b border-border/60 sticky top-0 z-50">
-        <Link className="flex items-center justify-center gap-2" href="/">
-          <div className="bg-primary/10 rounded-lg p-1.5 border border-primary/20 animate-pulse">
-            <Sparkles className="h-4.5 w-4.5 text-primary" />
-          </div>
-          <span className="font-extrabold text-lg tracking-tight text-foreground">
-            reviewsim.ai
-          </span>
-        </Link>
-        <nav className="ml-auto flex gap-4 sm:gap-6 items-center">
-          <Link
-            className="text-xs font-bold uppercase tracking-wider text-muted-foreground hover:text-primary transition-colors"
-            href="/"
-          >
-            Inicio
-          </Link>
-          <ThemeToggle />
-          <AuthModal onStateChange={() => {
-            const stored = localStorage.getItem("review_simulator_user")
-            if (stored) {
-              setCurrentUser(JSON.parse(stored))
-            } else {
-              setCurrentUser(null)
-              setSessions([])
-            }
-          }} />
-        </nav>
-      </header>
+      <AppHeader
+        variant="app"
+        onAuthChange={() => {
+          const stored = localStorage.getItem("review_simulator_user")
+          if (stored) {
+            setCurrentUser(JSON.parse(stored))
+          } else {
+            setCurrentUser(null)
+            setSessions([])
+          }
+        }}
+      />
 
-      <main className="flex-1 relative z-10 container mx-auto py-8 px-4">
+      <main className="relative z-10 mx-auto w-full max-w-6xl flex-1 px-5 py-8 md:px-8 md:py-10">
         {!currentUser ? (
-          <div className="flex flex-col items-center justify-center py-20 text-center max-w-md mx-auto">
-            <div className="mb-4 bg-primary/5 p-4 rounded-full border border-primary/10">
-              <AlertCircle className="h-10 w-10 text-primary" />
+          <motion.div
+            initial={{ opacity: 0, y: 12 }}
+            animate={{ opacity: 1, y: 0 }}
+            className="mx-auto flex max-w-md flex-col items-center rounded-2xl border border-border/70 bg-card/80 px-6 py-14 text-center shadow-sm backdrop-blur-sm"
+          >
+            <div className="mb-4 flex h-14 w-14 items-center justify-center rounded-2xl bg-primary/10 ring-1 ring-primary/15">
+              <FlaskConical className="h-7 w-7 text-primary" />
             </div>
-            <h2 className="text-xl font-bold mb-2">Inicia sesión requerida</h2>
-            <p className="text-xs text-muted-foreground mb-6 leading-relaxed">
-              Debes iniciar sesión con tu cuenta para visualizar tus experimentos, guardar poblaciones y comparar productos.
+            <h2 className="text-xl font-semibold tracking-tight">Inicia sesión</h2>
+            <p className="mt-2 text-sm leading-relaxed text-muted-foreground">
+              Accede para ver tus simulaciones, poblaciones guardadas y comparaciones con IA.
             </p>
-            <AuthModal onStateChange={() => window.location.reload()} />
-          </div>
-        ) : (
-          <div>
-            <div className="flex items-center gap-4 mb-6">
-              <Link href="/">
-                <Button
-                  variant="outline"
-                  size="icon"
-                  className="rounded-full border-border hover:bg-accent transition-colors h-9 w-9"
-                >
-                  <ArrowLeft className="h-4 w-4" />
-                </Button>
-              </Link>
-              <div>
-                <h1 className="text-2xl font-extrabold text-foreground tracking-tight">
-                  Mis Experimentos
-                </h1>
-                <p className="text-xs text-muted-foreground mt-0.5">
-                  Administra, visualiza e innova tus productos simulados
-                </p>
-              </div>
+            <div className="mt-6">
+              <AuthModal onStateChange={() => window.location.reload()} />
             </div>
+          </motion.div>
+        ) : (
+          <div className="space-y-6">
+            {/* Encabezado de página (claro y separado del nav) */}
+            <section className="space-y-5">
+              <div className="flex items-center gap-3">
+                <Link href="/">
+                  <Button
+                    variant="outline"
+                    size="icon"
+                    className="h-9 w-9 shrink-0 rounded-xl border-border/70"
+                    aria-label="Volver al inicio"
+                  >
+                    <ArrowLeft className="h-4 w-4" />
+                  </Button>
+                </Link>
+                <div className="min-w-0">
+                  <h1 className="text-2xl font-semibold tracking-tight text-foreground sm:text-[1.75rem]">
+                    Experimentos
+                  </h1>
+                  <p className="mt-0.5 text-sm text-muted-foreground">
+                    Simulaciones, linajes y poblaciones reutilizables
+                  </p>
+                </div>
+              </div>
 
-            {/* Tab Selector */}
-            <div className="flex border-b border-border/60 mb-8 mt-6">
-              {[
-                { id: "experiments", label: "Mis Simulaciones", icon: <TrendingUp className="h-4 w-4" /> },
-                { id: "populations", label: "Poblaciones Guardadas", icon: <Users className="h-4 w-4" /> },
-              ].map((tab) => {
-                const active = activeTab === tab.id;
+              {/* Stats: fila dedicada, misma altura, legible */}
+              <div className="grid grid-cols-3 gap-2 sm:gap-3">
+                <div className="rounded-2xl border border-border/60 bg-card/90 px-3 py-3 shadow-sm sm:px-4">
+                  <div className="flex items-center gap-2 text-muted-foreground">
+                    <FlaskConical className="hidden h-3.5 w-3.5 sm:block" />
+                    <p className="text-[10px] font-medium uppercase tracking-wider">Simulaciones</p>
+                  </div>
+                  <p className="mt-1 text-xl font-semibold tabular-nums tracking-tight text-foreground sm:text-2xl">
+                    {sessions.length}
+                  </p>
+                </div>
+                <div className="rounded-2xl border border-border/60 bg-card/90 px-3 py-3 shadow-sm sm:px-4">
+                  <div className="flex items-center gap-2 text-muted-foreground">
+                    <CheckCircle className="hidden h-3.5 w-3.5 sm:block" />
+                    <p className="text-[10px] font-medium uppercase tracking-wider">Completas</p>
+                  </div>
+                  <p className="mt-1 text-xl font-semibold tabular-nums tracking-tight text-foreground sm:text-2xl">
+                    {completedCount}
+                  </p>
+                </div>
+                <div className="rounded-2xl border border-border/60 bg-card/90 px-3 py-3 shadow-sm sm:px-4">
+                  <div className="flex items-center gap-2 text-muted-foreground">
+                    <Users className="hidden h-3.5 w-3.5 sm:block" />
+                    <p className="text-[10px] font-medium uppercase tracking-wider">Poblaciones</p>
+                  </div>
+                  <p className="mt-1 text-xl font-semibold tabular-nums tracking-tight text-foreground sm:text-2xl">
+                    {savedPopulations.length}
+                  </p>
+                </div>
+              </div>
+            </section>
+
+            {/* Tabs de contenido */}
+            <div className="flex w-full max-w-md rounded-2xl border border-border/60 bg-muted/40 p-1 shadow-sm">
+              {(
+                [
+                  { id: "experiments" as const, label: "Simulaciones", icon: FlaskConical },
+                  { id: "populations" as const, label: "Poblaciones", icon: Users },
+                ]
+              ).map((tab) => {
+                const active = activeTab === tab.id
+                const Icon = tab.icon
                 return (
                   <button
                     key={tab.id}
                     type="button"
-                    onClick={() => setActiveTab(tab.id as "experiments" | "populations")}
-                    className={`flex items-center gap-2 px-5 py-3 text-xs font-semibold uppercase tracking-wider transition-all border-b-2 -mb-px ${
+                    onClick={() => setActiveTab(tab.id)}
+                    className={`inline-flex flex-1 items-center justify-center gap-2 rounded-xl px-3 py-2.5 text-xs font-semibold transition-all ${
                       active
-                        ? "border-primary text-foreground bg-primary/[0.02]"
-                        : "border-transparent text-muted-foreground hover:text-primary"
+                        ? "bg-background text-foreground shadow-sm ring-1 ring-border/60"
+                        : "text-muted-foreground hover:text-foreground"
                     }`}
                   >
-                    {tab.icon}
+                    <Icon className={`h-3.5 w-3.5 shrink-0 ${active ? "text-primary" : ""}`} />
                     {tab.label}
                   </button>
-                );
+                )
               })}
             </div>
 
             {activeTab === "experiments" && (
-              <>
-                {/* Compare Bar Action */}
+              <div className="space-y-5">
                 {selectedSessions.length > 0 && (
                   <motion.div
-                    initial={{ opacity: 0, y: 15 }}
+                    initial={{ opacity: 0, y: 8 }}
                     animate={{ opacity: 1, y: 0 }}
-                    className="mb-6 p-4 rounded-xl border border-primary/10 bg-primary/[0.03] backdrop-blur-sm flex flex-col sm:flex-row items-center justify-between gap-4"
+                    className="flex flex-col gap-4 rounded-2xl border border-primary/20 bg-primary/[0.04] p-4 sm:flex-row sm:items-center sm:justify-between"
                   >
-                    <div className="flex flex-col text-left">
-                      <span className="text-xs font-bold text-primary uppercase tracking-wider">
-                        Comparación Side-by-Side ({selectedSessions.length}/2)
-                      </span>
-                      <p className="text-xs text-muted-foreground mt-1">
-                        {selectedSessions.length === 1 
-                          ? "Selecciona otra simulación para iniciar la comparación de productos con IA"
-                          : "Tienes 2 productos seleccionados para comparar sus feedback con IA"}
+                    <div>
+                      <p className="text-xs font-semibold text-primary">
+                        Comparar productos · {selectedSessions.length}/2
+                      </p>
+                      <p className="mt-0.5 text-xs text-muted-foreground">
+                        {selectedSessions.length === 1
+                          ? "Elige otra simulación para comparar con IA."
+                          : "Listo: lanza la comparación side-by-side."}
                       </p>
                     </div>
-                    <div className="flex gap-2">
+                    <div className="flex flex-wrap gap-2">
                       <Button
                         onClick={() => setSelectedSessions([])}
                         variant="ghost"
                         size="sm"
-                        className="text-xs hover:bg-primary/10 rounded-xl"
+                        className="h-9 rounded-xl text-xs"
                       >
-                        Limpiar selección
+                        Limpiar
                       </Button>
                       <Button
                         onClick={handleCompare}
                         disabled={selectedSessions.length !== 2}
-                        className="bg-primary text-primary-foreground hover:bg-primary/95 transition-all font-semibold rounded-xl text-xs px-4 h-9 shadow-sm shadow-primary/10"
                         size="sm"
+                        className="h-9 gap-1.5 rounded-xl text-xs font-semibold shadow-sm shadow-primary/15"
                       >
-                        <GitCompare className="h-3.5 w-3.5 mr-1.5" />
-                        Comparar Productos con IA
+                        <GitCompare className="h-3.5 w-3.5" />
+                        Comparar con IA
                       </Button>
                     </div>
                   </motion.div>
                 )}
 
-                {/* Search and Filters */}
-                <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-6 mt-6">
-                  <div className="relative w-full sm:max-w-md">
-                    <Search className="absolute left-3 top-2.5 h-4 w-4 text-muted-foreground/60" />
-                    <input
-                      type="text"
-                      placeholder="Buscar por nombre de producto..."
+                <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+                  <div className="relative w-full sm:max-w-sm">
+                    <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground/70" />
+                    <Input
+                      type="search"
+                      placeholder="Buscar producto…"
                       value={searchQuery}
                       onChange={(e) => setSearchQuery(e.target.value)}
-                      className="w-full pl-9 pr-4 py-2 text-xs bg-background/50 border border-border rounded-xl focus:outline-none focus:ring-1 focus:ring-primary leading-relaxed"
+                      className="h-10 rounded-xl border-border/70 bg-card/80 pl-9 text-sm shadow-sm"
                     />
                   </div>
-                  <div className="flex items-center gap-2 bg-primary/5 border border-primary/10 p-1 rounded-xl shrink-0">
-                    <Button
-                      variant={viewMode === 'grid' ? 'secondary' : 'ghost'}
-                      size="sm"
-                      onClick={() => setViewMode('grid')}
-                      className="text-[10px] font-bold uppercase tracking-wider px-3 py-1.5 h-auto rounded-lg"
+                  <div className="inline-flex shrink-0 rounded-xl border border-border/60 bg-card/80 p-0.5 shadow-sm">
+                    <button
+                      type="button"
+                      onClick={() => setViewMode("grid")}
+                      className={`inline-flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-[11px] font-semibold transition-all ${
+                        viewMode === "grid"
+                          ? "bg-primary text-primary-foreground shadow-sm"
+                          : "text-muted-foreground hover:text-foreground"
+                      }`}
                     >
-                      Vista Cuadrícula
-                    </Button>
-                    <Button
-                      variant={viewMode === 'tree' ? 'secondary' : 'ghost'}
-                      size="sm"
-                      onClick={() => setViewMode('tree')}
-                      className="text-[10px] font-bold uppercase tracking-wider px-3 py-1.5 h-auto rounded-lg gap-1.5"
+                      <LayoutGrid className="h-3.5 w-3.5" />
+                      Cuadrícula
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setViewMode("tree")}
+                      className={`inline-flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-[11px] font-semibold transition-all ${
+                        viewMode === "tree"
+                          ? "bg-primary text-primary-foreground shadow-sm"
+                          : "text-muted-foreground hover:text-foreground"
+                      }`}
                     >
-                      <TrendingUp className="h-3.5 w-3.5 rotate-90" />
-                      Vista Árbol (Linaje)
-                    </Button>
+                      <Network className="h-3.5 w-3.5" />
+                      Linaje
+                    </button>
                   </div>
                 </div>
 
                 {loading ? (
-                  <div className="flex items-center justify-center py-20">
-                    <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary" />
+                  <div className="flex flex-col items-center justify-center gap-3 py-24">
+                    <div className="h-9 w-9 animate-spin rounded-full border-2 border-primary border-t-transparent" />
+                    <p className="text-xs text-muted-foreground">Cargando experimentos…</p>
                   </div>
                 ) : filteredSessions.length === 0 ? (
-                  <div className="flex flex-col items-center justify-center py-16 text-center bg-card/40 rounded-2xl border border-border">
-                    <HelpCircle className="h-10 w-10 text-muted-foreground/40 mb-2 animate-bounce" />
-                    <h3 className="font-bold text-sm">No se encontraron experimentos</h3>
-                    <p className="text-xs text-muted-foreground max-w-xs mt-1">
-                      Aún no has creado simulaciones para esta cuenta o no coinciden con la búsqueda.
+                  <div className="flex flex-col items-center rounded-2xl border border-dashed border-border/80 bg-card/40 px-6 py-16 text-center">
+                    <div className="mb-3 flex h-12 w-12 items-center justify-center rounded-2xl bg-muted">
+                      <HelpCircle className="h-6 w-6 text-muted-foreground/60" />
+                    </div>
+                    <h3 className="text-sm font-semibold">Sin experimentos</h3>
+                    <p className="mt-1 max-w-sm text-xs leading-relaxed text-muted-foreground">
+                      {searchQuery
+                        ? "Ningún resultado coincide con la búsqueda."
+                        : "Crea una simulación para ver aquí el historial y el linaje de productos."}
                     </p>
-                    <Link href="/simulator" className="mt-4">
-                      <Button className="bg-primary text-primary-foreground hover:bg-primary/95 shadow-sm shadow-primary/10 rounded-xl font-semibold text-xs h-9 px-4" size="sm">
-                        Crear Nueva Simulación
-                      </Button>
-                    </Link>
+                    <Button asChild size="sm" className="mt-5 h-9 rounded-xl text-xs font-semibold">
+                      <Link href="/simulator">
+                        Ir al simulador
+                        <ArrowRight className="ml-1 h-3.5 w-3.5" />
+                      </Link>
+                    </Button>
                   </div>
                 ) : viewMode === "tree" ? (
                   <div className="space-y-4">
@@ -1477,129 +1634,164 @@ export default function ExperimentsPage() {
                     ))}
                   </div>
                 ) : (
-                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                    {filteredSessions.map((session) => {
+                  <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
+                    {filteredSessions.map((session, index) => {
                       const isSelected = selectedSessions.includes(session.session_id)
                       return (
                         <motion.div
                           key={session.session_id}
-                          whileHover={{ y: -3 }}
-                          className={`relative flex flex-col justify-between p-5 bg-white/80 dark:bg-gray-950/80 backdrop-blur-sm border rounded-2xl cursor-pointer hover:shadow-lg transition-all duration-300 ${
-                            isSelected 
-                              ? "border-purple-500 ring-2 ring-purple-500/10 shadow-purple-500/5 bg-purple-500/5 dark:bg-purple-950/10" 
-                              : "border-purple-100 dark:border-gray-800 hover:border-purple-300 dark:hover:border-purple-900"
-                          }`}
+                          initial={{ opacity: 0, y: 10 }}
+                          animate={{ opacity: 1, y: 0 }}
+                          transition={{ delay: Math.min(index * 0.04, 0.24) }}
+                          whileHover={{ y: -2 }}
                           onClick={() => handleSelectSession(session.session_id)}
+                          className={`group relative flex cursor-pointer flex-col overflow-hidden rounded-2xl border bg-card/90 shadow-sm shadow-black/[0.02] transition-all ${
+                            isSelected
+                              ? "border-primary/40 ring-2 ring-primary/15 shadow-primary/10"
+                              : "border-border/70 hover:border-primary/25 hover:shadow-md hover:shadow-primary/5"
+                          }`}
                         >
-                          <div className="flex justify-between items-start gap-2">
-                            <div className="flex-1 min-w-0">
-                              <span className="text-[10px] font-bold text-purple-600 dark:text-purple-400 bg-purple-100 dark:bg-purple-950/50 px-2 py-0.5 rounded-full uppercase tracking-wider">
-                                Simulación
+                          <div className="relative h-28 w-full overflow-hidden bg-muted/50">
+                            {/* eslint-disable-next-line @next/next/no-img-element */}
+                            <img
+                              src={session.product_image || "/placeholder.svg"}
+                              alt=""
+                              className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-[1.03]"
+                              onError={(e) => {
+                                const el = e.currentTarget
+                                if (!el.src.endsWith("/placeholder.svg")) {
+                                  el.src = "/placeholder.svg"
+                                }
+                              }}
+                            />
+                            <div className="absolute inset-0 bg-gradient-to-t from-card via-transparent to-transparent opacity-90" />
+                            <div className="absolute left-3 top-3 flex flex-wrap gap-1.5">
+                              <span className="rounded-full bg-background/90 px-2 py-0.5 text-[10px] font-semibold text-foreground shadow-sm backdrop-blur-sm">
+                                {session.parent_session_id ? "Mejora" : "Original"}
                               </span>
-                              <h3 className="font-bold text-base text-gray-800 dark:text-gray-200 mt-2 line-clamp-2">
-                                {session.product_name}
-                              </h3>
-                              {session.parent_session_id && (
-                                <div className="mt-1 text-[10px] font-bold text-emerald-600 dark:text-emerald-400 bg-emerald-500/10 border border-emerald-500/20 px-2 py-0.5 rounded max-w-full truncate" title={`Versión mejorada de: ${session.parent_product_name || "Producto original"}`}>
-                                  Versión mejorada de: {session.parent_product_name || "Producto original"}
-                                </div>
+                              {session.average_rating != null ? (
+                                <span className="inline-flex items-center gap-0.5 rounded-full bg-amber-500/15 px-2 py-0.5 text-[10px] font-bold text-amber-700 dark:text-amber-400 backdrop-blur-sm">
+                                  ★ {session.average_rating.toFixed(1)}
+                                </span>
+                              ) : (
+                                <span className="rounded-full bg-muted/90 px-2 py-0.5 text-[10px] font-semibold text-muted-foreground backdrop-blur-sm">
+                                  En curso
+                                </span>
                               )}
-                              <div className="flex items-center gap-1.5 text-xs text-gray-400 mt-1.5">
-                                <Clock className="h-3 w-3" />
-                                <span>
-                                  {new Date(session.created_at).toLocaleDateString('es-ES', {
-                                    day: '2-digit',
-                                    month: 'short',
-                                    year: 'numeric'
-                                  })}
-                                </span>
-                              </div>
                             </div>
-                            <div className="flex items-center gap-1">
-                              <Button
-                                variant="ghost"
-                                size="icon"
-                                onClick={(e) => {
-                                  e.stopPropagation();
-                                  handleDuplicateSession(session.session_id, e);
-                                }}
-                                className="text-gray-400 hover:text-purple-500 hover:bg-purple-50 dark:hover:bg-purple-950/20 rounded-full h-8 w-8 flex-shrink-0"
-                                title="Duplicar Experimento"
-                              >
-                                <Copy className="h-4 w-4" />
-                              </Button>
-                              <Button
-                                variant="ghost"
-                                size="icon"
-                                onClick={(e) => handleDeleteSession(session.session_id, e)}
-                                className="text-gray-400 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-950/20 rounded-full h-8 w-8 flex-shrink-0"
-                              >
-                                <Trash2 className="h-4 w-4" />
-                              </Button>
-                            </div>
-                          </div>
-
-                          <div className="flex items-center justify-between mt-6 pt-4 border-t border-purple-50 dark:border-gray-800">
-                            {session.average_rating ? (
-                              <div className="flex items-center gap-1 bg-amber-500/10 px-2 py-0.5 rounded-lg">
-                                <span className="text-amber-500 font-bold text-xs">★</span>
-                                <span className="text-xs font-bold text-amber-700 dark:text-amber-400">
-                                  {session.average_rating.toFixed(1)} / 5
-                                </span>
-                              </div>
-                            ) : (
-                              <span className="text-xs font-semibold text-purple-600 dark:text-purple-400 bg-purple-100 dark:bg-purple-900/30 px-2.5 py-0.5 rounded-full">
-                                Incompleto
+                            {isSelected && (
+                              <span className="absolute right-3 top-3 flex h-6 w-6 items-center justify-center rounded-full bg-primary text-primary-foreground shadow-md">
+                                <CheckCircle className="h-3.5 w-3.5" />
                               </span>
                             )}
-                            <Button
-                              onClick={(e) => {
-                                e.stopPropagation()
-                                handleSelectRecentSession(session.session_id)
-                              }}
-                              variant="link"
-                              className="p-0 h-auto text-xs text-purple-600 dark:text-purple-400 font-semibold"
-                            >
-                              Cargar
-                            </Button>
+                          </div>
+
+                          <div className="flex flex-1 flex-col p-4">
+                            <h3 className="line-clamp-2 text-sm font-semibold leading-snug tracking-tight text-foreground">
+                              {session.product_name || "Producto sin nombre"}
+                            </h3>
+                            {session.parent_product_name && (
+                              <p className="mt-1 truncate text-[10px] font-medium text-emerald-600 dark:text-emerald-400">
+                                ← {session.parent_product_name}
+                              </p>
+                            )}
+                            <div className="mt-2 flex items-center gap-1.5 text-[11px] text-muted-foreground">
+                              <Clock className="h-3 w-3 shrink-0" />
+                              {new Date(session.created_at).toLocaleDateString("es-ES", {
+                                day: "2-digit",
+                                month: "short",
+                                year: "numeric",
+                              })}
+                            </div>
+
+                            <div className="mt-auto flex items-center justify-between gap-2 border-t border-border/50 pt-3.5 mt-4">
+                              <div className="flex gap-0.5">
+                                <Button
+                                  variant="ghost"
+                                  size="icon"
+                                  title="Duplicar"
+                                  onClick={(e) => {
+                                    e.stopPropagation()
+                                    handleDuplicateSession(session.session_id, e)
+                                  }}
+                                  className="h-8 w-8 rounded-lg text-muted-foreground hover:text-foreground"
+                                >
+                                  <Copy className="h-3.5 w-3.5" />
+                                </Button>
+                                <Button
+                                  variant="ghost"
+                                  size="icon"
+                                  title="Eliminar"
+                                  onClick={(e) => handleDeleteSession(session.session_id, e)}
+                                  className="h-8 w-8 rounded-lg text-muted-foreground hover:bg-red-500/10 hover:text-red-500"
+                                >
+                                  <Trash2 className="h-3.5 w-3.5" />
+                                </Button>
+                              </div>
+                              <Button
+                                size="sm"
+                                onClick={(e) => {
+                                  e.stopPropagation()
+                                  handleSelectRecentSession(session.session_id)
+                                }}
+                                className="h-8 gap-1 rounded-xl px-3 text-xs font-semibold"
+                              >
+                                Cargar
+                                <ArrowRight className="h-3 w-3" />
+                              </Button>
+                            </div>
                           </div>
                         </motion.div>
                       )
                     })}
                   </div>
                 )}
-              </>
+              </div>
             )}
 
             {activeTab === "populations" && (
-              <div>
-                <div className="flex justify-between items-center mb-6">
-                  <h2 className="text-xl font-bold text-gray-800 dark:text-gray-200">
-                    Mis Poblaciones Guardadas
-                  </h2>
-                  <Button 
+              <div className="space-y-5">
+                <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+                  <div>
+                    <h2 className="text-base font-semibold tracking-tight">Poblaciones guardadas</h2>
+                    <p className="text-xs text-muted-foreground">
+                      Reutiliza grupos de reseñadores en nuevas simulaciones.
+                    </p>
+                  </div>
+                  <Button
                     onClick={() => setIsCreateModalOpen(true)}
-                    className="bg-gradient-to-r from-indigo-500 via-purple-500 to-pink-500 text-white gap-2 font-semibold px-4 py-2 rounded-xl shadow-md hover:shadow-lg transition-all"
+                    className="h-9 gap-1.5 rounded-xl bg-gradient-to-r from-indigo-500 to-violet-600 text-xs font-semibold text-white shadow-sm shadow-primary/20"
                   >
                     <Plus className="h-4 w-4" />
-                    Crear Población
+                    Crear población
                   </Button>
                 </div>
 
                 {loadingPopulations ? (
-                  <div className="flex items-center justify-center py-20">
-                    <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-purple-500" />
+                  <div className="flex flex-col items-center justify-center gap-3 py-24">
+                    <div className="h-9 w-9 animate-spin rounded-full border-2 border-primary border-t-transparent" />
+                    <p className="text-xs text-muted-foreground">Cargando poblaciones…</p>
                   </div>
                 ) : savedPopulations.length === 0 ? (
-                  <div className="flex flex-col items-center justify-center py-16 text-center bg-white/40 dark:bg-gray-950/40 rounded-xl border border-purple-100 dark:border-gray-800">
-                    <Users className="h-10 w-10 text-purple-400 mb-2" />
-                    <h3 className="font-bold text-lg">No tienes poblaciones guardadas</h3>
-                    <p className="text-sm text-gray-500 dark:text-gray-400 max-w-xs mt-1">
-                      Puedes guardar configuraciones de población personalizadas desde el simulador de reseñas para reutilizarlas en el futuro.
+                  <div className="flex flex-col items-center rounded-2xl border border-dashed border-border/80 bg-card/40 px-6 py-16 text-center">
+                    <div className="mb-3 flex h-12 w-12 items-center justify-center rounded-2xl bg-primary/10">
+                      <Users className="h-6 w-6 text-primary" />
+                    </div>
+                    <h3 className="text-sm font-semibold">Aún no hay poblaciones</h3>
+                    <p className="mt-1 max-w-sm text-xs leading-relaxed text-muted-foreground">
+                      Crea una población con demografía y personalidad personalizadas para reutilizarla.
                     </p>
+                    <Button
+                      onClick={() => setIsCreateModalOpen(true)}
+                      size="sm"
+                      className="mt-5 h-9 rounded-xl text-xs font-semibold"
+                    >
+                      <Plus className="mr-1 h-3.5 w-3.5" />
+                      Crear población
+                    </Button>
                   </div>
                 ) : (
-                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 animate-in fade-in duration-300">
+                  <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
                     {savedPopulations.map((pop) => (
                       <PopulationCard
                         key={pop.id}
@@ -1989,7 +2181,7 @@ export default function ExperimentsPage() {
                     {/* Prompt */}
                     <div className="space-y-3 text-left">
                       <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-2">
-                        <Label htmlFor="create-prompt" className="text-sm font-bold text-gray-800 dark:text-gray-200 flex items-center gap-2">
+                        <Label htmlFor="create-prompt" className="text-sm font-bold text-foreground flex items-center gap-2">
                           <Sparkles className="h-4 w-4 text-purple-500 animate-pulse" />
                           Describir la población con un Prompt (Recomendado)
                         </Label>
@@ -2012,6 +2204,12 @@ export default function ExperimentsPage() {
                         rows={3}
                         className="bg-white/70 dark:bg-gray-800/70 border-purple-200 dark:border-gray-700 focus-visible:ring-purple-500 min-h-[80px] text-sm rounded-xl"
                       />
+                      {!createUseCustomConfig && (
+                        <p className="text-[11px] text-muted-foreground leading-relaxed">
+                          Con el modo prompt, un agente configura automáticamente demografía, rangos de personalidad
+                          y estilo de reseña a partir de tu descripción. Activa los sliders solo si quieres fijarlos a mano.
+                        </p>
+                      )}
                     </div>
 
                     {/* Advanced Sliders */}
@@ -2419,17 +2617,19 @@ export default function ExperimentsPage() {
                                 : "border-border hover:border-primary/30 bg-card/50"
                             }`}
                           >
-                            <div className="h-10 w-10 rounded-lg bg-muted overflow-hidden shrink-0 flex items-center justify-center">
-                              {s.product_image ? (
-                                // eslint-disable-next-line @next/next/no-img-element
-                                <img
-                                  src={s.product_image}
-                                  alt=""
-                                  className="h-full w-full object-cover"
-                                />
-                              ) : (
-                                <Package className="h-4 w-4 text-muted-foreground" />
-                              )}
+                            <div className="h-10 w-10 shrink-0 overflow-hidden rounded-lg bg-muted">
+                              {/* eslint-disable-next-line @next/next/no-img-element */}
+                              <img
+                                src={s.product_image || "/placeholder.svg"}
+                                alt=""
+                                className="h-full w-full object-cover"
+                                onError={(e) => {
+                                  const el = e.currentTarget
+                                  if (!el.src.endsWith("/placeholder.svg")) {
+                                    el.src = "/placeholder.svg"
+                                  }
+                                }}
+                              />
                             </div>
                             <div className="min-w-0 flex-1">
                               <p className="text-xs font-semibold truncate">

@@ -397,30 +397,38 @@ export function MiiCharacter({
     }
   }
 
-  // Al cambiar layout: formación (círculo/rejilla/personalidad) o paseo libre
+  // Al cambiar layout o plaza (p. ej. otro mapa de personalidad): caminan a la nueva posición
   useEffect(() => {
     const b = brain.current
     if (!b) return
     const isFormation = layout === "circle" || layout === "grid" || layout === "personality"
+    const slotMoved =
+      Math.hypot(position[0] - b.slotX, position[2] - b.slotZ) > 0.08
+    const layoutChanged = b.layout !== layout
+
     b.layout = layout
     b.slotX = position[0]
     b.slotZ = position[2]
 
     if (isFormation) {
-      // Van a su plaza de personalidad / círculo / rejilla y se quedan
-      b.mode = "formation"
-      b.targetX = position[0]
-      b.targetZ = position[2]
-      b.state = "go_to_slot"
-      b.timer = 40
+      // Formación: ir andando a la plaza (también si solo cambia el mapa de ejes)
+      if (layoutChanged || slotMoved || b.mode !== "formation") {
+        b.mode = "formation"
+        b.targetX = position[0]
+        b.targetZ = position[2]
+        b.state = "go_to_slot"
+        b.timer = 60
+      }
     } else {
-      // Paseo: deambular desde donde están
+      // Paseo: deambular desde donde están (sin teletransporte)
       b.mode = "free"
-      const dest = randomInCircle(WANDER_RADIUS, rng)
-      b.targetX = dest.x
-      b.targetZ = dest.z
-      b.state = "walk"
-      b.timer = 2 + rng() * 4
+      if (layoutChanged || b.state === "go_to_slot") {
+        const dest = randomInCircle(WANDER_RADIUS, rng)
+        b.targetX = dest.x
+        b.targetZ = dest.z
+        b.state = "walk"
+        b.timer = 2 + rng() * 4
+      }
     }
   }, [layout, position[0], position[2], rng])
 

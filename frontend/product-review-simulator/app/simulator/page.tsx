@@ -371,7 +371,8 @@ export default function SimulatorPage() {
         personality,
         adaptToProduct,
         undefined, // modelName
-        useCustomConfig ? undefined : populationPrompt // only use populationPrompt if they are not in custom configuration mode
+        useCustomConfig ? undefined : populationPrompt,
+        useCustomConfig
       );
       
       // 3. Temporizador de seguridad: si tras 4 segundos no hay ningún perfil recibido, arrancar el fallback

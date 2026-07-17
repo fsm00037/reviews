@@ -220,7 +220,9 @@ export const BotService = {
     personality: PersonalityConfig,
     adaptToProduct: boolean,
     modelName?: string,
-    populationPrompt?: string
+    populationPrompt?: string,
+    /** true = sliders manuales; false/omit + prompt = el agente configura rangos */
+    useCustomConfig?: boolean
   ) => {
     // Crear una copia de demographics para asegurar que se envían correctamente los valores
     const formattedDemographics = {
@@ -229,6 +231,8 @@ export const BotService = {
       gender_ratio: demographics.gender_ratio,
       education_level: demographics.education_level
     };
+
+    const promptMode = !useCustomConfig && !!(populationPrompt && populationPrompt.trim())
     
     return fetchAPI<{profiles: BotProfile[]}>('/phase2', {
       method: 'POST',
@@ -242,7 +246,10 @@ export const BotService = {
           demographics: formattedDemographics,
           personality: personality,
           adapt_to_product: adaptToProduct,
-          population_prompt: populationPrompt
+          // En modo prompt el agente rellena demografía/personalidad/estilo
+          population_prompt: promptMode ? populationPrompt!.trim() : (populationPrompt || undefined),
+          use_custom_config: !!useCustomConfig,
+          manual_ranges: !!useCustomConfig,
         },
         model_name: modelName
       }),

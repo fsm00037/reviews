@@ -552,7 +552,9 @@ export const ConfigPhase: React.FC<ConfigPhaseProps> = ({
                     className="bg-background/50 border-border focus-visible:ring-primary min-h-[100px] text-xs rounded-xl leading-relaxed"
                   />
                   <p className="text-[11px] text-muted-foreground/80">
-                    Describe en lenguaje natural los intereses, rasgos de personalidad, edad u origen para guiar la generación de los bots.
+                    {useCustomConfig
+                      ? "Describe la población; los sliders de abajo tienen prioridad sobre el prompt."
+                      : "Un agente configurará demografía, personalidad y estilo de reseña según este prompt. Activa «Personalización avanzada» solo si quieres fijar los rangos a mano."}
                   </p>
                 </div>
 

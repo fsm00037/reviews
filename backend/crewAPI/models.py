@@ -102,6 +102,47 @@ class PopulationAgeRange(BaseModel):
     rationale: str = Field("", description="Breve justificación del rango elegido")
 
 
+class AgentPopulationConfig(BaseModel):
+    """
+    Configuración completa de población decidida por el agente a partir del prompt.
+    Cada par [low, high] es un rango 0-100 (salvo edades).
+    """
+    age_min: int = Field(..., ge=16, le=90, description="Edad mínima")
+    age_max: int = Field(..., ge=16, le=90, description="Edad máxima")
+    education_level: Literal["Low", "Medium", "High", "Mixed"] = Field(
+        "Mixed", description="Nivel educativo dominante de la población"
+    )
+    gender_ratio: Literal["Male", "Female", "Male&Female"] = Field(
+        "Male&Female", description="Composición de género"
+    )
+    income_level: Literal["low", "medium", "high", "very_high", "Mixed"] = Field(
+        "Mixed", description="Nivel de renta dominante"
+    )
+
+    # Personalidad: rangos [min, max] 0-100
+    introvert_extrovert: List[int] = Field(..., min_length=2, max_length=2)
+    analytical_creative: List[int] = Field(..., min_length=2, max_length=2)
+    busy_free_time: List[int] = Field(..., min_length=2, max_length=2)
+    disorganized_organized: List[int] = Field(..., min_length=2, max_length=2)
+    independent_cooperative: List[int] = Field(..., min_length=2, max_length=2)
+    environmentalist: List[int] = Field(..., min_length=2, max_length=2)
+    safe_risky: List[int] = Field(..., min_length=2, max_length=2)
+    price_sensitive_premium: List[int] = Field(..., min_length=2, max_length=2)
+    brand_loyal_explorer: List[int] = Field(..., min_length=2, max_length=2)
+    tech_novice_expert: List[int] = Field(..., min_length=2, max_length=2)
+    skeptic_enthusiast: List[int] = Field(..., min_length=2, max_length=2)
+
+    # Estilo de reseña de la población [min, max]
+    positivity_bias: List[int] = Field(..., min_length=2, max_length=2)
+    verbosity: List[int] = Field(..., min_length=2, max_length=2)
+    detail_level: List[int] = Field(..., min_length=2, max_length=2)
+
+    config_rationale: str = Field(
+        "",
+        description="Breve justificación en español de por qué estos rangos encajan con el prompt",
+    )
+
+
 class UserProfilesResponse(BaseModel):
     profiles: List[BotProfile]
 

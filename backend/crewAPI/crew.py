@@ -6,7 +6,7 @@ import threading
 import concurrent.futures
 import litellm
 from crewai import Crew, Process, LLM
-from typing import Dict, Any, List, Union
+from typing import Dict, Any, List, Union, Optional
 import config
 import solucionadorError
 from agents import (
@@ -22,7 +22,16 @@ from tasks import (
     create_reviewer_tasks,
     create_compiler_task
 )
-from models import APIRequest, APIResponse, Product, BotProfile, Review, AnalysisResult, PopulationAgeRange
+from models import (
+    APIRequest,
+    APIResponse,
+    Product,
+    BotProfile,
+    Review,
+    AnalysisResult,
+    PopulationAgeRange,
+    AgentPopulationConfig,
+)
 from realism import (
     enrich_profile,
     review_length_guidance,
@@ -31,6 +40,7 @@ from realism import (
     sample_age,
     sample_education,
     sample_location,
+    sample_personality,
 )
 
 # Warning control
@@ -99,71 +109,190 @@ def get_litellm_params(model_name: str = None) -> dict:
             params["api_key"] = config.GEMINI_API_KEY
         return params
 
-def call_llm_json(prompt: str, response_model: type, model_name: str = None, temperature: float = 1.0) -> dict:
+def _extract_json_object(text: str) -> str:
+    """Extrae el primer objeto/array JSON de un texto (quita fences markdown)."""
+    cleaned = (text or "").strip()
+    match = re.search(r"```(?:json)?\s*([\s\S]*?)\s*```", cleaned)
+    if match:
+        cleaned = match.group(1).strip()
+    start_obj = cleaned.find("{")
+    start_arr = cleaned.find("[")
+    if start_obj == -1 and start_arr == -1:
+        return cleaned
+    if start_obj == -1 or (start_arr != -1 and start_arr < start_obj):
+        start, open_c, close_c = start_arr, "[", "]"
+    else:
+        start, open_c, close_c = start_obj, "{", "}"
+    depth = 0
+    in_str = False
+    esc = False
+    for i in range(start, len(cleaned)):
+        ch = cleaned[i]
+        if in_str:
+            if esc:
+                esc = False
+            elif ch == "\\":
+                esc = True
+            elif ch == '"':
+                in_str = False
+            continue
+        if ch == '"':
+            in_str = True
+        elif ch == open_c:
+            depth += 1
+        elif ch == close_c:
+            depth -= 1
+            if depth == 0:
+                return cleaned[start : i + 1]
+    end = cleaned.rfind(close_c)
+    if start != -1 and end > start:
+        return cleaned[start : end + 1]
+    return cleaned
+
+
+def _model_field_names(response_model: type) -> set:
+    if hasattr(response_model, "model_fields"):
+        return set(response_model.model_fields.keys())
+    if hasattr(response_model, "__fields__"):
+        return set(response_model.__fields__.keys())
+    return set()
+
+
+def _coerce_llm_json_to_instance(data: Any, response_model: type) -> dict:
+    """
+    Algunos modelos devuelven un JSON Schema (title/properties/required)
+    en lugar de la instancia. Aplana properties cuando hace falta.
+    """
+    if not isinstance(data, dict):
+        return data
+
+    fields = _model_field_names(response_model)
+    if fields and fields.issubset(data.keys()):
+        return {k: data[k] for k in fields if k in data}
+
+    props = data.get("properties")
+    if isinstance(props, dict) and (
+        "title" in data or "required" in data or data.get("type") == "object" or "description" in data
+    ):
+        flat: Dict[str, Any] = {}
+        for k, v in props.items():
+            if fields and k not in fields:
+                continue
+            # Valor directo (caso habitual del bug: properties.age_min = 16)
+            if not isinstance(v, dict):
+                flat[k] = v
+                continue
+            # Definición de campo del schema
+            if "const" in v:
+                flat[k] = v["const"]
+            elif "default" in v:
+                flat[k] = v["default"]
+            elif "type" in v and not any(x in v for x in fields):
+                # schema sin valor → saltar
+                continue
+            else:
+                flat[k] = v
+        # Campos sueltos en la raíz (p. ej. rationale fuera de properties)
+        for k in fields:
+            if k not in flat and k in data and k not in (
+                "properties", "required", "title", "description", "type", "$defs", "definitions"
+            ):
+                flat[k] = data[k]
+        if flat:
+            return flat
+
+    return data
+
+
+def _validate_llm_json(data: Any, response_model: type) -> dict:
+    coerced = _coerce_llm_json_to_instance(data, response_model)
+    validated_obj = response_model(**coerced)
+    return validated_obj.model_dump() if hasattr(validated_obj, "model_dump") else validated_obj.dict()
+
+
+def call_llm_json(
+    prompt: str,
+    response_model: type,
+    model_name: str = None,
+    temperature: float = 1.0,
+    preprocess=None,
+) -> dict:
     """
     Realiza una llamada a litellm solicitando una respuesta JSON y la valida contra el Pydantic model.
+    preprocess: callable opcional (dict) -> dict para normalizar/clamp antes de validar.
     """
     params = get_litellm_params(model_name)
     schema_desc = json.dumps(response_model.model_json_schema(), ensure_ascii=False, indent=2)
-    
+    field_names = sorted(_model_field_names(response_model))
+    example_hint = ", ".join(f'"{f}": <valor>' for f in field_names) if field_names else '"campo": <valor>'
+
     system_prompt = (
-        "Eres un asistente automatizado. Tu tarea es responder ÚNICAMENTE en formato JSON.\n"
-        f"El JSON devuelto debe cumplir estrictamente con el siguiente esquema JSON:\n{schema_desc}\n"
-        "No agregues texto explicativo, ni introducciones, ni comentarios adicionales fuera del bloque JSON."
+        "Eres un asistente automatizado. Responde ÚNICAMENTE con un objeto JSON de INSTANCIA "
+        "(valores reales), NUNCA con un JSON Schema.\n"
+        f"Campos requeridos: {field_names}\n"
+        f"Forma correcta: {{ {example_hint} }}\n"
+        "INCORRECTO (no hagas esto): {\"title\": \"...\", \"properties\": {...}, \"required\": [...]}\n"
+        "Restricciones numéricas del schema son OBLIGATORIAS (p. ej. age_min >= 16, age_max <= 90, "
+        "rangos 0-100 con min <= max).\n"
+        f"Referencia de tipos/campos:\n{schema_desc}\n"
+        "Sin markdown, sin texto fuera del JSON."
     )
-    
+
     messages = [
         {"role": "system", "content": system_prompt},
-        {"role": "user", "content": prompt}
+        {"role": "user", "content": prompt},
     ]
-    
+
+    def _parse_and_validate(raw_text: str) -> dict:
+        data = json.loads(_extract_json_object(raw_text))
+        data = _coerce_llm_json_to_instance(data, response_model)
+        if preprocess:
+            data = preprocess(data)
+        return _validate_llm_json(data, response_model)
+
     try:
         completion_response = litellm.completion(
             messages=messages,
             temperature=temperature,
-            **params
+            **params,
         )
         content = completion_response.choices[0].message.content
-        cleaned_content = content.strip()
-        
-        match = re.search(r'```(?:json)?\s*([\s\S]*?)\s*```', cleaned_content)
-        if match:
-            cleaned_content = match.group(1).strip()
-        else:
-            start_idx = cleaned_content.find('{')
-            end_idx = cleaned_content.rfind('}')
-            if start_idx != -1 and end_idx != -1 and end_idx > start_idx:
-                cleaned_content = cleaned_content[start_idx:end_idx+1]
-                
-        data = json.loads(cleaned_content)
-        validated_obj = response_model(**data)
-        return validated_obj.model_dump() if hasattr(validated_obj, "model_dump") else validated_obj.dict()
+        return _parse_and_validate(content)
     except Exception as e:
-        print(f"Error parseando o validando JSON: {e}. Contenido crudo intentado: {content if 'content' in locals() else 'N/A'}")
+        print(
+            f"Error parseando o validando JSON: {e}. "
+            f"Contenido crudo intentado: {content if 'content' in locals() else 'N/A'}"
+        )
+        # Si el preprocess no se aplicó (error antes) o el modelo falló, reintentar
         print("Reintentando llamada al modelo para obtener JSON válido...")
-        if 'content' in locals():
+        if "content" in locals():
+            # Último intento local: reparsear el mismo contenido con preprocess (si falló por orden)
+            try:
+                return _parse_and_validate(content)
+            except Exception:
+                pass
             messages.append({"role": "assistant", "content": content})
-        messages.append({"role": "user", "content": f"El JSON anterior no es válido o no cumple con el esquema debido a: {str(e)}. Por favor, vuelve a generar el JSON correctamente, asegurando que todos los campos requeridos estén presentes y tengan el tipo adecuado."})
-        
+        messages.append(
+            {
+                "role": "user",
+                "content": (
+                    f"El JSON no es válido ({e}). "
+                    f"Devuelve SOLO la instancia plana con claves {field_names}. "
+                    "Reglas críticas: age_min debe ser un entero ENTRE 16 y 90 (nunca 15 ni menos); "
+                    "age_max entre 16 y 90 y >= age_min + 5; "
+                    "cada rango de personalidad/estilo es un array de 2 enteros [min, max] con 0<=min<=max<=100. "
+                    "No devuelvas title/properties/required."
+                ),
+            }
+        )
+
         retry_response = litellm.completion(
             messages=messages,
             temperature=temperature,
-            **params
+            **params,
         )
         retry_content = retry_response.choices[0].message.content
-        cleaned_content = retry_content.strip()
-        match = re.search(r'```(?:json)?\s*([\s\S]*?)\s*```', cleaned_content)
-        if match:
-            cleaned_content = match.group(1).strip()
-        else:
-            start_idx = cleaned_content.find('{')
-            end_idx = cleaned_content.rfind('}')
-            if start_idx != -1 and end_idx != -1 and end_idx > start_idx:
-                cleaned_content = cleaned_content[start_idx:end_idx+1]
-                
-        data = json.loads(cleaned_content)
-        validated_obj = response_model(**data)
-        return validated_obj.model_dump() if hasattr(validated_obj, "model_dump") else validated_obj.dict()
+        return _parse_and_validate(retry_content)
 
 def load_json_file(file_path):
     """
@@ -268,6 +397,30 @@ def _clamp_age_range(lo: int, hi: int) -> tuple:
     return lo, hi
 
 
+def _norm_range_pair(pair: Any, default: tuple = (0, 100), absolute: tuple = (0, 100)) -> list:
+    """Normaliza un par [low, high] dentro de absolute."""
+    a_lo, a_hi = absolute
+    try:
+        if isinstance(pair, (list, tuple)) and len(pair) >= 2:
+            lo, hi = int(pair[0]), int(pair[1])
+        elif isinstance(pair, dict):
+            lo = int(pair.get("min", pair.get("low", default[0])))
+            hi = int(pair.get("max", pair.get("high", default[1])))
+        else:
+            lo, hi = default
+    except (TypeError, ValueError):
+        lo, hi = default
+    lo = max(a_lo, min(a_hi, lo))
+    hi = max(a_lo, min(a_hi, hi))
+    if lo > hi:
+        lo, hi = hi, lo
+    if hi - lo < 5:
+        mid = (lo + hi) // 2
+        lo = max(a_lo, mid - 8)
+        hi = min(a_hi, mid + 8)
+    return [lo, hi]
+
+
 def decide_population_age_range(
     profile_parameters: Dict[str, Any],
     product_instructions: str = "",
@@ -282,8 +435,8 @@ def decide_population_age_range(
     population_prompt = (profile_parameters.get("population_prompt") or "").strip()
 
     prompt = f"""
-    Eres un demógrafo de market research. Debes decidir el RANGO DE EDADES
-    (age_min, age_max) de una población sintética de consumidores para un test pre-lanzamiento.
+    Eres un demógrafo de market research. Decide el RANGO DE EDADES de una población
+    sintética de consumidores para un test pre-lanzamiento.
 
     Contexto:
     - Prompt / descripción de la población (prioridad alta si existe):
@@ -295,17 +448,18 @@ def decide_population_age_range(
       {product_instructions or '(sin producto concreto)'}
 
     Reglas:
-    1. Tú decides el rango real de la población. No copies ciegamente el slider del usuario.
-    2. Si el prompt habla de estudiantes, jubilados, padres, gamers, etc., el rango debe reflejarlo.
-    3. Si hay producto, el rango debe ser coherente con compradores típicos de ese producto.
-    4. age_min >= 16, age_max <= 85, y (age_max - age_min) >= 5 (población diversa, no un solo año).
-    5. Si no hay señales claras, elige un rango realista de compradores adultos (p. ej. 22-55 o 28-65).
-    6. rationale: 1 frase en español explicando por qué ese rango.
+    1. Tú decides el rango real. No copies ciegamente el slider del usuario.
+    2. Si el prompt habla de estudiantes, instituto, jubilados, padres, etc., el rango debe reflejarlo.
+    3. Si hay producto, el rango debe ser coherente con compradores típicos.
+    4. age_min >= 16, age_max <= 85, y (age_max - age_min) >= 5.
+    5. Si no hay señales claras, usa un rango adulto realista (p. ej. 22-55).
+    6. rationale: 1 frase en español.
 
-    Devuelve SOLO JSON del esquema PopulationAgeRange.
+    Responde SOLO con este JSON de instancia (valores, no un schema):
+    {{"age_min": 18, "age_max": 24, "rationale": "Breve motivo"}}
     """
     try:
-        result = call_llm_json(prompt, PopulationAgeRange, model_name=model_name, temperature=0.7)
+        result = call_llm_json(prompt, PopulationAgeRange, model_name=model_name, temperature=0.4)
         lo, hi = _clamp_age_range(result.get("age_min", 22), result.get("age_max", 55))
         rationale = result.get("rationale") or ""
         print(f"📊 Rango de edades decidido por el agente: {lo}-{hi} ({rationale})")
@@ -320,6 +474,204 @@ def decide_population_age_range(
             "age_min": lo,
             "age_max": hi,
             "rationale": "Rango por defecto a partir de la demografía configurada.",
+        }
+
+
+PERSONALITY_RANGE_KEYS = [
+    "introvert_extrovert",
+    "analytical_creative",
+    "busy_free_time",
+    "disorganized_organized",
+    "independent_cooperative",
+    "environmentalist",
+    "safe_risky",
+    "price_sensitive_premium",
+    "brand_loyal_explorer",
+    "tech_novice_expert",
+    "skeptic_enthusiast",
+]
+
+REVIEW_STYLE_RANGE_KEYS = ["positivity_bias", "verbosity", "detail_level"]
+
+
+def _sanitize_agent_population_config(data: Dict[str, Any]) -> Dict[str, Any]:
+    """
+    Corrige valores fuera de rango del LLM ANTES de validar con Pydantic
+    (p. ej. age_min=15 → 16; arrays invertidos; enums inválidos).
+    """
+    if not isinstance(data, dict):
+        return data
+    out = dict(data)
+
+    try:
+        amin = int(out.get("age_min", 22))
+    except (TypeError, ValueError):
+        amin = 22
+    try:
+        amax = int(out.get("age_max", 55))
+    except (TypeError, ValueError):
+        amax = 55
+    # Forzar dominio válido del schema (ge=16, le=90)
+    amin = max(16, min(90, amin))
+    amax = max(16, min(90, amax))
+    amin, amax = _clamp_age_range(amin, amax)
+    out["age_min"] = amin
+    out["age_max"] = amax
+
+    for k in PERSONALITY_RANGE_KEYS:
+        out[k] = _norm_range_pair(out.get(k), (20, 80), (0, 100))
+    for k in REVIEW_STYLE_RANGE_KEYS:
+        defaults = {
+            "positivity_bias": (40, 75),
+            "verbosity": (35, 70),
+            "detail_level": (40, 80),
+        }
+        out[k] = _norm_range_pair(out.get(k), defaults.get(k, (30, 70)), (0, 100))
+
+    edu = out.get("education_level") or "Mixed"
+    out["education_level"] = edu if edu in ("Low", "Medium", "High", "Mixed") else "Mixed"
+    gender = out.get("gender_ratio") or "Male&Female"
+    out["gender_ratio"] = gender if gender in ("Male", "Female", "Male&Female") else "Male&Female"
+    income = out.get("income_level") or "Mixed"
+    out["income_level"] = (
+        income if income in ("low", "medium", "high", "very_high", "Mixed") else "Mixed"
+    )
+
+    rationale = out.get("config_rationale") or out.get("rationale") or ""
+    out["config_rationale"] = str(rationale) if rationale is not None else ""
+    return out
+
+
+def decide_population_config_from_prompt(
+    profile_parameters: Dict[str, Any],
+    product_instructions: str = "",
+    model_name: str = None,
+) -> Dict[str, Any]:
+    """
+    Modo prompt: el agente configura demografía + rangos de personalidad y estilo de reseña
+    a partir de la descripción en lenguaje natural.
+    """
+    population_prompt = (profile_parameters.get("population_prompt") or "").strip()
+    demographics = profile_parameters.get("demographics") or {}
+
+    prompt = f"""
+    Eres un demógrafo y estratega de market research. A partir del PROMPT del usuario,
+    configura TODOS los rangos de una población sintética de consumidores para un test pre-lanzamiento.
+
+    PROMPT DE POBLACIÓN (prioridad absoluta):
+    "{population_prompt}"
+
+    Contexto de producto (si hay):
+    {product_instructions or '(sin producto concreto)'}
+
+    Pistas opcionales del UI (puedes ignorarlas si chocan con el prompt):
+    {json.dumps(demographics, ensure_ascii=False)}
+
+    === REGLAS OBLIGATORIAS DE JSON (si fallas, la respuesta se rechaza) ===
+    - Devuelve SOLO un objeto JSON plano de instancia (NO un schema con title/properties/required).
+    - age_min: entero, MÍNIMO 16, MÁXIMO 90. Nunca uses 14 ni 15. Para adolescentes de instituto usa 16.
+    - age_max: entero, 16-90, y age_max >= age_min + 5.
+    - education_level: exactamente uno de "Low" | "Medium" | "High" | "Mixed"
+    - gender_ratio: exactamente uno de "Male" | "Female" | "Male&Female"
+    - income_level: exactamente uno de "low" | "medium" | "high" | "very_high" | "Mixed"
+    - Cada eje de personalidad y estilo: array de EXACTAMENTE 2 enteros [min, max] con 0 <= min <= max <= 100.
+    - config_rationale: string en español (1-3 frases).
+
+    Ejes de personalidad (todos obligatorios como [min, max]):
+    introvert_extrovert, analytical_creative, busy_free_time, disorganized_organized,
+    independent_cooperative, environmentalist, safe_risky, price_sensitive_premium,
+    brand_loyal_explorer, tech_novice_expert, skeptic_enthusiast.
+    (0 = polo izquierdo del nombre, 100 = polo derecho).
+
+    Estilo de reseña (obligatorios [min, max]): positivity_bias, verbosity, detail_level.
+
+    Orientación:
+    - Instituto / chicos de 15-16 años → age_min=16, age_max=18 o 19 (NO 15).
+    - Universitarios → ~18-24. Ejecutivos → ~30-55. Jubilados → ~60-80.
+    - Rangos de personalidad con span ~15-40 (no [0,100] genérico si el prompt es específico).
+
+    Ejemplo VÁLIDO (cópialo como plantilla de forma):
+    {{
+      "age_min": 16,
+      "age_max": 19,
+      "education_level": "Medium",
+      "gender_ratio": "Male&Female",
+      "income_level": "low",
+      "introvert_extrovert": [40, 75],
+      "analytical_creative": [30, 70],
+      "busy_free_time": [55, 90],
+      "disorganized_organized": [25, 60],
+      "independent_cooperative": [40, 75],
+      "environmentalist": [20, 55],
+      "safe_risky": [35, 70],
+      "price_sensitive_premium": [15, 50],
+      "brand_loyal_explorer": [45, 85],
+      "tech_novice_expert": [55, 90],
+      "skeptic_enthusiast": [35, 70],
+      "positivity_bias": [50, 80],
+      "verbosity": [45, 80],
+      "detail_level": [40, 75],
+      "config_rationale": "Adolescentes aficionados al deporte; edades 16-19 y alto tiempo libre."
+    }}
+    """
+    try:
+        raw = call_llm_json(
+            prompt,
+            AgentPopulationConfig,
+            model_name=model_name,
+            temperature=0.35,
+            preprocess=_sanitize_agent_population_config,
+        )
+        age_min, age_max = _clamp_age_range(raw.get("age_min", 22), raw.get("age_max", 55))
+        personality = {
+            k: _norm_range_pair(raw.get(k), (20, 80)) for k in PERSONALITY_RANGE_KEYS
+        }
+        edu = raw.get("education_level") or "Mixed"
+        if edu not in ("Low", "Medium", "High", "Mixed"):
+            edu = "Mixed"
+        gender = raw.get("gender_ratio") or "Male&Female"
+        if gender not in ("Male", "Female", "Male&Female"):
+            gender = "Male&Female"
+        income = raw.get("income_level") or "Mixed"
+        if income not in ("low", "medium", "high", "very_high", "Mixed"):
+            income = "Mixed"
+
+        cfg = {
+            "age_min": age_min,
+            "age_max": age_max,
+            "demographics": {
+                "age_range": [age_min, age_max],
+                "education_level": edu,
+                "gender_ratio": gender,
+                "income_level": income,
+            },
+            "personality": personality,
+            "positivity_bias": _norm_range_pair(raw.get("positivity_bias"), (40, 75)),
+            "verbosity": _norm_range_pair(raw.get("verbosity"), (35, 70)),
+            "detail_level": _norm_range_pair(raw.get("detail_level"), (40, 80)),
+            "config_rationale": raw.get("config_rationale") or raw.get("rationale") or "",
+        }
+        print(
+            f"🎛️ Agente configuró población desde prompt: "
+            f"edad {age_min}-{age_max}, edu={edu}, género={gender}, renta={income}"
+        )
+        print(f"   Rationale: {cfg['config_rationale'][:200]}")
+        return cfg
+    except Exception as e:
+        print(f"⚠️ Falló configuración completa por prompt ({e}); fallback a solo edad.")
+        age = decide_population_age_range(profile_parameters, product_instructions, model_name)
+        return {
+            "age_min": age["age_min"],
+            "age_max": age["age_max"],
+            "demographics": {
+                **(profile_parameters.get("demographics") or {}),
+                "age_range": [age["age_min"], age["age_max"]],
+            },
+            "personality": profile_parameters.get("personality") or {},
+            "positivity_bias": profile_parameters.get("positivity_bias") or [40, 75],
+            "verbosity": profile_parameters.get("verbosity") or [35, 70],
+            "detail_level": profile_parameters.get("detail_level") or [40, 80],
+            "config_rationale": age.get("rationale") or "",
         }
 
 
@@ -356,19 +708,51 @@ def run_phase2(num_reviewers: int, profile_parameters: Union[Dict[str, Any], str
             except Exception as e:
                 print(f"Error loading product info from DB for profile generation: {e}")
 
-        # El agente decide el rango de edades de TODA la población (una sola vez)
-        age_decision = decide_population_age_range(
-            profile_parameters, product_instructions, model_name=model_name
+        population_prompt = (profile_parameters.get("population_prompt") or "").strip()
+        # Modo prompt (sin sliders manuales): el agente configura demografía + todos los rangos
+        use_manual = bool(
+            profile_parameters.get("use_custom_config")
+            or profile_parameters.get("manual_ranges")
         )
-        age_min = age_decision["age_min"]
-        age_max = age_decision["age_max"]
-        age_rationale = age_decision.get("rationale") or ""
-        # Guardar decisión en params (útil al guardar población / depurar)
-        profile_parameters = {
-            **profile_parameters,
-            "resolved_age_range": [age_min, age_max],
-            "resolved_age_rationale": age_rationale,
-        }
+        agent_configured = False
+
+        if population_prompt and not use_manual:
+            agent_cfg = decide_population_config_from_prompt(
+                profile_parameters, product_instructions, model_name=model_name
+            )
+            age_min, age_max = agent_cfg["age_min"], agent_cfg["age_max"]
+            age_rationale = agent_cfg.get("config_rationale") or ""
+            profile_parameters = {
+                **profile_parameters,
+                "demographics": {
+                    **(profile_parameters.get("demographics") or {}),
+                    **(agent_cfg.get("demographics") or {}),
+                },
+                "personality": agent_cfg.get("personality") or profile_parameters.get("personality") or {},
+                "positivity_bias": agent_cfg.get("positivity_bias")
+                or profile_parameters.get("positivity_bias"),
+                "verbosity": agent_cfg.get("verbosity") or profile_parameters.get("verbosity"),
+                "detail_level": agent_cfg.get("detail_level")
+                or profile_parameters.get("detail_level"),
+                "resolved_age_range": [age_min, age_max],
+                "resolved_age_rationale": age_rationale,
+                "agent_config_rationale": age_rationale,
+                "agent_configured_from_prompt": True,
+            }
+            agent_configured = True
+        else:
+            # Solo edad (sliders manuales o sin prompt)
+            age_decision = decide_population_age_range(
+                profile_parameters, product_instructions, model_name=model_name
+            )
+            age_min = age_decision["age_min"]
+            age_max = age_decision["age_max"]
+            age_rationale = age_decision.get("rationale") or ""
+            profile_parameters = {
+                **profile_parameters,
+                "resolved_age_range": [age_min, age_max],
+                "resolved_age_rationale": age_rationale,
+            }
 
         def generate_single_profile(index: int):
             from faker import Faker
@@ -395,6 +779,8 @@ def run_phase2(num_reviewers: int, profile_parameters: Union[Dict[str, Any], str
             fallback_age = sample_age({"age_range": [age_min, age_max]}, seed)
             pre_edu = sample_education(demographics, seed)
             pre_loc = sample_location(demographics, seed)
+            # Personalidad muestreada DENTRO de los rangos del agente / sliders (fuente de verdad)
+            forced_personality = sample_personality(profile_parameters, seed)
             
             population_prompt_instruction = ""
             population_prompt = profile_parameters.get("population_prompt", "")
@@ -405,6 +791,17 @@ def run_phase2(num_reviewers: int, profile_parameters: Union[Dict[str, Any], str
                 "{population_prompt}"
                 Diseña este perfil de forma que sea totalmente coherente y cumpla con la descripción anterior.
                 """
+
+            agent_note = ""
+            if profile_parameters.get("agent_configured_from_prompt"):
+                agent_note = f"""
+                CONFIGURACIÓN YA DECIDIDA POR EL AGENTE DE POBLACIÓN (respétala):
+                - rationale: {profile_parameters.get('agent_config_rationale') or age_rationale or ''}
+                - demografía efectiva: {json.dumps(demographics, ensure_ascii=False)}
+                - rangos de personalidad de la población: {json.dumps(profile_parameters.get('personality') or {}, ensure_ascii=False)}
+                - estilo reseña población: positivity={profile_parameters.get('positivity_bias')},
+                  verbosity={profile_parameters.get('verbosity')}, detail={profile_parameters.get('detail_level')}
+                """
                 
             prompt = f"""
             Eres un demógrafo y psicólogo del consumidor. Genera UN único perfil de comprador realista
@@ -412,46 +809,37 @@ def run_phase2(num_reviewers: int, profile_parameters: Union[Dict[str, Any], str
 
             Perfil {index} de {num_reviewers}.
 
-            DATOS FIJOS (no los cambies):
+            DATOS FIJOS (no los cambies; el sistema los forzará si los alteras):
             - id: {index}
             - name: {generated_name}
             - gender: {gender}
             - location: {pre_loc}
             - education_level: {pre_edu}
+            - personality: {json.dumps(forced_personality, ensure_ascii=False)}
+              (valores ya muestreados dentro de los rangos de la población; NO inventes otros)
 
             EDAD — TÚ LA DECIDES (obligatorio):
-            - El rango de edades de ESTA población (decidido para todos) es: {age_min} a {age_max} años.
-              Motivo del rango: {age_rationale or 'coherencia con la población objetivo'}
-            - Elige la edad concreta de ESTE perfil DENTRO de ese rango (incluido).
-            - Diversifica: no pongas a todos la misma edad. Perfil {index}/{num_reviewers}:
-              reparte edades a lo largo del rango (unos más jóvenes, otros en el medio, otros mayores).
+            - El rango de edades de ESTA población es: {age_min} a {age_max} años.
+              Motivo: {age_rationale or 'coherencia con la población objetivo'}
+            - Elige la edad de ESTE perfil DENTRO de ese rango. Diversifica según índice {index}/{num_reviewers}.
             - La edad debe cuadrar con ocupación, backstory y etapa vital.
 
+            {agent_note}
             {product_instructions}
             {population_prompt_instruction}
 
-            Parámetros de población (rangos 0-100 donde aplica):
-            {json.dumps({k: v for k, v in profile_parameters.items() if k not in ('resolved_age_range', 'resolved_age_rationale')}, ensure_ascii=False)}
-
             REQUISITOS DE REALISMO (crítico):
             1. La persona debe parecer un humano real, no un arquetipo genérico de marketing.
-            2. Incluye contradicciones leves y matices (ej. le gusta la tecnología pero odia apps complicadas).
-            3. bio: 1-2 frases en primera o tercera persona, natural, sin jerga de IA.
-            4. backstory: 120-220 palabras. Historia concreta: trabajo, familia/hogar, hábitos de compra,
-               frustraciones con productos similares, y qué le haría comprar o devolver este tipo de producto.
-            5. personality: valores 0-100 coherentes con la historia (incluye los ejes extendidos):
-               introvert_extrovert, analytical_creative, busy_free_time, disorganized_organized,
-               independent_cooperative, environmentalist, safe_risky,
-               price_sensitive_premium, brand_loyal_explorer, tech_novice_expert, skeptic_enthusiast.
-            6. consumer: occupation realista, income_level (low|medium|high|very_high), household
-               (alone|couple|family_kids|shared|other), shopping_channel (online|physical|both),
-               interests (3-6), pain_points (2-4), brand_preferences (0-4), recent_purchase_context (1 frase).
-            7. appearance: puedes omitirla o dar valores básicos; el sistema la completará.
-            8. review_style: el sistema rellenará positivity/verbosity/etc. con los sesgos de población.
-               Si indiques verbosity (0-100): 0-30 = pocas palabras; 70-100 = hablador.
-            9. En bio o backstory, deja entrever si es de pocas palabras o hablador (sin decir el número).
-            10. Diversidad: evita clichés ("ama la tecnología y el café"). Sé específico y localizable en España.
-            11. Campo age: entero obligatorio entre {age_min} y {age_max}.
+            2. Incluye contradicciones leves y matices.
+            3. bio: 1-2 frases naturales, coherentes con personality y edad.
+            4. backstory: 120-220 palabras; trabajo, hogar, hábitos de compra, coherente con los rasgos fijos.
+            5. personality: usa EXACTAMENTE los valores fijos de arriba (no los cambies).
+            6. consumer: occupation realista; income_level coherente con la demografía de población
+               ({demographics.get('income_level', 'Mixed')}); household; shopping_channel;
+               interests (3-6); pain_points (2-4); brand_preferences; recent_purchase_context.
+            7. appearance: puedes omitirla; el sistema la completará.
+            8. review_style: el sistema lo rellenará; no hace falta inventarlo.
+            9. Campo age: entero entre {age_min} y {age_max}.
 
             Devuelve SOLO JSON válido del esquema BotProfile.
             """
@@ -461,16 +849,16 @@ def run_phase2(num_reviewers: int, profile_parameters: Union[Dict[str, Any], str
                 profile_dict["name"] = generated_name
                 profile_dict["gender"] = gender
                 profile_dict["id"] = index
+                profile_dict["location"] = pre_loc
+                profile_dict["education_level"] = pre_edu
+                # Personalidad del agente/sliders (no la inventada por el LLM)
+                profile_dict["personality"] = forced_personality
                 # Edad: la del agente, acotada al rango decidido; fallback solo si falta
                 try:
                     age_val = int(profile_dict.get("age") or fallback_age)
                 except (TypeError, ValueError):
                     age_val = fallback_age
                 profile_dict["age"] = max(age_min, min(age_max, age_val))
-                if not profile_dict.get("location"):
-                    profile_dict["location"] = pre_loc
-                if not profile_dict.get("education_level"):
-                    profile_dict["education_level"] = pre_edu
 
                 profile_dict = enrich_profile(profile_dict, profile_parameters, index)
                 
@@ -492,7 +880,11 @@ def run_phase2(num_reviewers: int, profile_parameters: Union[Dict[str, Any], str
         with concurrent.futures.ThreadPoolExecutor(max_workers=min(num_reviewers, 10)) as executor:
             executor.map(generate_single_profile, range(1, num_reviewers + 1))
             
-    return LiteLLMResult({"profiles": sorted(profiles, key=lambda x: x.get('id', 0))})
+    return LiteLLMResult({
+        "profiles": sorted(profiles, key=lambda x: x.get('id', 0)),
+        # Config efectiva (tras agente) para que el frontend pueda guardar la población bien
+        "profile_parameters": profile_parameters if num_reviewers > 0 else (profile_parameters or {}),
+    })
 
 def run_phase3(product_info: Dict[str, Any], user_profiles: List[Dict[str, Any]], model_name: str = None, session_dir: str = None, on_review_generated = None) -> Dict[str, Any]:
     """Run phase 3: Generate reviews in parallel using LiteLLM"""
