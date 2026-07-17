@@ -153,14 +153,16 @@ export default function SimulatorPage() {
   const [verbosity, setVerbosity] = useState<[number, number]>([40, 70])
   const [detailLevel, setDetailLevel] = useState<[number, number]>([50, 80])
 
-  // New demographic configuration
+  // New demographic configuration (fully parametrizable)
   const [demographics, setDemographics] = useState<DemographicConfig>({
     age_range: [25, 45],
-    education_level: "Mixed", // Opción mixta por defecto
-    gender_ratio: "Male&Female", // Opción mixta por defecto
+    education_level: "Mixed",
+    gender_ratio: "Male&Female",
+    income_level: "Mixed",
+    regions: [],
   })
 
-  // New personality configuration with ranges
+  // Personality + consumer psychographics (ranges 0-100)
   const [personality, setPersonality] = useState<PersonalityConfig>({
     introvert_extrovert: [0, 100],
     analytical_creative: [0, 100],
@@ -169,6 +171,10 @@ export default function SimulatorPage() {
     independent_cooperative: [0, 100],
     environmentalist: [0, 100],
     safe_risky: [0, 100],
+    price_sensitive_premium: [0, 100],
+    brand_loyal_explorer: [0, 100],
+    tech_novice_expert: [0, 100],
+    skeptic_enthusiast: [0, 100],
   })
 
   // State for product adaptation
@@ -858,6 +864,45 @@ export default function SimulatorPage() {
         sessionStorage.removeItem("review_simulator_example_key");
         return;
       }
+
+      // Bootstrap desde Experimentos → Usar en Simulador (población + producto ya en sesión)
+      const bootstrapRaw = sessionStorage.getItem("review_simulator_bootstrap");
+      if (bootstrapRaw) {
+        try {
+          const boot = JSON.parse(bootstrapRaw);
+          sessionStorage.removeItem("review_simulator_bootstrap");
+
+          if (boot.population?.profile_parameters) {
+            const params = boot.population.profile_parameters;
+            if (params.demographics) setDemographics((d) => ({ ...d, ...params.demographics }));
+            if (params.personality) setPersonality((p) => ({ ...p, ...params.personality }));
+            if (params.population_prompt !== undefined) setPopulationPrompt(params.population_prompt || "");
+            setUseCustomConfig(true);
+          }
+          if (boot.population?.num_reviewers) {
+            setPopulationSize(boot.population.num_reviewers);
+          }
+          if (Array.isArray(boot.reviewers) && boot.reviewers.length > 0) {
+            setBots(boot.reviewers);
+            setPopulationSize(boot.reviewers.length);
+          }
+
+          // Cargar producto + reseñadores ya guardados en la sesión
+          loadCurrentResults().then(() => {
+            const step = typeof boot.goToStep === "number" ? boot.goToStep : 2;
+            setActiveStep(step);
+            setCheckpointStep(Math.max(step, 1));
+          });
+          return () => {
+            if (eventSourceRef.current) {
+              eventSourceRef.current.close();
+            }
+          };
+        } catch (e) {
+          console.error("Error en bootstrap del simulador:", e);
+          sessionStorage.removeItem("review_simulator_bootstrap");
+        }
+      }
     }
 
     loadCurrentResults();
@@ -892,7 +937,7 @@ export default function SimulatorPage() {
           </Link>
           <Link className="flex items-center justify-center gap-2" href="/">
             <span className="font-bold text-lg tracking-tight">
-              reviewsim<span className="text-primary font-extrabold">.ai</span>
+              PreMarket<span className="text-primary font-extrabold"> Lab</span>
             </span>
           </Link>
           <div className="ml-auto flex items-center gap-4">
@@ -976,6 +1021,12 @@ export default function SimulatorPage() {
                 setPopulationPrompt={setPopulationPrompt}
                 useCustomConfig={useCustomConfig}
                 setUseCustomConfig={setUseCustomConfig}
+                positivityBias={positivityBias}
+                setPositivityBias={setPositivityBias}
+                verbosity={verbosity}
+                setVerbosity={setVerbosity}
+                detailLevel={detailLevel}
+                setDetailLevel={setDetailLevel}
               />
             )}
 

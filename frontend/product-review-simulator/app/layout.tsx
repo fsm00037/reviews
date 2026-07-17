@@ -6,9 +6,9 @@ import { ThemeProvider } from "@/components/theme-provider"
 const inter = Inter({ subsets: ["latin"] })
 
 export const metadata = {
-  title: "Product Review Simulator 2025",
-  description: "Generate realistic product reviews with customizable bot profiles",
-    generator: 'v0.dev'
+  title: "PreMarket Lab — Testea productos con poblaciones sintéticas",
+  description:
+    "Crea poblaciones de consumidores realistas, visualízalas en 3D y simula reseñas antes de lanzar tu producto al mercado.",
 }
 
 export default function RootLayout({
@@ -17,16 +17,18 @@ export default function RootLayout({
   children: React.ReactNode
 }) {
   return (
-    <html lang="en">
-      <body className={inter.className}>
-        <ThemeProvider attribute="class" defaultTheme="system" enableSystem disableTransitionOnChange>
+    <html lang="es" suppressHydrationWarning>
+      <body className={`${inter.className} min-h-screen`}>
+        <ThemeProvider
+          attribute="class"
+          defaultTheme="light"
+          enableSystem={false}
+          forcedTheme={undefined}
+          disableTransitionOnChange
+        >
           {children}
         </ThemeProvider>
       </body>
     </html>
   )
 }
-
-
-
-import './globals.css'

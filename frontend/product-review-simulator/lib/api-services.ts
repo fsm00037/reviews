@@ -196,6 +196,10 @@ export const ProductService = {
       body: JSON.stringify(product),
     }),
 
+  // Producto de una sesión concreta (sin cambiar sesión activa)
+  getSessionProduct: (sessionId: string) =>
+    fetchAPI<Product>(`/sessions/${sessionId}/product`),
+
   // Duplicar producto/sesión completo
   duplicateProduct: (sessionId: string) =>
     fetchAPI<{ status: string; message: string; session_id: string }>(`/sessions/${sessionId}/duplicate`, {
@@ -247,6 +251,13 @@ export const BotService = {
   
   // Obtener perfiles actuales
   getReviewerProfiles: () => fetchAPI<BotProfile[]>('/reviewers'),
+
+  /** Cargar perfiles en la sesión actual (población guardada → simulador) */
+  loadReviewers: (profiles: BotProfile[]) =>
+    fetchAPI<{ loaded: number; profiles: BotProfile[] }>('/reviewers', {
+      method: 'POST',
+      body: JSON.stringify({ profiles }),
+    }),
   
   // Obtener perfiles de una sesión específica
   getSessionReviewers: (sessionId: string) => fetchAPI<BotProfile[]>(`/sessions/${sessionId}/reviewers`)
@@ -420,6 +431,16 @@ export const AnalysisService = {
         } else {
           safeResponse.demographic_insights = [];
         }
+
+        if ('market_fit_score' in response && response.market_fit_score != null) {
+          safeResponse.market_fit_score = Number(response.market_fit_score);
+        }
+        if ('launch_recommendation' in response && response.launch_recommendation) {
+          safeResponse.launch_recommendation = String(response.launch_recommendation);
+        }
+        if ('segment_breakdown' in response && Array.isArray(response.segment_breakdown)) {
+          safeResponse.segment_breakdown = response.segment_breakdown;
+        }
         
         return safeResponse;
       }
@@ -532,10 +553,29 @@ export const SimulatorService = {
 
 export const SavedPopulationService = {
   getSavedPopulations: () => fetchAPI<any[]>('/populations'),
-  savePopulation: (name: string, description: string, numReviewers: number, profileParameters: any) =>
-    fetchAPI<{message: string; id: number}>('/populations', {
+  savePopulation: (
+    name: string,
+    description: string,
+    numReviewers: number,
+    profileParameters: any,
+    reviewers?: any[]
+  ) =>
+    fetchAPI<{message: string; id: number; reviewers_saved?: number}>('/populations', {
       method: 'POST',
-      body: JSON.stringify({ name, description, num_reviewers: numReviewers, profile_parameters: profileParameters })
+      body: JSON.stringify({
+        name,
+        description,
+        num_reviewers: numReviewers,
+        profile_parameters: profileParameters,
+        reviewers: reviewers || [],
+      })
+    }),
+  getPopulationReviewers: (id: number) =>
+    fetchAPI<BotProfile[]>(`/populations/${id}/reviewers`),
+  updatePopulationReviewers: (id: number, reviewers: any[]) =>
+    fetchAPI<{message: string; count: number}>(`/populations/${id}/reviewers`, {
+      method: 'PUT',
+      body: JSON.stringify({ reviewers }),
     }),
   deletePopulation: (id: number) =>
     fetchAPI<{message: string}>(`/populations/${id}`, {

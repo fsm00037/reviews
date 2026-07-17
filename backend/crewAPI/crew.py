@@ -22,7 +22,16 @@ from tasks import (
     create_reviewer_tasks,
     create_compiler_task
 )
-from models import APIRequest, APIResponse, Product, BotProfile, Review, AnalysisResult
+from models import APIRequest, APIResponse, Product, BotProfile, Review, AnalysisResult, PopulationAgeRange
+from realism import (
+    enrich_profile,
+    review_length_guidance,
+    rating_bias_guidance,
+    verbosity_label,
+    sample_age,
+    sample_education,
+    sample_location,
+)
 
 # Warning control
 warnings.filterwarnings('ignore')
@@ -246,6 +255,74 @@ def run_phase1(product_url: str, model_name: str = None, session_dir: str = None
     
     return product_results
 
+def _clamp_age_range(lo: int, hi: int) -> tuple:
+    lo = max(16, min(90, int(lo)))
+    hi = max(16, min(90, int(hi)))
+    if lo > hi:
+        lo, hi = hi, lo
+    # Evitar rangos degenerados (mismo año o 1 año)
+    if hi - lo < 4:
+        mid = (lo + hi) // 2
+        lo = max(16, mid - 5)
+        hi = min(90, mid + 5)
+    return lo, hi
+
+
+def decide_population_age_range(
+    profile_parameters: Dict[str, Any],
+    product_instructions: str = "",
+    model_name: str = None,
+) -> Dict[str, Any]:
+    """
+    El agente demógrafo decide el rango de edades de toda la población
+    según prompt de usuario, producto y demografía (pista suave).
+    """
+    demographics = profile_parameters.get("demographics") or {}
+    hint_range = demographics.get("age_range") or [22, 55]
+    population_prompt = (profile_parameters.get("population_prompt") or "").strip()
+
+    prompt = f"""
+    Eres un demógrafo de market research. Debes decidir el RANGO DE EDADES
+    (age_min, age_max) de una población sintética de consumidores para un test pre-lanzamiento.
+
+    Contexto:
+    - Prompt / descripción de la población (prioridad alta si existe):
+      "{population_prompt or '(no hay prompt específico)'}"
+    - Pista de demografía del UI (puedes IGNORARLA o ampliarla si el prompt o el producto lo exigen):
+      age_range sugerido por el usuario: {hint_range}
+      resto demografía: {json.dumps(demographics, ensure_ascii=False)}
+    - Adaptación a producto / target (si hay):
+      {product_instructions or '(sin producto concreto)'}
+
+    Reglas:
+    1. Tú decides el rango real de la población. No copies ciegamente el slider del usuario.
+    2. Si el prompt habla de estudiantes, jubilados, padres, gamers, etc., el rango debe reflejarlo.
+    3. Si hay producto, el rango debe ser coherente con compradores típicos de ese producto.
+    4. age_min >= 16, age_max <= 85, y (age_max - age_min) >= 5 (población diversa, no un solo año).
+    5. Si no hay señales claras, elige un rango realista de compradores adultos (p. ej. 22-55 o 28-65).
+    6. rationale: 1 frase en español explicando por qué ese rango.
+
+    Devuelve SOLO JSON del esquema PopulationAgeRange.
+    """
+    try:
+        result = call_llm_json(prompt, PopulationAgeRange, model_name=model_name, temperature=0.7)
+        lo, hi = _clamp_age_range(result.get("age_min", 22), result.get("age_max", 55))
+        rationale = result.get("rationale") or ""
+        print(f"📊 Rango de edades decidido por el agente: {lo}-{hi} ({rationale})")
+        return {"age_min": lo, "age_max": hi, "rationale": rationale}
+    except Exception as e:
+        print(f"⚠️ No se pudo decidir rango de edades con LLM ({e}); usando pista demográfica.")
+        lo, hi = _clamp_age_range(
+            int(hint_range[0]) if isinstance(hint_range, (list, tuple)) and len(hint_range) >= 2 else 22,
+            int(hint_range[1]) if isinstance(hint_range, (list, tuple)) and len(hint_range) >= 2 else 55,
+        )
+        return {
+            "age_min": lo,
+            "age_max": hi,
+            "rationale": "Rango por defecto a partir de la demografía configurada.",
+        }
+
+
 def run_phase2(num_reviewers: int, profile_parameters: Union[Dict[str, Any], str] = None, model_name: str = None, session_dir: str = None, on_profile_generated = None) -> Dict[str, Any]:
     """Run phase 2: Create user profiles in parallel using LiteLLM"""
     if isinstance(profile_parameters, str):
@@ -279,6 +356,20 @@ def run_phase2(num_reviewers: int, profile_parameters: Union[Dict[str, Any], str
             except Exception as e:
                 print(f"Error loading product info from DB for profile generation: {e}")
 
+        # El agente decide el rango de edades de TODA la población (una sola vez)
+        age_decision = decide_population_age_range(
+            profile_parameters, product_instructions, model_name=model_name
+        )
+        age_min = age_decision["age_min"]
+        age_max = age_decision["age_max"]
+        age_rationale = age_decision.get("rationale") or ""
+        # Guardar decisión en params (útil al guardar población / depurar)
+        profile_parameters = {
+            **profile_parameters,
+            "resolved_age_range": [age_min, age_max],
+            "resolved_age_rationale": age_rationale,
+        }
+
         def generate_single_profile(index: int):
             from faker import Faker
             
@@ -299,6 +390,11 @@ def run_phase2(num_reviewers: int, profile_parameters: Union[Dict[str, Any], str
             first_name = fake.first_name_male() if gender == "Male" else fake.first_name_female()
             last_name = fake.last_name()
             generated_name = f"{first_name} {last_name}"
+            seed = f"{generated_name}-{index}"
+            # Solo fallback si el LLM no devuelve edad
+            fallback_age = sample_age({"age_range": [age_min, age_max]}, seed)
+            pre_edu = sample_education(demographics, seed)
+            pre_loc = sample_location(demographics, seed)
             
             population_prompt_instruction = ""
             population_prompt = profile_parameters.get("population_prompt", "")
@@ -311,42 +407,72 @@ def run_phase2(num_reviewers: int, profile_parameters: Union[Dict[str, Any], str
                 """
                 
             prompt = f"""
-            Genera un (1) único perfil de usuario realista y detallado para evaluar un producto en español.
-            Este es el perfil {index} de un total de {num_reviewers} perfiles a generar.
-            
-            DEBES usar estrictamente el siguiente nombre y género predeterminados para este perfil:
-            - Nombre completo: {generated_name}
-            - Género: {gender}
-            
+            Eres un demógrafo y psicólogo del consumidor. Genera UN único perfil de comprador realista
+            en español para un test de mercado pre-lanzamiento (simulación comercial).
+
+            Perfil {index} de {num_reviewers}.
+
+            DATOS FIJOS (no los cambies):
+            - id: {index}
+            - name: {generated_name}
+            - gender: {gender}
+            - location: {pre_loc}
+            - education_level: {pre_edu}
+
+            EDAD — TÚ LA DECIDES (obligatorio):
+            - El rango de edades de ESTA población (decidido para todos) es: {age_min} a {age_max} años.
+              Motivo del rango: {age_rationale or 'coherencia con la población objetivo'}
+            - Elige la edad concreta de ESTE perfil DENTRO de ese rango (incluido).
+            - Diversifica: no pongas a todos la misma edad. Perfil {index}/{num_reviewers}:
+              reparte edades a lo largo del rango (unos más jóvenes, otros en el medio, otros mayores).
+            - La edad debe cuadrar con ocupación, backstory y etapa vital.
+
             {product_instructions}
             {population_prompt_instruction}
-            El perfil debe crearse considerando estos rasgos demográficos y de personalidad de la población (de 0 a 100):
-            {json.dumps(profile_parameters, ensure_ascii=False)}
-            
-            Asegúrate de que el perfil generado sea original, diverso y diferente a otros perfiles típicos.
-            El perfil de usuario debe incluir:
-            - id: un número único (usa {index})
-            - name: {generated_name}
-            - bio: una biografía breve
-            - age: edad (número entero)
-            - location: ubicación en España (ej. Madrid, Barcelona, Sevilla, Valencia...)
-            - gender: {gender}
-            - education_level: nivel educativo
-            - personality: un objeto con rasgos de personalidad (valores de 0 a 100):
-              * introvert_extrovert
-              * analytical_creative
-              * busy_free_time
-              * disorganized_organized
-              * independent_cooperative
-              * environmentalist
-              * safe_risky
-            - backstory: historia detallada del usuario con su experiencia, intereses y motivaciones.
+
+            Parámetros de población (rangos 0-100 donde aplica):
+            {json.dumps({k: v for k, v in profile_parameters.items() if k not in ('resolved_age_range', 'resolved_age_rationale')}, ensure_ascii=False)}
+
+            REQUISITOS DE REALISMO (crítico):
+            1. La persona debe parecer un humano real, no un arquetipo genérico de marketing.
+            2. Incluye contradicciones leves y matices (ej. le gusta la tecnología pero odia apps complicadas).
+            3. bio: 1-2 frases en primera o tercera persona, natural, sin jerga de IA.
+            4. backstory: 120-220 palabras. Historia concreta: trabajo, familia/hogar, hábitos de compra,
+               frustraciones con productos similares, y qué le haría comprar o devolver este tipo de producto.
+            5. personality: valores 0-100 coherentes con la historia (incluye los ejes extendidos):
+               introvert_extrovert, analytical_creative, busy_free_time, disorganized_organized,
+               independent_cooperative, environmentalist, safe_risky,
+               price_sensitive_premium, brand_loyal_explorer, tech_novice_expert, skeptic_enthusiast.
+            6. consumer: occupation realista, income_level (low|medium|high|very_high), household
+               (alone|couple|family_kids|shared|other), shopping_channel (online|physical|both),
+               interests (3-6), pain_points (2-4), brand_preferences (0-4), recent_purchase_context (1 frase).
+            7. appearance: puedes omitirla o dar valores básicos; el sistema la completará.
+            8. review_style: el sistema rellenará positivity/verbosity/etc. con los sesgos de población.
+               Si indiques verbosity (0-100): 0-30 = pocas palabras; 70-100 = hablador.
+            9. En bio o backstory, deja entrever si es de pocas palabras o hablador (sin decir el número).
+            10. Diversidad: evita clichés ("ama la tecnología y el café"). Sé específico y localizable en España.
+            11. Campo age: entero obligatorio entre {age_min} y {age_max}.
+
+            Devuelve SOLO JSON válido del esquema BotProfile.
             """
             try:
-                profile_dict = call_llm_json(prompt, BotProfile, model_name=model_name, temperature=1.2)
+                profile_dict = call_llm_json(prompt, BotProfile, model_name=model_name, temperature=1.15)
                 # Forzar el nombre y género generados por Faker para evitar desviaciones
                 profile_dict["name"] = generated_name
                 profile_dict["gender"] = gender
+                profile_dict["id"] = index
+                # Edad: la del agente, acotada al rango decidido; fallback solo si falta
+                try:
+                    age_val = int(profile_dict.get("age") or fallback_age)
+                except (TypeError, ValueError):
+                    age_val = fallback_age
+                profile_dict["age"] = max(age_min, min(age_max, age_val))
+                if not profile_dict.get("location"):
+                    profile_dict["location"] = pre_loc
+                if not profile_dict.get("education_level"):
+                    profile_dict["education_level"] = pre_edu
+
+                profile_dict = enrich_profile(profile_dict, profile_parameters, index)
                 
                 with db_lock:
                     profiles.append(profile_dict)
@@ -376,26 +502,100 @@ def run_phase3(product_info: Dict[str, Any], user_profiles: List[Dict[str, Any]]
     def generate_single_review(args):
         i, profile = args
         try:
+            style = profile.get("review_style") or {}
+            positivity = int(style.get("positivity", 50))
+            verbosity = int(style.get("verbosity", 50))
+            detail = int(style.get("detail_level", 50))
+            formality = int(style.get("formality", 50))
+            emoji_usage = int(style.get("emoji_usage", 20))
+            typo_tendency = int(style.get("typo_tendency", 10))
+            complaint = int(style.get("complaint_focus", 40))
+            personality = profile.get("personality") or {}
+            skeptic = int(personality.get("skeptic_enthusiast", 50))
+            price_sensitive = int(personality.get("price_sensitive_premium", 50))
+
+            length_guide = review_length_guidance(verbosity, detail)
+            rating_guide = rating_bias_guidance(positivity, skeptic, complaint, price_sensitive)
+            v_label = verbosity_label(verbosity)
+
+            # Strip appearance noise from prompt to reduce tokens; keep consumer + personality
+            profile_for_prompt = {
+                "id": profile.get("id"),
+                "name": profile.get("name"),
+                "bio": profile.get("bio"),
+                "age": profile.get("age"),
+                "location": profile.get("location"),
+                "gender": profile.get("gender"),
+                "education_level": profile.get("education_level"),
+                "personality": personality,
+                "backstory": profile.get("backstory"),
+                "consumer": profile.get("consumer"),
+                "review_style": style,
+                "verbosidad": {
+                    "nivel": verbosity,
+                    "etiqueta": v_label,
+                    "escala": "0=pocas palabras, 100=muy hablador",
+                },
+            }
+
             prompt = f"""
-            Evalúa el siguiente producto desde la perspectiva de tu perfil personal de usuario.
-            
-            Información del producto:
+            Eres {profile.get('name')}, una persona real escribiendo una reseña de compra online en español
+            (estilo Amazon/PcComponentes/El Corte Inglés), NO un asistente de IA.
+
+            PRODUCTO:
             {json.dumps(product_info, ensure_ascii=False, indent=2)}
-            
-            Perfil de usuario (Tú):
-            {json.dumps(profile, ensure_ascii=False, indent=2)}
-            
-            Genera una reseña realista que refleje tu personalidad, motivaciones e intereses detallados en tu perfil.
-            La reseña debe estar en formato JSON e incluir:
-            - id: un número único (usa {i})
-            - bot_id: el ID de tu perfil de usuario ({profile.get('id', i)})
+
+            TU PERFIL:
+            {json.dumps(profile_for_prompt, ensure_ascii=False, indent=2)}
+
+            CUALIDAD CLAVE — VERBOSIDAD: eres "{v_label}" (verbosity={verbosity}/100).
+            - 0-30 = pocas palabras (telegráfico)
+            - 70-100 = hablador (te enrollas)
+            DEBES respetar esto en la longitud y el tono del content y del title.
+
+            REGLAS DE ESCRITURA (obligatorias para realismo):
+            1. Escribe en primera persona, con voz humana coherente con tu edad, educación y personalidad.
+            2. {length_guide}
+            3. {rating_guide}
+            4. Formalidad del texto ~{formality}/100 (0=muy coloquial con muletillas; 100=formal y estructurado).
+            5. Emojis: uso ~{emoji_usage}/100 (0=ninguno; alto=1-3 como mucho, no abuses).
+            6. Errores tipográficos leves permitidos solo si typo_tendency={typo_tendency} es alto (>50); si es bajo, ortografía correcta.
+            7. Si eres de pocas palabras, un solo detalle del producto basta; si eres hablador, menciona varios.
+            8. Relaciona la opinión con TU vida (ocupación, hogar, pain_points, presupuesto) — breve o extenso según verbosidad.
+            9. NO uses frases de IA: "En resumen", "Cabe destacar", "Sin duda alguna", "Producto innovador",
+               "Cumple con las expectativas", listas perfectas, tono de brochure.
+            10. Sí puedes usar: anécdotas, dudas, comparaciones vagas ("el que tenía antes..."),
+                y un cierre natural — solo si tu verbosidad lo permite.
+            11. El título debe sonar a reseña real (corto si pocas palabras; más expresivo si hablador).
+            12. usage_duration: inventa un tiempo de uso creíble (ej. "3 días", "2 semanas", "1 mes").
+            13. pros/cons: si pocas palabras, 0-2 items cortos; si hablador, 2-4 items.
+            14. would_recommend: true/false coherente con rating y texto.
+            15. verified_purchase: true.
+            16. rating entero 1-5. La nota DEBE cuadrar con el tono del content.
+            17. CALIDAD / PRECIO (obligatorio al fijar la valoración):
+                - Mira el precio del producto y lo que realmente ofrece (calidad, materiales,
+                  funciones, durabilidad, acabados).
+                - Tu rating debe reflejar si la relación calidad-precio te compensa según tu
+                  sensibilidad al precio (price_sensitive_premium en tu perfil:
+                  bajo = buscas chollo; alto = aceptas pagar más por calidad).
+                - Producto correcto pero caro para lo que es → no pongas 5; baja 1 estrella o más.
+                - Producto decente/barato o premium que justifica el precio → la nota puede subir.
+                - En el content (y en pros/cons si aplica) alude al precio o a si "vale lo que cuesta",
+                  con la longitud que te permita tu verbosidad.
+
+            JSON de salida (Review):
+            - id: {i}
+            - bot_id: {profile.get('id', i)}
             - product_id: 1
-            - rating: una calificación de 1 a 5 estrellas (número entero)
-            - title: un título breve y descriptivo para la reseña
-            - content: el contenido detallado de la reseña
+            - rating, title, content, pros, cons, would_recommend, usage_duration, verified_purchase
             """
             
-            review_dict = call_llm_json(prompt, Review, model_name=model_name)
+            review_dict = call_llm_json(prompt, Review, model_name=model_name, temperature=0.95)
+            review_dict["id"] = i
+            review_dict["bot_id"] = profile.get("id", i)
+            review_dict["product_id"] = 1
+            if "verified_purchase" not in review_dict or review_dict["verified_purchase"] is None:
+                review_dict["verified_purchase"] = True
             
             with db_lock:
                 reviews_generated.append(review_dict)
@@ -438,29 +638,25 @@ def run_phase4(model_name: str = None, session_dir: str = None, reviews: List[Di
     product_text = json.dumps(product_info, ensure_ascii=False, indent=2)
     
     prompt = f"""
-    Eres un compilador y analizador de reseñas de productos. Analiza el conjunto de reseñas dadas para el siguiente producto y genera un informe estructurado final.
-    
-    Información del producto:
+    Eres un analista de market research pre-lanzamiento. Analiza reseñas sintéticas de una población de prueba
+    y genera un informe accionable para decidir si el producto está listo para salir al mercado.
+
+    Producto:
     {product_text}
-    
-    Reseñas de los usuarios:
+
+    Reseñas:
     {reviews_text}
-    
-    Tu informe debe ser un objeto JSON que incluya:
-    - average_rating: valoración media (número decimal, ej. 4.2)
-    - rating_distribution: un objeto con la distribución de estrellas (número de reseñas para 1, 2, 3, 4 y 5 estrellas). Campos obligatorios:
-      * one_star: cantidad de reviews de 1 estrella
-      * two_stars: cantidad de reviews de 2 estrellas
-      * three_stars: cantidad de reviews de 3 estrellas
-      * four_stars: cantidad de reviews de 4 estrellas
-      * five_stars: cantidad de reviews de 5 estrellas
-    - positive_points: una lista de strings con los puntos positivos más mencionados
-    - negative_points: una lista de strings con los puntos negativos más mencionados
-    - keyword_analysis: una lista de objetos, donde cada uno tiene:
-      * word: la palabra clave extraída
-      * count: frecuencia de aparición de la palabra clave
-      * sentiment: sentimiento asociado ("positive", "negative" o "neutral")
-    - demographic_insights: una lista de strings con insights sobre qué segmentos demográficos valoraron mejor o peor el producto.
+
+    Devuelve JSON con:
+    - average_rating: float (se recalculará; estima de todos modos)
+    - rating_distribution: {{one_star, two_stars, three_stars, four_stars, five_stars}}
+    - positive_points: 4-8 hallazgos positivos concretos (no genéricos)
+    - negative_points: 4-8 fricciones o riesgos de mercado concretos
+    - keyword_analysis: lista de {{word, count, sentiment}} con palabras reales de las reseñas
+    - demographic_insights: insights de segmentos (edad, estilo de vida, sensibilidad al precio, tech level...)
+    - market_fit_score: 0-100 (encaje de este producto con la población simulada)
+    - launch_recommendation: 1-3 frases con recomendación de lanzamiento (go / iterate / pivot) y por qué
+    - segment_breakdown: lista opcional de objetos {{segment, avg_rating, n, note}}
     """
     
     analysis_dict = call_llm_json(prompt, AnalysisResult, model_name=model_name)

@@ -30,6 +30,12 @@ interface ConfigPhaseProps {
   setPopulationPrompt: (prompt: string) => void;
   useCustomConfig: boolean;
   setUseCustomConfig: (useCustom: boolean) => void;
+  positivityBias?: [number, number];
+  setPositivityBias?: (v: [number, number]) => void;
+  verbosity?: [number, number];
+  setVerbosity?: (v: [number, number]) => void;
+  detailLevel?: [number, number];
+  setDetailLevel?: (v: [number, number]) => void;
 }
 
 export const ConfigPhase: React.FC<ConfigPhaseProps> = ({
@@ -50,6 +56,12 @@ export const ConfigPhase: React.FC<ConfigPhaseProps> = ({
   setPopulationPrompt,
   useCustomConfig,
   setUseCustomConfig,
+  positivityBias = [60, 80],
+  setPositivityBias,
+  verbosity = [40, 70],
+  setVerbosity,
+  detailLevel = [50, 80],
+  setDetailLevel,
 }) => {
   type PresetMeta = { id: number; name: string; description: string; icon: string; tag: string };
   const [presets, setPresets] = useState<PresetMeta[]>([]);
@@ -144,7 +156,7 @@ export const ConfigPhase: React.FC<ConfigPhaseProps> = ({
     }
   };
 
-  const handleLoadUserPopulation = (pop: any) => {
+  const handleLoadUserPopulation = async (pop: any) => {
     setPopulationSize(pop.num_reviewers);
     if (pop.profile_parameters) {
       const params = pop.profile_parameters;
@@ -153,6 +165,28 @@ export const ConfigPhase: React.FC<ConfigPhaseProps> = ({
       if (params.population_prompt !== undefined) setPopulationPrompt(params.population_prompt);
       setUseCustomConfig(true);
       setConfigTab("custom");
+    }
+    // Cargar reseñadores guardados con la población (si existen)
+    let profiles: BotProfile[] | null = null;
+    if (Array.isArray(pop.reviewers) && pop.reviewers.length > 0) {
+      profiles = pop.reviewers;
+    } else if (pop.id) {
+      try {
+        const stored = await SavedPopulationService.getPopulationReviewers(pop.id);
+        if (Array.isArray(stored) && stored.length > 0) profiles = stored;
+      } catch {
+        /* sin perfiles */
+      }
+    }
+    if (profiles?.length) {
+      try {
+        const loaded = await BotService.loadReviewers(profiles);
+        setBots(loaded?.profiles || profiles);
+        setPopulationSize((loaded?.profiles || profiles).length);
+      } catch {
+        setBots(profiles);
+        setPopulationSize(profiles.length);
+      }
     }
   };
 
@@ -167,7 +201,10 @@ export const ConfigPhase: React.FC<ConfigPhaseProps> = ({
         {
           demographics,
           personality,
-          population_prompt: populationPrompt
+          population_prompt: populationPrompt,
+          positivity_bias: positivityBias,
+          verbosity,
+          detail_level: detailLevel,
         }
       );
       if (response && response.id) {
@@ -211,9 +248,11 @@ export const ConfigPhase: React.FC<ConfigPhaseProps> = ({
       <CardHeader className="border-b border-border/60 bg-muted/10 pb-5">
         <CardTitle className="flex items-center gap-2.5 text-lg font-bold">
           <Users className="h-5 w-5 text-primary" />
-          Configuración de bots
+          Diseña tu población de mercado
         </CardTitle>
-        <CardDescription className="text-xs text-muted-foreground mt-1">Ajusta los parámetros para la generación de perfiles de bots</CardDescription>
+        <CardDescription className="text-xs text-muted-foreground mt-1">
+          Parametriza demografía, psicografía y estilo de reseña — o usa un prompt en lenguaje natural
+        </CardDescription>
       </CardHeader>
       <CardContent className="p-0">
 
@@ -612,7 +651,13 @@ export const ConfigPhase: React.FC<ConfigPhaseProps> = ({
                               ["independent_cooperative", "Independiente", "Cooperativo"],
                               ["environmentalist", "Poco ecologista", "Ecologista"],
                               ["safe_risky", "Prudente", "Arriesgado"],
-                            ] as const).map(([key, minL, maxL]) => (
+                              ["price_sensitive_premium", "Sensible al precio", "Prefiere premium"],
+                              ["brand_loyal_explorer", "Fiel a marcas", "Explorador"],
+                              ["tech_novice_expert", "Novato tech", "Early adopter"],
+                              ["skeptic_enthusiast", "Escéptico", "Entusiasta"],
+                            ] as const).map(([key, minL, maxL]) => {
+                              const range = personality[key] || [0, 100]
+                              return (
                               <div key={key}>
                                 <div className="flex justify-between mb-1 text-[10px] font-medium text-muted-foreground">
                                   <span>{minL}</span>
@@ -620,15 +665,123 @@ export const ConfigPhase: React.FC<ConfigPhaseProps> = ({
                                 </div>
                                 <CustomRangeSlider
                                   label=""
-                                  minValue={personality[key][0]}
-                                  maxValue={personality[key][1]}
+                                  minValue={range[0]}
+                                  maxValue={range[1]}
                                   absoluteMin={0}
                                   absoluteMax={100}
                                   onChange={(min, max) => setPersonality({ ...personality, [key]: [min, max] })}
                                 />
                               </div>
+                            )})}
+                          </div>
+                        </div>
+                      </div>
+
+                      {/* Estilo de reseña (afecta generación realista) */}
+                      {setPositivityBias && setVerbosity && setDetailLevel && (
+                        <div className="lg:col-span-2 bg-muted/15 p-5 rounded-2xl border border-border/60">
+                          <h3 className="text-xs font-semibold uppercase tracking-wider text-muted-foreground mb-4">
+                            Estilo de reseña de la población
+                          </h3>
+                          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                            <div>
+                              <div className="flex justify-between mb-1 text-[10px] font-medium text-muted-foreground">
+                                <span>Crítico</span>
+                                <span>Positivo</span>
+                              </div>
+                              <CustomRangeSlider
+                                label=""
+                                minValue={positivityBias[0]}
+                                maxValue={positivityBias[1]}
+                                absoluteMin={0}
+                                absoluteMax={100}
+                                onChange={(min, max) => setPositivityBias([min, max])}
+                              />
+                            </div>
+                            <div>
+                              <div className="flex justify-between mb-1 text-[10px] font-medium text-muted-foreground">
+                                <span>Pocas palabras</span>
+                                <span>Hablador</span>
+                              </div>
+                              <CustomRangeSlider
+                                label=""
+                                minValue={verbosity[0]}
+                                maxValue={verbosity[1]}
+                                absoluteMin={0}
+                                absoluteMax={100}
+                                onChange={(min, max) => setVerbosity([min, max])}
+                              />
+                              <p className="text-[9px] text-muted-foreground/80 mt-1.5 leading-snug">
+                                Verbosidad del reseñador: define si escribe reseñas telegráficas o se extiende.
+                              </p>
+                            </div>
+                            <div>
+                              <div className="flex justify-between mb-1 text-[10px] font-medium text-muted-foreground">
+                                <span>Superficial</span>
+                                <span>Muy detallado</span>
+                              </div>
+                              <CustomRangeSlider
+                                label=""
+                                minValue={detailLevel[0]}
+                                maxValue={detailLevel[1]}
+                                absoluteMin={0}
+                                absoluteMax={100}
+                                onChange={(min, max) => setDetailLevel([min, max])}
+                              />
+                            </div>
+                          </div>
+                        </div>
+                      )}
+
+                      {/* Comportamiento de reseña + renta */}
+                      <div className="lg:col-span-2 grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div className="bg-muted/15 p-4 rounded-xl border border-border/60">
+                          <h4 className="text-xs font-bold mb-2">Nivel de renta de la población</h4>
+                          <div className="flex flex-wrap gap-3">
+                            {(["Mixed", "low", "medium", "high", "very_high"] as const).map((lvl) => (
+                              <label key={lvl} className="flex items-center gap-1.5 text-xs cursor-pointer">
+                                <input
+                                  type="radio"
+                                  name="incomeLevel"
+                                  checked={(demographics.income_level || "Mixed") === lvl}
+                                  onChange={() => setDemographics({ ...demographics, income_level: lvl })}
+                                  className="h-3.5 w-3.5 accent-primary"
+                                />
+                                {lvl === "Mixed"
+                                  ? "Mixta"
+                                  : lvl === "low"
+                                    ? "Baja"
+                                    : lvl === "medium"
+                                      ? "Media"
+                                      : lvl === "high"
+                                        ? "Alta"
+                                        : "Muy alta"}
+                              </label>
                             ))}
                           </div>
+                          <p className="text-[10px] text-muted-foreground mt-2">
+                            Influye en sensibilidad al precio y expectativas de calidad en las reseñas.
+                          </p>
+                        </div>
+                        <div className="bg-muted/15 p-4 rounded-xl border border-border/60">
+                          <h4 className="text-xs font-bold mb-2">Regiones (opcional)</h4>
+                          <p className="text-[10px] text-muted-foreground mb-2">
+                            Separadas por coma. Vacío = ciudades de España al azar.
+                          </p>
+                          <Input
+                            placeholder="Madrid, Barcelona, Valencia"
+                            value={(demographics.regions || []).join(", ")}
+                            onChange={(e) =>
+                              setDemographics({
+                                ...demographics,
+                                regions: e.target.value
+                                  .split(",")
+                                  .map((s) => s.trim())
+                                  .filter(Boolean),
+                              })
+                            }
+                            className="bg-background border-border rounded-xl text-xs h-9"
+                          />
                         </div>
                       </div>
                     </motion.div>

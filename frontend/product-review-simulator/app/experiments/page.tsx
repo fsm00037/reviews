@@ -29,7 +29,10 @@ import {
   Plus,
   UserCircle2,
   Settings,
-  Zap
+  Zap,
+  Link2,
+  Package,
+  Loader2,
 } from "lucide-react"
 import AnimatedBackground from "@/components/animated-background"
 import { ThemeToggle } from "@/components/theme-toggle"
@@ -38,6 +41,8 @@ import { RecentSession, DemographicConfig, PersonalityConfig } from "@/lib/types
 import { SimulatorService, CompareService, ProductService, SavedPopulationService, BotService, getSessionId } from "@/lib/api-services"
 import { MarkdownReport } from "@/components/markdown-report"
 import { Label } from "@/components/ui/label"
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
+import { getBotAvatarUrl } from "@/lib/bot-avatar"
 import { Input } from "@/components/ui/input"
 import { Textarea } from "@/components/ui/textarea"
 import { CustomRangeSlider } from "@/components/custom-range-slider"
@@ -497,12 +502,22 @@ export default function ExperimentsPage() {
   const [cachedPopReviewers, setCachedPopReviewers] = useState<{[popId: number]: any[]}>({})
   const [isReviewersModalOpen, setIsReviewersModalOpen] = useState(false)
   const [viewingPopName, setViewingPopName] = useState("")
+  const [viewingPop, setViewingPop] = useState<any | null>(null)
   const [loadingBotsForPopId, setLoadingBotsForPopId] = useState<number | null>(null)
   const [activeReviewersList, setActiveReviewersList] = useState<any[]>([])
   
   // Real-time generation states & refs
   const [tempGeneratedBots, setTempGeneratedBots] = useState<any[]>([])
   const eventSourceRef = useRef<EventSource | null>(null);
+
+  // Modal: Usar población en simulador (elegir producto)
+  const [useSimPop, setUseSimPop] = useState<any | null>(null)
+  const [useSimMode, setUseSimMode] = useState<"new" | "existing">("new")
+  const [useSimProductUrl, setUseSimProductUrl] = useState("")
+  const [useSimSessionId, setUseSimSessionId] = useState<string | null>(null)
+  const [useSimLoading, setUseSimLoading] = useState(false)
+  const [useSimError, setUseSimError] = useState<string | null>(null)
+  const [useSimStatus, setUseSimStatus] = useState("")
 
   // SSE helper (connectSSE)
   const connectSSE = (
@@ -609,114 +624,418 @@ export default function ExperimentsPage() {
   }
 
   const handleUsePopulation = (pop: any) => {
-    if (typeof window !== 'undefined') {
-      sessionStorage.setItem('review_simulator_load_population', JSON.stringify(pop))
-      router.push('/simulator')
+    setUseSimPop(pop)
+    setUseSimMode("new")
+    setUseSimProductUrl("")
+    setUseSimSessionId(null)
+    setUseSimError(null)
+    setUseSimStatus("")
+    setUseSimLoading(false)
+  }
+
+  /** Ejecuta trabajo de API en una sesión temporal y restaura la anterior (evita mezclar poblaciones). */
+  const withTempSession = async <T,>(fn: () => Promise<T>): Promise<T> => {
+    const prev =
+      typeof window !== "undefined"
+        ? sessionStorage.getItem("review_simulator_session_id")
+        : null
+    const tempId = crypto.randomUUID()
+    sessionStorage.setItem("review_simulator_session_id", tempId)
+    try {
+      return await fn()
+    } finally {
+      if (prev) sessionStorage.setItem("review_simulator_session_id", prev)
+      else sessionStorage.removeItem("review_simulator_session_id")
     }
   }
 
-  const handleViewReviewers = async (pop: any) => {
-    setViewingPopName(pop.name);
-    setIsReviewersModalOpen(true);
-    
-    // Check cache first
-    if (cachedPopReviewers[pop.id]) {
-      setActiveReviewersList(cachedPopReviewers[pop.id]);
-      return;
+  /**
+   * Genera perfiles SOLO para esta población en una sesión aislada.
+   * No reutiliza reseñadores del simulador ni de otra población.
+   */
+  const generateReviewersForPopulation = async (
+    pop: any,
+    onProgress?: (profiles: any[]) => void
+  ): Promise<any[]> => {
+    const targetCount = pop.num_reviewers || 10
+    const formattedDemographics = {
+      ...pop.profile_parameters?.demographics,
+      gender_ratio: pop.profile_parameters?.demographics?.gender_ratio,
+      education_level: pop.profile_parameters?.demographics?.education_level,
     }
-    
-    setLoadingBotsForPopId(pop.id);
-    setActiveReviewersList([]);
-    try {
-      const formattedDemographics = {
-        ...pop.profile_parameters.demographics,
-        gender_ratio: pop.profile_parameters.demographics.gender_ratio,
-        education_level: pop.profile_parameters.demographics.education_level
-      };
-      
-      const response = await BotService.generateBots(
-        pop.num_reviewers,
-        [pop.num_reviewers, pop.num_reviewers],
+
+    return withTempSession(async () => {
+      await BotService.generateBots(
+        targetCount,
+        [targetCount, targetCount],
         [0, 100],
         [0, 100],
         [0, 100],
         formattedDemographics,
-        pop.profile_parameters.personality,
+        pop.profile_parameters?.personality,
         false,
         undefined,
-        pop.profile_parameters.population_prompt
-      );
-      
-      if (response && response.profiles) {
-        setCachedPopReviewers(prev => ({
-          ...prev,
-          [pop.id]: response.profiles
-        }));
-        setActiveReviewersList(response.profiles);
+        pop.profile_parameters?.population_prompt
+      )
+
+      let profiles: any[] = []
+      let generationStarted = false
+      const maxAttempts = 80
+      const intervalMs = 2000
+
+      for (let attempt = 0; attempt < maxAttempts; attempt++) {
+        const statusInfo = await SimulatorService.getPhaseStatus("phase2")
+        if (statusInfo.status === "pending" || statusInfo.status === "running") {
+          generationStarted = true
+        }
+        if (statusInfo.status === "failed") {
+          throw new Error(statusInfo.error || "Falló la generación de perfiles")
+        }
+
+        try {
+          const res = await BotService.getReviewerProfiles()
+          if (Array.isArray(res)) {
+            // Tras limpiar al iniciar phase2, la lista vacía o parcial es de ESTA generación
+            if (generationStarted || res.length === 0) {
+              profiles = res
+              if (res.length > 0) onProgress?.(res)
+            }
+          }
+        } catch (e: any) {
+          if (e?.status === 404) {
+            // Sesión limpia / aún sin perfiles → la generación ya arrancó
+            generationStarted = true
+            profiles = []
+          } else if (e?.status !== 404) {
+            console.warn("[Población] poll perfiles:", e?.message || e)
+          }
+        }
+
+        // Solo aceptar "completed" si vimos la generación activa (no un completed viejo de otra sesión: sesión es nueva)
+        if (statusInfo.status === "completed" && (generationStarted || attempt > 0)) {
+          if (profiles.length > 0) break
+          // completed pero vacío: reintentar lectura
+          try {
+            const res = await BotService.getReviewerProfiles()
+            if (Array.isArray(res) && res.length > 0) {
+              profiles = res
+              break
+            }
+          } catch {
+            /* */
+          }
+        }
+        if (generationStarted && profiles.length >= targetCount) break
+
+        await new Promise((r) => setTimeout(r, intervalMs))
       }
-    } catch (err) {
-      console.error("Error generating preview bots:", err);
-      alert("Error al generar los reseñadores");
-      setIsReviewersModalOpen(false);
-    } finally {
-      setLoadingBotsForPopId(null);
+
+      if (!profiles.length) {
+        throw new Error("No se generaron reseñadores a tiempo. Inténtalo de nuevo.")
+      }
+      return profiles
+    })
+  }
+
+  /** Carga reseñadores guardados de la población (DB); regenera solo si no hay. */
+  const loadStoredPopulationReviewers = async (pop: any): Promise<any[] | null> => {
+    // Siempre revalidar desde API cuando hay id (evita cache/lista local desfasada)
+    if (pop?.id != null) {
+      try {
+        const stored = await SavedPopulationService.getPopulationReviewers(pop.id)
+        if (Array.isArray(stored) && stored.length > 0) return stored
+      } catch {
+        /* sin guardados */
+      }
     }
-  };
+    if (Array.isArray(pop.reviewers) && pop.reviewers.length > 0) return pop.reviewers
+    if (cachedPopReviewers[pop.id]?.length) return cachedPopReviewers[pop.id]
+    return null
+  }
+
+  /** Resuelve los reseñadores de una población (DB / regenerar aislado). */
+  const resolvePopulationReviewers = async (pop: any): Promise<any[]> => {
+    const stored = await loadStoredPopulationReviewers(pop)
+    if (stored?.length) {
+      setCachedPopReviewers((prev) => ({ ...prev, [pop.id]: stored }))
+      return stored
+    }
+    const profiles = await generateReviewersForPopulation(pop)
+    setCachedPopReviewers((prev) => ({ ...prev, [pop.id]: profiles }))
+    try {
+      await SavedPopulationService.updatePopulationReviewers(pop.id, profiles)
+      setSavedPopulations((prev) =>
+        prev.map((p) => (p.id === pop.id ? { ...p, reviewers: profiles } : p))
+      )
+    } catch {
+      /* opcional */
+    }
+    return profiles
+  }
+
+  const startFreshSession = () => {
+    const id = crypto.randomUUID()
+    sessionStorage.setItem("review_simulator_session_id", id)
+    return id
+  }
+
+  const writeSimulatorBootstrap = (pop: any, reviewers: any[]) => {
+    sessionStorage.setItem(
+      "review_simulator_bootstrap",
+      JSON.stringify({
+        population: {
+          id: pop.id,
+          name: pop.name,
+          num_reviewers: pop.num_reviewers,
+          profile_parameters: pop.profile_parameters,
+        },
+        reviewers,
+        goToStep: 2,
+      })
+    )
+    // Compat con ConfigPhase (parámetros de población)
+    sessionStorage.setItem("review_simulator_load_population", JSON.stringify(pop))
+  }
+
+  const confirmUseInSimulator = async () => {
+    if (!useSimPop) return
+    setUseSimError(null)
+    setUseSimLoading(true)
+
+    try {
+      if (useSimMode === "new") {
+        const url = useSimProductUrl.trim()
+        if (!url || !/^https?:\/\//i.test(url)) {
+          setUseSimError("Introduce un enlace de producto válido (http/https).")
+          setUseSimLoading(false)
+          return
+        }
+      } else if (!useSimSessionId) {
+        setUseSimError("Selecciona un producto ya creado.")
+        setUseSimLoading(false)
+        return
+      }
+
+      setUseSimStatus("Preparando reseñadores de la población…")
+      const reviewers = await resolvePopulationReviewers(useSimPop)
+
+      // Nueva sesión limpia para no mezclar experimentos
+      startFreshSession()
+
+      if (useSimMode === "new") {
+        setUseSimStatus("Analizando producto desde el enlace…")
+        await ProductService.analyzeProduct(useSimProductUrl.trim())
+        // phase1 es asíncrona: esperar a que el producto esté listo
+        let productReady = false
+        for (let i = 0; i < 90; i++) {
+          const st = await SimulatorService.getPhaseStatus("phase1")
+          if (st.status === "failed") {
+            throw new Error(st.error || "Error al analizar el producto")
+          }
+          if (st.status === "completed") {
+            productReady = true
+            break
+          }
+          setUseSimStatus(`Analizando producto… (${i + 1})`)
+          await new Promise((r) => setTimeout(r, 2000))
+        }
+        if (!productReady) {
+          throw new Error("El análisis del producto tardó demasiado. Prueba de nuevo.")
+        }
+        // Asegurar que el producto es legible
+        await ProductService.getProductInfo()
+      } else {
+        setUseSimStatus("Cargando producto del experimento…")
+        const product = await ProductService.getSessionProduct(useSimSessionId!)
+        await ProductService.updateProduct(product)
+      }
+
+      setUseSimStatus("Cargando población en el simulador…")
+      await BotService.loadReviewers(reviewers)
+      writeSimulatorBootstrap(useSimPop, reviewers)
+
+      setUseSimPop(null)
+      router.push("/simulator")
+    } catch (err: any) {
+      console.error("Usar en simulador:", err)
+      setUseSimError(err?.message || "No se pudo preparar el simulador. Inténtalo de nuevo.")
+    } finally {
+      setUseSimLoading(false)
+      setUseSimStatus("")
+    }
+  }
+
+  const handleViewReviewers = async (pop: any, opts?: { forceRegenerate?: boolean }) => {
+    setViewingPopName(pop.name)
+    setViewingPop(pop)
+    setIsReviewersModalOpen(true)
+    setActiveReviewersList([])
+    setLoadingBotsForPopId(pop.id)
+
+    try {
+      // 1) Solo reseñadores de ESTA población (API por pop_id) — salvo regenerar a la fuerza
+      if (!opts?.forceRegenerate) {
+        const stored = await loadStoredPopulationReviewers(pop)
+        if (stored?.length) {
+          setCachedPopReviewers((prev) => ({ ...prev, [pop.id]: stored }))
+          setActiveReviewersList(stored)
+          return
+        }
+      } else {
+        // Invalidar cache local de esta población
+        setCachedPopReviewers((prev) => {
+          const next = { ...prev }
+          delete next[pop.id]
+          return next
+        })
+      }
+
+      // 2) Generar en sesión temporal (no contamina simulador ni otras poblaciones)
+      const profiles = await generateReviewersForPopulation(pop, (partial) => {
+        setActiveReviewersList(partial)
+      })
+
+      setCachedPopReviewers((prev) => ({ ...prev, [pop.id]: profiles }))
+      setActiveReviewersList(profiles)
+
+      try {
+        await SavedPopulationService.updatePopulationReviewers(pop.id, profiles)
+        setSavedPopulations((prev) =>
+          prev.map((p) => (p.id === pop.id ? { ...p, reviewers: profiles } : p))
+        )
+        setViewingPop((prev: any) => (prev?.id === pop.id ? { ...prev, reviewers: profiles } : prev))
+      } catch (e) {
+        console.warn("No se pudieron cachear reseñadores en la población", e)
+      }
+    } catch (err: any) {
+      console.error("Error generating preview bots:", err)
+      alert(err?.message || "Error al generar los reseñadores")
+      if (!opts?.forceRegenerate) setIsReviewersModalOpen(false)
+    } finally {
+      setLoadingBotsForPopId(null)
+    }
+  }
 
   const handleCreatePopulation = async () => {
     if (!createName.trim()) return;
     setIsSavingPop(true);
     setTempGeneratedBots([]);
+
+    // Sesión dedicada a esta creación (no mezclar con simulador u otras poblaciones)
+    startFreshSession();
     
     let sseSource: EventSource | null = null;
     let isConnected = false;
+    let finished = false;
+    let fallbackScheduled = false;
+    let generationStarted = false;
+    let latestProfiles: any[] = [];
     
     // Fallback polling for profile generation (same as simulator)
     let attemptCount = 0;
     const maxAttempts = 100;
     const pollingInterval = 3000;
     
+    const scheduleFallbackRetry = () => {
+      if (finished) return;
+      attemptCount++;
+      setTimeout(checkBotProfilesFallback, pollingInterval);
+    };
+
     const checkBotProfilesFallback = async () => {
+      if (finished) return;
       if (attemptCount >= maxAttempts) {
+        finished = true;
         setIsSavingPop(false);
         alert("Tiempo de espera agotado al generar perfiles");
         return;
       }
       try {
+        // 1) Estado de la fase (no lanza 404 mientras genera)
         const statusInfo = await SimulatorService.getPhaseStatus('phase2');
-        const profiles = await BotService.getReviewerProfiles();
-        
-        if (profiles && Array.isArray(profiles)) {
-          if (profiles.length > 0) {
-            setTempGeneratedBots(profiles);
-          }
-          if (statusInfo.status === 'completed' || profiles.length === createPopulationSize) {
-            // Completed! Proceed to save the population
-            await savePopulationData();
-            return;
-          } else if (statusInfo.status === 'failed') {
-            setIsSavingPop(false);
-            alert("Error al generar perfiles");
-            return;
+        if (statusInfo.status === 'pending' || statusInfo.status === 'running') {
+          generationStarted = true;
+        }
+
+        if (statusInfo.status === 'failed') {
+          finished = true;
+          setIsSavingPop(false);
+          alert(
+            statusInfo.error
+              ? `Error al generar perfiles: ${String(statusInfo.error).slice(0, 200)}`
+              : "Error al generar perfiles"
+          );
+          return;
+        }
+
+        // 2) Perfiles: 404 = aún no listos (esperado mientras pending/running)
+        let profiles: any[] = [];
+        try {
+          const res = await BotService.getReviewerProfiles();
+          if (Array.isArray(res)) profiles = res;
+        } catch (profileErr: any) {
+          const st = profileErr?.status;
+          // 404 = generación en curso; no es un error de UI
+          if (st === 404) {
+            generationStarted = true;
           } else {
-            attemptCount++;
-            setTimeout(checkBotProfilesFallback, pollingInterval);
+            console.warn(
+              '[Fallback Polling] perfiles:',
+              profileErr?.message || profileErr?.status || 'error'
+            );
           }
         }
-      } catch (err) {
-        console.error('[Fallback Polling] Error:', err);
-        attemptCount++;
-        setTimeout(checkBotProfilesFallback, pollingInterval);
+
+        if (profiles.length > 0) {
+          latestProfiles = profiles;
+          setTempGeneratedBots(profiles);
+        }
+
+        const done =
+          generationStarted &&
+          (statusInfo.status === 'completed' || profiles.length >= createPopulationSize);
+        if (done && profiles.length > 0) {
+          finished = true;
+          sseSource?.close();
+          await savePopulationData(profiles);
+          return;
+        }
+
+        // idle / pending / running → seguir esperando
+        scheduleFallbackRetry();
+      } catch (err: any) {
+        // Fallo de red o del endpoint de status: reintentar sin spamear overlay
+        console.warn(
+          '[Fallback Polling] reintento:',
+          err?.message || err?.status || 'desconocido'
+        );
+        scheduleFallbackRetry();
       }
     };
 
     const startFallback = () => {
-      if (isConnected) return;
+      if (finished || isConnected || fallbackScheduled) return;
+      fallbackScheduled = true;
+      console.log('[SSE Fallback] Activando polling de respaldo para perfiles...');
       setTimeout(checkBotProfilesFallback, 1000);
     };
 
-    const savePopulationData = async () => {
+    const savePopulationData = async (profilesFromGen?: any[]) => {
       try {
+        // Perfiles de ESTA generación (no de otra sesión/población)
+        let reviewers: any[] = Array.isArray(profilesFromGen) ? profilesFromGen : [];
+        if (!reviewers.length && latestProfiles.length) {
+          reviewers = latestProfiles;
+        }
+        if (!reviewers.length) {
+          try {
+            const res = await BotService.getReviewerProfiles();
+            if (Array.isArray(res)) reviewers = res;
+          } catch {
+            /* ignore */
+          }
+        }
+
         const response = await SavedPopulationService.savePopulation(
           createName,
           createDescription,
@@ -725,9 +1044,13 @@ export default function ExperimentsPage() {
             demographics: createDemographics,
             personality: createPersonality,
             population_prompt: createPopulationPrompt
-          }
+          },
+          reviewers
         );
         if (response && response.id) {
+          if (reviewers.length) {
+            setCachedPopReviewers(prev => ({ ...prev, [response.id]: reviewers }));
+          }
           fetchPopulations();
           // Reset states
           setCreateName("");
@@ -749,11 +1072,18 @@ export default function ExperimentsPage() {
           });
           setCreatePopulationPrompt("");
           setCreateUseCustomConfig(false);
+          setTempGeneratedBots([]);
           setIsCreateModalOpen(false);
+        } else {
+          alert("No se pudo guardar la población. ¿Has iniciado sesión?");
         }
-      } catch (err) {
-        console.error("Error saving population:", err);
-        alert("Error al guardar la población");
+      } catch (err: any) {
+        console.error("Error saving population:", err?.message || err);
+        const msg =
+          err?.status === 401
+            ? "Debes iniciar sesión para guardar una población"
+            : err?.message || "Error al guardar la población";
+        alert(msg);
       } finally {
         setIsSavingPop(false);
       }
@@ -764,24 +1094,42 @@ export default function ExperimentsPage() {
       sseSource = connectSSE(
         async (message) => {
           isConnected = true;
+          if (finished) return;
           if (message.type === 'profile_generated') {
+            generationStarted = true;
             const newBot = message.data;
             setTempGeneratedBots((prev) => {
               const filtered = prev.filter((b) => b.id !== newBot.id);
-              return [...filtered, newBot].sort((a, b) => a.id - b.id);
+              const next = [...filtered, newBot].sort((a, b) => a.id - b.id);
+              latestProfiles = next;
+              return next;
             });
           } else if (message.type === 'phase2_completed') {
             console.log('[SSE] Phase 2 completed');
+            finished = true;
             sseSource?.close();
-            await savePopulationData();
+            let finalProfiles = latestProfiles;
+            try {
+              const res = await BotService.getReviewerProfiles();
+              if (Array.isArray(res) && res.length > 0) finalProfiles = res;
+            } catch {
+              /* usar latestProfiles */
+            }
+            await savePopulationData(finalProfiles);
           } else if (message.type === 'phase2_failed') {
-            console.error('[SSE] Phase 2 failed:', message.data.error);
+            console.error('[SSE] Phase 2 failed:', message.data?.error);
+            finished = true;
             setIsSavingPop(false);
-            alert("Error al generar perfiles");
+            alert(
+              message.data?.error
+                ? `Error al generar perfiles: ${String(message.data.error).slice(0, 200)}`
+                : "Error al generar perfiles"
+            );
             sseSource?.close();
           }
         },
         () => {
+          // SSE a menudo se cae; el 404 de /reviewers es normal mientras genera
           startFallback();
         }
       );
@@ -805,10 +1153,17 @@ export default function ExperimentsPage() {
         undefined,
         createPopulationPrompt
       );
-    } catch (err) {
-      console.error("Error initiating bot generation:", err);
+
+      // Si SSE no conecta en ~4s, activar polling de todas formas
+      setTimeout(() => {
+        if (!finished && !isConnected) startFallback();
+      }, 4000);
+    } catch (err: any) {
+      console.error("Error initiating bot generation:", err?.message || err);
+      finished = true;
       setIsSavingPop(false);
       sseSource?.close();
+      alert(err?.message || "Error al iniciar la generación de perfiles");
     }
   };
 
@@ -1506,9 +1861,9 @@ export default function ExperimentsPage() {
                     Generados: {tempGeneratedBots.length} de {createPopulationSize} bots ({Math.round((tempGeneratedBots.length / createPopulationSize) * 100)}%)
                   </span>
 
-                  {/* List of generated bots */}
+                  {/* List of generated bots with avatars */}
                   {tempGeneratedBots.length > 0 && (
-                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 w-full max-w-2xl max-h-48 overflow-y-auto pr-2 pb-2">
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 w-full max-w-2xl max-h-56 overflow-y-auto pr-2 pb-2">
                       {tempGeneratedBots.map((bot, index) => (
                         <motion.div
                           key={bot.id || index}
@@ -1516,9 +1871,18 @@ export default function ExperimentsPage() {
                           animate={{ opacity: 1, y: 0 }}
                           className="p-3 bg-purple-50/50 dark:bg-purple-950/20 border border-purple-100/50 dark:border-purple-900/20 rounded-xl flex items-center space-x-3 shadow-sm text-left"
                         >
-                          <div className="w-8 h-8 rounded-full bg-purple-100 dark:bg-purple-950 flex items-center justify-center font-bold text-xs text-purple-600 dark:text-purple-400 shrink-0">
-                            {bot.name.substring(0, 2).toUpperCase()}
-                          </div>
+                          <Avatar className="h-10 w-10 shrink-0 border border-purple-200/60 dark:border-purple-800/40 shadow-sm">
+                            <AvatarImage src={getBotAvatarUrl(bot)} alt={bot.name} />
+                            <AvatarFallback
+                              className={`text-white text-xs font-bold ${
+                                bot.gender === "Male"
+                                  ? "bg-gradient-to-br from-indigo-500 to-indigo-600"
+                                  : "bg-gradient-to-br from-pink-500 to-purple-600"
+                              }`}
+                            >
+                              {(bot.name || "??").substring(0, 2).toUpperCase()}
+                            </AvatarFallback>
+                          </Avatar>
                           <div className="flex-1 min-w-0">
                             <p className="text-xs font-bold text-gray-800 dark:text-gray-200 truncate">{bot.name}</p>
                             <p className="text-[10px] text-gray-500 dark:text-gray-400 truncate">{bot.location} • {bot.age} años • {bot.gender === 'Male' ? 'Hombre' : bot.gender === 'Female' ? 'Mujer' : 'Otro'}</p>
@@ -1848,13 +2212,18 @@ export default function ExperimentsPage() {
                     >
                       <div>
                         <div className="flex items-center gap-3">
-                          <div className="h-11 w-11 rounded-full overflow-hidden border border-purple-250/30 dark:border-gray-700 bg-purple-50/50 dark:bg-purple-950/20 shrink-0 flex items-center justify-center">
-                            <img 
-                              src={`https://api.dicebear.com/10.x/croodles-neutral/svg?mouthVariant=variant01,variant02,variant03,variant04,variant05,variant06,variant07,variant09,variant10,variant11,variant12,variant13,variant14,variant15,variant16,variant17,variant18&seed=${encodeURIComponent(bot.name)}`} 
-                              alt={bot.name}
-                              className="w-full h-full object-cover"
-                            />
-                          </div>
+                          <Avatar className="h-11 w-11 shrink-0 border border-purple-200/50 dark:border-gray-700 shadow-sm">
+                            <AvatarImage src={getBotAvatarUrl(bot)} alt={bot.name} />
+                            <AvatarFallback
+                              className={`text-white text-xs font-bold ${
+                                bot.gender === "Male"
+                                  ? "bg-gradient-to-br from-indigo-500 to-indigo-600"
+                                  : "bg-gradient-to-br from-pink-500 to-purple-600"
+                              }`}
+                            >
+                              {(bot.name || "??").substring(0, 2).toUpperCase()}
+                            </AvatarFallback>
+                          </Avatar>
                           <div>
                             <h3 className="font-bold text-gray-805 dark:text-gray-150 text-sm leading-snug">{bot.name}</h3>
                             <p className="text-[10px] text-gray-500 dark:text-gray-400">
@@ -1915,13 +2284,218 @@ export default function ExperimentsPage() {
                 </div>
               )}
 
-              {/* Close Button */}
-              <div className="flex justify-end mt-6 pt-4 border-t border-purple-100 dark:border-gray-800">
+              {/* Close / Regenerar */}
+              <div className="flex justify-end gap-2 mt-6 pt-4 border-t border-purple-100 dark:border-gray-800">
+                {viewingPop && (
+                  <Button
+                    variant="outline"
+                    disabled={loadingBotsForPopId !== null}
+                    onClick={() => handleViewReviewers(viewingPop, { forceRegenerate: true })}
+                    className="rounded-xl text-xs font-semibold"
+                  >
+                    {loadingBotsForPopId !== null ? "Generando…" : "Regenerar reseñadores"}
+                  </Button>
+                )}
                 <Button
-                  onClick={() => setIsReviewersModalOpen(false)}
+                  onClick={() => {
+                    setIsReviewersModalOpen(false)
+                    setViewingPop(null)
+                  }}
                   className="bg-gradient-to-r from-indigo-500 via-purple-500 to-pink-500 text-white rounded-xl font-bold px-6 shadow-md hover:shadow-lg transition-all"
                 >
                   Cerrar
+                </Button>
+              </div>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      {/* Modal: Usar población en simulador — elegir producto */}
+      <AnimatePresence>
+        {useSimPop && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 overflow-y-auto p-4 md:p-6 flex items-start justify-center"
+            onClick={() => !useSimLoading && setUseSimPop(null)}
+          >
+            <motion.div
+              initial={{ scale: 0.95, y: 20 }}
+              animate={{ scale: 1, y: 0 }}
+              exit={{ scale: 0.95, y: 20 }}
+              onClick={(e) => e.stopPropagation()}
+              className="bg-white dark:bg-gray-950 border dark:border-gray-800 rounded-2xl w-full max-w-lg p-6 shadow-2xl relative my-8 text-gray-900 dark:text-gray-100"
+            >
+              <Button
+                variant="ghost"
+                size="icon"
+                disabled={useSimLoading}
+                onClick={() => setUseSimPop(null)}
+                className="absolute top-4 right-4 text-gray-400 hover:text-gray-600 hover:bg-gray-100 dark:hover:bg-gray-900 rounded-full h-8 w-8"
+              >
+                <X className="h-4 w-4" />
+              </Button>
+
+              <h2 className="text-xl font-bold pr-10 flex items-center gap-2">
+                <Sparkles className="h-5 w-5 text-purple-500" />
+                Usar en simulador
+              </h2>
+              <p className="text-xs text-muted-foreground mt-1 mb-5">
+                Población <span className="font-semibold text-foreground">{useSimPop.name}</span>
+                {" · "}
+                {useSimPop.num_reviewers} reseñadores. Elige con qué producto simular.
+              </p>
+
+              {/* Tabs: nuevo / existente */}
+              <div className="grid grid-cols-2 gap-2 p-1 rounded-xl bg-muted/50 border border-border mb-5">
+                <button
+                  type="button"
+                  disabled={useSimLoading}
+                  onClick={() => setUseSimMode("new")}
+                  className={`flex items-center justify-center gap-1.5 rounded-lg py-2.5 text-xs font-semibold transition-all ${
+                    useSimMode === "new"
+                      ? "bg-background shadow-sm text-foreground border border-border"
+                      : "text-muted-foreground hover:text-foreground"
+                  }`}
+                >
+                  <Link2 className="h-3.5 w-3.5" />
+                  Producto nuevo
+                </button>
+                <button
+                  type="button"
+                  disabled={useSimLoading}
+                  onClick={() => setUseSimMode("existing")}
+                  className={`flex items-center justify-center gap-1.5 rounded-lg py-2.5 text-xs font-semibold transition-all ${
+                    useSimMode === "existing"
+                      ? "bg-background shadow-sm text-foreground border border-border"
+                      : "text-muted-foreground hover:text-foreground"
+                  }`}
+                >
+                  <Package className="h-3.5 w-3.5" />
+                  Ya creado
+                </button>
+              </div>
+
+              {useSimMode === "new" ? (
+                <div className="space-y-2 text-left">
+                  <Label htmlFor="use-sim-url" className="text-xs font-semibold">
+                    Enlace del producto
+                  </Label>
+                  <Input
+                    id="use-sim-url"
+                    type="url"
+                    disabled={useSimLoading}
+                    placeholder="https://www.amazon.es/… o URL de tienda"
+                    value={useSimProductUrl}
+                    onChange={(e) => setUseSimProductUrl(e.target.value)}
+                    className="rounded-xl"
+                  />
+                  <p className="text-[11px] text-muted-foreground">
+                    Analizaremos la ficha y abriremos el simulador con esta población lista.
+                  </p>
+                </div>
+              ) : (
+                <div className="space-y-2 text-left">
+                  <Label className="text-xs font-semibold">Experimentos con producto</Label>
+                  {sessions.length === 0 ? (
+                    <p className="text-xs text-muted-foreground py-6 text-center border border-dashed rounded-xl">
+                      No hay experimentos guardados. Usa «Producto nuevo» o crea uno en el simulador.
+                    </p>
+                  ) : (
+                    <div className="max-h-56 overflow-y-auto space-y-2 pr-1">
+                      {sessions.map((s) => {
+                        const selected = useSimSessionId === s.session_id
+                        return (
+                          <button
+                            key={s.session_id}
+                            type="button"
+                            disabled={useSimLoading}
+                            onClick={() => setUseSimSessionId(s.session_id)}
+                            className={`w-full flex items-center gap-3 p-3 rounded-xl border text-left transition-all ${
+                              selected
+                                ? "border-primary bg-primary/5 shadow-sm"
+                                : "border-border hover:border-primary/30 bg-card/50"
+                            }`}
+                          >
+                            <div className="h-10 w-10 rounded-lg bg-muted overflow-hidden shrink-0 flex items-center justify-center">
+                              {s.product_image ? (
+                                // eslint-disable-next-line @next/next/no-img-element
+                                <img
+                                  src={s.product_image}
+                                  alt=""
+                                  className="h-full w-full object-cover"
+                                />
+                              ) : (
+                                <Package className="h-4 w-4 text-muted-foreground" />
+                              )}
+                            </div>
+                            <div className="min-w-0 flex-1">
+                              <p className="text-xs font-semibold truncate">
+                                {s.product_name || "Producto sin nombre"}
+                              </p>
+                              <p className="text-[10px] text-muted-foreground">
+                                {s.created_at
+                                  ? new Date(s.created_at).toLocaleDateString("es-ES", {
+                                      day: "2-digit",
+                                      month: "short",
+                                      year: "numeric",
+                                    })
+                                  : "—"}
+                                {s.average_rating != null && (
+                                  <span className="ml-1.5">· ★ {Number(s.average_rating).toFixed(1)}</span>
+                                )}
+                              </p>
+                            </div>
+                            {selected && <CheckCircle className="h-4 w-4 text-primary shrink-0" />}
+                          </button>
+                        )
+                      })}
+                    </div>
+                  )}
+                </div>
+              )}
+
+              {useSimError && (
+                <div className="mt-4 flex items-start gap-2 rounded-xl border border-red-200 bg-red-50 dark:bg-red-950/30 dark:border-red-900 px-3 py-2 text-xs text-red-700 dark:text-red-300">
+                  <AlertCircle className="h-4 w-4 shrink-0 mt-0.5" />
+                  <span>{useSimError}</span>
+                </div>
+              )}
+
+              {useSimLoading && useSimStatus && (
+                <div className="mt-4 flex items-center gap-2 text-xs text-purple-600 dark:text-purple-400">
+                  <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                  {useSimStatus}
+                </div>
+              )}
+
+              <div className="flex justify-end gap-2 mt-6 pt-4 border-t border-border">
+                <Button
+                  variant="outline"
+                  disabled={useSimLoading}
+                  onClick={() => setUseSimPop(null)}
+                  className="rounded-xl"
+                >
+                  Cancelar
+                </Button>
+                <Button
+                  disabled={useSimLoading}
+                  onClick={confirmUseInSimulator}
+                  className="rounded-xl bg-gradient-to-r from-indigo-500 to-purple-600 text-white font-semibold gap-1.5"
+                >
+                  {useSimLoading ? (
+                    <>
+                      <Loader2 className="h-4 w-4 animate-spin" />
+                      Preparando…
+                    </>
+                  ) : (
+                    <>
+                      <Sparkles className="h-4 w-4" />
+                      Abrir simulador
+                    </>
+                  )}
                 </Button>
               </div>
             </motion.div>

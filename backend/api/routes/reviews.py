@@ -208,17 +208,44 @@ def get_reviewers():
         return jsonify({"error": "La Fase 2 falló", "details": status_info['error']}), 500
         
     reviewers = get_reviewer_profiles(session_id)
-    # Si la lista está vacía y la tarea sigue en proceso, retornar 404 para seguir esperando
-    if not reviewers and status_info['status'] in ['pending', 'running']:
+    # Pendiente / en curso sin perfiles (p. ej. recién limpiados) → seguir esperando
+    if status_info['status'] in ['pending', 'running'] and not reviewers:
         return jsonify({"error": "Perfiles de reseñadores no listos"}), 404
         
     return jsonify(reviewers)
+
+
+@reviews_bp.route('/reviewers', methods=['POST'])
+def set_reviewers():
+    """Cargar perfiles de reseñadores en la sesión actual (p. ej. población guardada)."""
+    session_id = get_session_id()
+    data = request.json or {}
+    profiles = data.get('profiles') or data.get('reviewers') or []
+    if not isinstance(profiles, list) or len(profiles) == 0:
+        return jsonify({"error": "Se requiere una lista de profiles no vacía"}), 400
+    try:
+        db.save_reviewers(session_id, profiles)
+        db.set_task_status(session_id, 'phase2', 'completed')
+        saved = get_reviewer_profiles(session_id)
+        return jsonify({"loaded": len(saved), "profiles": saved}), 200
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+
 
 @reviews_bp.route('/sessions/<session_id>/reviewers', methods=['GET'])
 def get_session_reviewers(session_id):
     """Obtener perfiles de los reseñadores de una sesión específica"""
     reviewers = get_reviewer_profiles(session_id)
     return jsonify(reviewers)
+
+
+@reviews_bp.route('/sessions/<session_id>/product', methods=['GET'])
+def get_session_product(session_id):
+    """Obtener el producto de una sesión concreta (sin cambiar la sesión activa)."""
+    product_info = get_product_info(session_id)
+    if not product_info or not product_info.get("name"):
+        return jsonify({"error": "Producto no encontrado en esa sesión"}), 404
+    return jsonify(product_info)
 
 @reviews_bp.route('/sessions/<session_id>/duplicate', methods=['POST'])
 def duplicate_session(session_id):

@@ -73,6 +73,12 @@ def init_db():
         FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
     )
     """)
+
+    # Migración: perfiles generados de la población (JSON)
+    try:
+        cursor.execute("ALTER TABLE saved_populations ADD COLUMN reviewers TEXT")
+    except sqlite3.OperationalError:
+        pass
     
     # Tabla para las propuestas de mejora del producto
     cursor.execute("""
@@ -113,10 +119,27 @@ def init_db():
         education_level TEXT,
         personality TEXT, -- Serializado como JSON
         backstory TEXT,
+        appearance TEXT, -- JSON apariencia 3D
+        consumer TEXT, -- JSON perfil de consumidor
+        review_style TEXT, -- JSON estilo de reseña
         PRIMARY KEY (session_id, id),
         FOREIGN KEY (session_id) REFERENCES sessions(session_id) ON DELETE CASCADE
     )
     """)
+
+    # Migraciones de columnas extendidas en reviewers
+    for col in ("appearance", "consumer", "review_style"):
+        try:
+            cursor.execute(f"ALTER TABLE reviewers ADD COLUMN {col} TEXT")
+        except sqlite3.OperationalError:
+            pass
+
+    # Metadata opcional en reseñas
+    for col in ("pros", "cons", "would_recommend", "usage_duration", "verified_purchase"):
+        try:
+            cursor.execute(f"ALTER TABLE reviews ADD COLUMN {col} TEXT")
+        except sqlite3.OperationalError:
+            pass
     
     # Tabla para las reseñas generadas
     cursor.execute("""
@@ -143,9 +166,22 @@ def init_db():
         negative_points TEXT, -- Serializado como JSON
         keyword_analysis TEXT, -- Serializado como JSON
         demographic_insights TEXT, -- Serializado como JSON
+        market_fit_score REAL,
+        launch_recommendation TEXT,
+        segment_breakdown TEXT, -- JSON
         FOREIGN KEY (session_id) REFERENCES sessions(session_id) ON DELETE CASCADE
     )
     """)
+
+    for col, typ in (
+        ("market_fit_score", "REAL"),
+        ("launch_recommendation", "TEXT"),
+        ("segment_breakdown", "TEXT"),
+    ):
+        try:
+            cursor.execute(f"ALTER TABLE analysis ADD COLUMN {col} {typ}")
+        except sqlite3.OperationalError:
+            pass
     
     # Tabla para el estado de ejecución de las fases
     cursor.execute("""
@@ -253,6 +289,12 @@ def get_product(session_id: str) -> dict:
         "technical_specs": json.loads(row["technical_specs"] or "[]")
     }
 
+def _row_get(row, key, default=None):
+    try:
+        return row[key]
+    except (IndexError, KeyError):
+        return default
+
 def save_reviewers(session_id: str, reviewers: list):
     init_session(session_id)
     conn = get_connection()
@@ -262,8 +304,8 @@ def save_reviewers(session_id: str, reviewers: list):
         # Generate avatar URL deterministically — never trust the LLM for this
         avatar_url = _dicebear_url(r.get("name") or "")
         cursor.execute("""
-        INSERT INTO reviewers (session_id, id, name, avatar, bio, age, location, gender, education_level, personality, backstory)
-        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+        INSERT INTO reviewers (session_id, id, name, avatar, bio, age, location, gender, education_level, personality, backstory, appearance, consumer, review_style)
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
         """, (
             session_id,
             r.get("id"),
@@ -275,7 +317,10 @@ def save_reviewers(session_id: str, reviewers: list):
             r.get("gender"),
             r.get("education_level"),
             json.dumps(r.get("personality", {})),
-            r.get("backstory")
+            r.get("backstory"),
+            json.dumps(r.get("appearance") or {}),
+            json.dumps(r.get("consumer") or {}),
+            json.dumps(r.get("review_style") or {}),
         ))
     conn.commit()
     conn.close()
@@ -291,6 +336,9 @@ def get_reviewers(session_id: str) -> list:
         name = row["name"]
         # Always regenerate the URL from the name to ensure it's correct
         avatar_url = _dicebear_url(name) if name else (row["avatar"] or "")
+        appearance_raw = _row_get(row, "appearance") or "{}"
+        consumer_raw = _row_get(row, "consumer") or "{}"
+        review_style_raw = _row_get(row, "review_style") or "{}"
         result.append({
             "id": row["id"],
             "name": name,
@@ -301,7 +349,10 @@ def get_reviewers(session_id: str) -> list:
             "gender": row["gender"],
             "education_level": row["education_level"],
             "personality": json.loads(row["personality"] or "{}"),
-            "backstory": row["backstory"]
+            "backstory": row["backstory"],
+            "appearance": json.loads(appearance_raw) if appearance_raw else {},
+            "consumer": json.loads(consumer_raw) if consumer_raw else {},
+            "review_style": json.loads(review_style_raw) if review_style_raw else {},
         })
     return result
 
@@ -311,9 +362,11 @@ def save_reviews(session_id: str, reviews: list):
     cursor = conn.cursor()
     cursor.execute("DELETE FROM reviews WHERE session_id = ?", (session_id,))
     for r in reviews:
+        pros = r.get("pros")
+        cons = r.get("cons")
         cursor.execute("""
-        INSERT INTO reviews (session_id, id, bot_id, product_id, rating, title, content)
-        VALUES (?, ?, ?, ?, ?, ?, ?)
+        INSERT INTO reviews (session_id, id, bot_id, product_id, rating, title, content, pros, cons, would_recommend, usage_duration, verified_purchase)
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
         """, (
             session_id,
             r.get("id"),
@@ -321,7 +374,12 @@ def save_reviews(session_id: str, reviews: list):
             r.get("product_id"),
             r.get("rating"),
             r.get("title"),
-            r.get("content")
+            r.get("content"),
+            json.dumps(pros) if pros is not None else None,
+            json.dumps(cons) if cons is not None else None,
+            json.dumps(r.get("would_recommend")) if r.get("would_recommend") is not None else None,
+            r.get("usage_duration"),
+            json.dumps(r.get("verified_purchase")) if r.get("verified_purchase") is not None else None,
         ))
     conn.commit()
     conn.close()
@@ -334,14 +392,42 @@ def get_reviews(session_id: str) -> list:
     conn.close()
     result = []
     for row in rows:
-        result.append({
+        item = {
             "id": row["id"],
             "bot_id": row["bot_id"],
             "product_id": row["product_id"],
             "rating": row["rating"],
             "title": row["title"],
-            "content": row["content"]
-        })
+            "content": row["content"],
+        }
+        pros_raw = _row_get(row, "pros")
+        cons_raw = _row_get(row, "cons")
+        would_rec = _row_get(row, "would_recommend")
+        usage = _row_get(row, "usage_duration")
+        verified = _row_get(row, "verified_purchase")
+        if pros_raw:
+            try:
+                item["pros"] = json.loads(pros_raw)
+            except Exception:
+                pass
+        if cons_raw:
+            try:
+                item["cons"] = json.loads(cons_raw)
+            except Exception:
+                pass
+        if would_rec is not None:
+            try:
+                item["would_recommend"] = json.loads(would_rec)
+            except Exception:
+                item["would_recommend"] = would_rec
+        if usage:
+            item["usage_duration"] = usage
+        if verified is not None:
+            try:
+                item["verified_purchase"] = json.loads(verified)
+            except Exception:
+                item["verified_purchase"] = verified
+        result.append(item)
     return result
 
 def save_analysis(session_id: str, analysis: dict):
@@ -349,8 +435,11 @@ def save_analysis(session_id: str, analysis: dict):
     conn = get_connection()
     cursor = conn.cursor()
     cursor.execute("""
-    INSERT OR REPLACE INTO analysis (session_id, average_rating, rating_distribution, positive_points, negative_points, keyword_analysis, demographic_insights)
-    VALUES (?, ?, ?, ?, ?, ?, ?)
+    INSERT OR REPLACE INTO analysis (
+        session_id, average_rating, rating_distribution, positive_points, negative_points,
+        keyword_analysis, demographic_insights, market_fit_score, launch_recommendation, segment_breakdown
+    )
+    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
     """, (
         session_id,
         analysis.get("average_rating"),
@@ -358,7 +447,10 @@ def save_analysis(session_id: str, analysis: dict):
         json.dumps(analysis.get("positive_points", [])),
         json.dumps(analysis.get("negative_points", [])),
         json.dumps(analysis.get("keyword_analysis", [])),
-        json.dumps(analysis.get("demographic_insights", []))
+        json.dumps(analysis.get("demographic_insights", [])),
+        analysis.get("market_fit_score"),
+        analysis.get("launch_recommendation"),
+        json.dumps(analysis.get("segment_breakdown") or []),
     ))
     conn.commit()
     conn.close()
@@ -371,14 +463,27 @@ def get_analysis(session_id: str) -> dict:
     conn.close()
     if not row:
         return {}
-    return {
+    result = {
         "average_rating": row["average_rating"],
         "rating_distribution": json.loads(row["rating_distribution"] or "{}"),
         "positive_points": json.loads(row["positive_points"] or "[]"),
         "negative_points": json.loads(row["negative_points"] or "[]"),
         "keyword_analysis": json.loads(row["keyword_analysis"] or "[]"),
-        "demographic_insights": json.loads(row["demographic_insights"] or "[]")
+        "demographic_insights": json.loads(row["demographic_insights"] or "[]"),
     }
+    mfs = _row_get(row, "market_fit_score")
+    if mfs is not None:
+        result["market_fit_score"] = mfs
+    lr = _row_get(row, "launch_recommendation")
+    if lr:
+        result["launch_recommendation"] = lr
+    sb = _row_get(row, "segment_breakdown")
+    if sb:
+        try:
+            result["segment_breakdown"] = json.loads(sb)
+        except Exception:
+            result["segment_breakdown"] = []
+    return result
 
 def set_task_status(session_id: str, phase: str, status: str, error: str = None):
     init_session(session_id)
@@ -649,13 +754,21 @@ def get_user_by_id(user_id) -> dict:
 
 # ─── Saved Populations Helpers ─────────────────────────────────────────────────
 
-def save_population(user_id: int, name: str, description: str, num_reviewers: int, profile_parameters: dict) -> int:
+def save_population(
+    user_id: int,
+    name: str,
+    description: str,
+    num_reviewers: int,
+    profile_parameters: dict,
+    reviewers: list | None = None,
+) -> int:
     conn = get_connection()
     cursor = conn.cursor()
+    reviewers_json = json.dumps(reviewers or [], ensure_ascii=False)
     cursor.execute("""
-    INSERT INTO saved_populations (user_id, name, description, num_reviewers, profile_parameters)
-    VALUES (?, ?, ?, ?, ?)
-    """, (user_id, name, description, num_reviewers, json.dumps(profile_parameters)))
+    INSERT INTO saved_populations (user_id, name, description, num_reviewers, profile_parameters, reviewers)
+    VALUES (?, ?, ?, ?, ?, ?)
+    """, (user_id, name, description, num_reviewers, json.dumps(profile_parameters, ensure_ascii=False), reviewers_json))
     pop_id = cursor.lastrowid
     conn.commit()
     conn.close()
@@ -669,6 +782,17 @@ def get_saved_populations(user_id: int) -> list:
     conn.close()
     result = []
     for row in rows:
+        reviewers_raw = None
+        try:
+            reviewers_raw = row["reviewers"]
+        except (IndexError, KeyError):
+            reviewers_raw = None
+        try:
+            reviewers = json.loads(reviewers_raw) if reviewers_raw else []
+        except (TypeError, json.JSONDecodeError):
+            reviewers = []
+        if not isinstance(reviewers, list):
+            reviewers = []
         result.append({
             "id": row["id"],
             "user_id": row["user_id"],
@@ -676,9 +800,46 @@ def get_saved_populations(user_id: int) -> list:
             "description": row["description"],
             "num_reviewers": row["num_reviewers"],
             "profile_parameters": json.loads(row["profile_parameters"] or "{}"),
+            "reviewers": reviewers,
             "created_at": row["created_at"]
         })
     return result
+
+
+def get_saved_population_reviewers(pop_id: int, user_id: int) -> list | None:
+    """Devuelve la lista de reseñadores guardados, o None si la población no existe."""
+    conn = get_connection()
+    cursor = conn.cursor()
+    cursor.execute(
+        "SELECT reviewers FROM saved_populations WHERE id = ? AND user_id = ?",
+        (pop_id, user_id),
+    )
+    row = cursor.fetchone()
+    conn.close()
+    if not row:
+        return None
+    try:
+        reviewers_raw = row["reviewers"]
+    except (IndexError, KeyError):
+        reviewers_raw = None
+    try:
+        reviewers = json.loads(reviewers_raw) if reviewers_raw else []
+    except (TypeError, json.JSONDecodeError):
+        reviewers = []
+    return reviewers if isinstance(reviewers, list) else []
+
+
+def update_saved_population_reviewers(pop_id: int, user_id: int, reviewers: list) -> bool:
+    conn = get_connection()
+    cursor = conn.cursor()
+    cursor.execute(
+        "UPDATE saved_populations SET reviewers = ? WHERE id = ? AND user_id = ?",
+        (json.dumps(reviewers or [], ensure_ascii=False), pop_id, user_id),
+    )
+    changes = conn.total_changes
+    conn.commit()
+    conn.close()
+    return changes > 0
 
 def delete_saved_population(pop_id: int, user_id: int) -> bool:
     conn = get_connection()

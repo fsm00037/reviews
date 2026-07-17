@@ -570,6 +570,56 @@ export const DashboardPhase: React.FC<DashboardPhaseProps> = ({
 
           {activeTab === "metrics" ? (
             <>
+              {/* Market fit / launch recommendation */}
+              {(parsedAnalysisResult?.market_fit_score != null || parsedAnalysisResult?.launch_recommendation) && (
+                <div className="mb-6 rounded-2xl border border-primary/20 bg-gradient-to-r from-primary/[0.06] to-indigo-500/[0.04] p-5">
+                  <div className="flex flex-col md:flex-row md:items-center gap-5">
+                    {parsedAnalysisResult?.market_fit_score != null && (
+                      <div className="flex items-center gap-4 min-w-[180px]">
+                        <div className="relative w-16 h-16">
+                          <svg viewBox="0 0 36 36" className="w-full h-full -rotate-90">
+                            <path
+                              d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831"
+                              fill="none"
+                              stroke="currentColor"
+                              className="text-muted"
+                              strokeWidth="3"
+                            />
+                            <path
+                              d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831"
+                              fill="none"
+                              stroke="currentColor"
+                              className="text-primary"
+                              strokeWidth="3"
+                              strokeDasharray={`${Math.min(100, Math.max(0, Number(parsedAnalysisResult.market_fit_score)))}, 100`}
+                              strokeLinecap="round"
+                            />
+                          </svg>
+                          <div className="absolute inset-0 flex items-center justify-center text-sm font-extrabold text-foreground">
+                            {Math.round(Number(parsedAnalysisResult.market_fit_score))}
+                          </div>
+                        </div>
+                        <div>
+                          <p className="text-[10px] font-bold uppercase tracking-wider text-primary">Market Fit</p>
+                          <p className="text-xs text-muted-foreground mt-0.5">Encaje con la población simulada</p>
+                        </div>
+                      </div>
+                    )}
+                    {parsedAnalysisResult?.launch_recommendation && (
+                      <div className="flex-1">
+                        <p className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground mb-1 flex items-center gap-1.5">
+                          <Rocket className="h-3.5 w-3.5 text-primary" />
+                          Recomendación de lanzamiento
+                        </p>
+                        <p className="text-sm text-foreground leading-relaxed font-medium">
+                          {parsedAnalysisResult.launch_recommendation}
+                        </p>
+                      </div>
+                    )}
+                  </div>
+                </div>
+              )}
+
               <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
                 <Card className="border-border bg-background/50 hover:border-primary/20 glow-card-hover rounded-2xl shadow-sm transition-all duration-300">
                   <CardHeader className="pb-2">

@@ -32,6 +32,7 @@ def save_new_population():
     description = data.get('description', '')
     num_reviewers = data.get('num_reviewers')
     profile_parameters = data.get('profile_parameters')
+    reviewers = data.get('reviewers') or []
     
     if not name or not num_reviewers or not profile_parameters:
         return jsonify({"error": "Faltan campos obligatorios (name, num_reviewers, profile_parameters)"}), 400
@@ -40,12 +41,48 @@ def save_new_population():
         num_reviewers = int(num_reviewers)
     except ValueError:
         return jsonify({"error": "num_reviewers debe ser un número entero"}), 400
+
+    if not isinstance(reviewers, list):
+        reviewers = []
         
-    pop_id = db.save_population(user_id, name, description, num_reviewers, profile_parameters)
+    pop_id = db.save_population(user_id, name, description, num_reviewers, profile_parameters, reviewers)
     return jsonify({
         "message": "Población guardada con éxito",
-        "id": pop_id
+        "id": pop_id,
+        "reviewers_saved": len(reviewers),
     }), 201
+
+
+@populations_bp.route('/<int:pop_id>/reviewers', methods=['GET'])
+def get_population_reviewers(pop_id):
+    """Obtener reseñadores guardados de una población (sin regenerar)."""
+    user_id = get_user_id()
+    if not user_id:
+        return jsonify({"error": "No autorizado"}), 401
+
+    reviewers = db.get_saved_population_reviewers(pop_id, user_id)
+    if reviewers is None:
+        return jsonify({"error": "Población no encontrada"}), 404
+    return jsonify(reviewers), 200
+
+
+@populations_bp.route('/<int:pop_id>/reviewers', methods=['PUT'])
+def put_population_reviewers(pop_id):
+    """Actualizar/cachear reseñadores de una población ya creada."""
+    user_id = get_user_id()
+    if not user_id:
+        return jsonify({"error": "No autorizado"}), 401
+
+    data = request.get_json() or {}
+    reviewers = data.get('reviewers') or []
+    if not isinstance(reviewers, list):
+        return jsonify({"error": "reviewers debe ser una lista"}), 400
+
+    ok = db.update_saved_population_reviewers(pop_id, user_id, reviewers)
+    if not ok:
+        return jsonify({"error": "Población no encontrada"}), 404
+    return jsonify({"message": "Reseñadores actualizados", "count": len(reviewers)}), 200
+
 
 @populations_bp.route('/<int:pop_id>', methods=['DELETE'])
 def delete_population(pop_id):

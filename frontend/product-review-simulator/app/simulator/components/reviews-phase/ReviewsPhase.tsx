@@ -6,6 +6,7 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { ArrowLeft, ArrowRight, BarChart3, MessageSquare, Star, Zap, Sparkles } from "lucide-react";
 import { User as MaleIcon, User as FemaleIcon } from "lucide-react";
 import { Product, BotProfile, Review } from "@/lib/types";
+import { getBotAvatarUrl } from "@/lib/bot-avatar";
 
 interface ReviewsPhaseProps {
   product: Product;
@@ -213,7 +214,7 @@ export const ReviewsPhase: React.FC<ReviewsPhaseProps> = ({
                 <div className="flex items-center justify-between mb-2">
                   <div className="flex items-center gap-2">
                     <Avatar className="h-7 w-7 border border-border shadow-sm shrink-0">
-                      <AvatarImage src={bot?.avatar?.includes('dicebear') ? bot.avatar : `https://api.dicebear.com/10.x/croodles-neutral/svg?mouthVariant=variant01,variant02,variant03,variant04,variant05,variant06,variant07,variant09,variant10,variant11,variant12,variant13,variant14,variant15,variant16,variant17,variant18&seed=${encodeURIComponent(bot?.name || 'avatar')}`} alt={bot?.name} />
+                      <AvatarImage src={getBotAvatarUrl(bot)} alt={bot?.name} />
                       <AvatarFallback
                         className={`${bot?.gender === "Male" ? "bg-gradient-to-br from-indigo-500 to-indigo-600" : "bg-gradient-to-br from-pink-500 to-purple-600"} text-white flex items-center justify-center`}
                       >
@@ -237,8 +238,54 @@ export const ReviewsPhase: React.FC<ReviewsPhaseProps> = ({
                   </div>
                 </div>
 
-                <h4 className="font-bold text-xs mb-1 text-foreground">{review.title}</h4>
+                <div className="flex flex-wrap items-center gap-2 mb-1">
+                  <h4 className="font-bold text-xs text-foreground">{review.title}</h4>
+                  {review.usage_duration && (
+                    <span className="text-[9px] font-semibold uppercase tracking-wider px-1.5 py-0.5 rounded bg-muted text-muted-foreground">
+                      Uso: {review.usage_duration}
+                    </span>
+                  )}
+                  {review.verified_purchase && (
+                    <span className="text-[9px] font-semibold uppercase tracking-wider px-1.5 py-0.5 rounded bg-emerald-500/10 text-emerald-600 dark:text-emerald-400">
+                      Compra verificada
+                    </span>
+                  )}
+                  {review.would_recommend === true && (
+                    <span className="text-[9px] font-semibold uppercase tracking-wider px-1.5 py-0.5 rounded bg-primary/10 text-primary">
+                      Recomienda
+                    </span>
+                  )}
+                  {review.would_recommend === false && (
+                    <span className="text-[9px] font-semibold uppercase tracking-wider px-1.5 py-0.5 rounded bg-red-500/10 text-red-500">
+                      No recomienda
+                    </span>
+                  )}
+                </div>
                 <p className="text-xs text-muted-foreground leading-relaxed">{review.content}</p>
+                {(review.pros?.length || review.cons?.length) ? (
+                  <div className="mt-3 grid grid-cols-1 sm:grid-cols-2 gap-2">
+                    {review.pros && review.pros.length > 0 && (
+                      <div className="rounded-lg bg-emerald-500/5 border border-emerald-500/15 p-2.5">
+                        <p className="text-[9px] font-bold uppercase tracking-wider text-emerald-600 dark:text-emerald-400 mb-1">Pros</p>
+                        <ul className="space-y-0.5">
+                          {review.pros.map((p, i) => (
+                            <li key={i} className="text-[11px] text-muted-foreground leading-snug">+ {p}</li>
+                          ))}
+                        </ul>
+                      </div>
+                    )}
+                    {review.cons && review.cons.length > 0 && (
+                      <div className="rounded-lg bg-red-500/5 border border-red-500/15 p-2.5">
+                        <p className="text-[9px] font-bold uppercase tracking-wider text-red-500 mb-1">Contras</p>
+                        <ul className="space-y-0.5">
+                          {review.cons.map((c, i) => (
+                            <li key={i} className="text-[11px] text-muted-foreground leading-snug">− {c}</li>
+                          ))}
+                        </ul>
+                      </div>
+                    )}
+                  </div>
+                ) : null}
               </motion.div>
             );
           })}

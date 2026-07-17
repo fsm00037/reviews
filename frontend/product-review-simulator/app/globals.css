@@ -3,49 +3,55 @@
 @tailwind utilities;
 
 @layer base {
+  /* —— Modo claro (principal): limpio, aireado, indigo suave —— */
   :root {
-    --background: 240 5% 98%;
-    --foreground: 240 10% 3.9%;
+    --background: 220 40% 98.5%;
+    --foreground: 224 32% 14%;
     --card: 0 0% 100%;
-    --card-foreground: 240 10% 3.9%;
+    --card-foreground: 224 32% 14%;
     --popover: 0 0% 100%;
-    --popover-foreground: 240 10% 3.9%;
-    --primary: 250 89% 65%; /* Elegant high-tech Indigo */
-    --primary-foreground: 0 0% 98%;
-    --secondary: 240 4.8% 95.9%;
-    --secondary-foreground: 240 5.9% 10%;
-    --muted: 240 4.8% 95.9%;
-    --muted-foreground: 240 3.8% 46.1%;
-    --accent: 240 4.8% 95.9%;
-    --accent-foreground: 240 5.9% 10%;
-    --destructive: 0 84.2% 60.2%;
-    --destructive-foreground: 0 0% 98%;
-    --border: 240 5.9% 90%;
-    --input: 240 5.9% 90%;
-    --ring: 250 89% 65%;
-    --radius: 0.85rem;
+    --popover-foreground: 224 32% 14%;
+    --primary: 243 75% 59%;
+    --primary-foreground: 0 0% 100%;
+    --secondary: 220 30% 96%;
+    --secondary-foreground: 224 28% 20%;
+    --muted: 220 28% 96%;
+    --muted-foreground: 220 12% 42%;
+    --accent: 243 80% 96%;
+    --accent-foreground: 243 55% 40%;
+    --destructive: 0 72% 51%;
+    --destructive-foreground: 0 0% 100%;
+    --border: 220 20% 90%;
+    --input: 220 20% 90%;
+    --ring: 243 75% 59%;
+    --radius: 0.9rem;
+    --surface-soft: 220 45% 97%;
+    --glow: 243 75% 59%;
   }
 
+  /* —— Modo oscuro (secundario, menos negro puro) —— */
   .dark {
-    --background: 240 10% 2.8%; /* Ultra deep dark, almost pure black */
-    --foreground: 0 0% 98%;
-    --card: 240 10% 4.2%; /* Subtle off-black card background */
-    --card-foreground: 0 0% 98%;
-    --popover: 240 10% 4.2%;
-    --popover-foreground: 0 0% 98%;
-    --primary: 250 89% 65%; /* High-tech Indigo */
-    --primary-foreground: 0 0% 98%;
-    --secondary: 240 3.7% 12.9%;
-    --secondary-foreground: 0 0% 98%;
-    --muted: 240 3.7% 12.9%;
-    --muted-foreground: 240 5% 64.9%;
-    --accent: 240 3.7% 12.9%;
-    --accent-foreground: 0 0% 98%;
-    --destructive: 0 62.8% 30.6%;
-    --destructive-foreground: 0 0% 98%;
-    --border: 240 3.7% 12.9%; /* Sleek thin borders */
-    --input: 240 3.7% 12.9%;
-    --ring: 250 89% 65%;
+    --background: 230 22% 8%;
+    --foreground: 220 20% 96%;
+    --card: 230 20% 11%;
+    --card-foreground: 220 20% 96%;
+    --popover: 230 20% 11%;
+    --popover-foreground: 220 20% 96%;
+    --primary: 243 80% 68%;
+    --primary-foreground: 0 0% 100%;
+    --secondary: 230 16% 16%;
+    --secondary-foreground: 220 20% 96%;
+    --muted: 230 16% 16%;
+    --muted-foreground: 220 12% 64%;
+    --accent: 243 30% 18%;
+    --accent-foreground: 243 80% 80%;
+    --destructive: 0 62% 45%;
+    --destructive-foreground: 0 0% 100%;
+    --border: 230 14% 18%;
+    --input: 230 14% 18%;
+    --ring: 243 80% 68%;
+    --surface-soft: 230 18% 12%;
+    --glow: 243 80% 68%;
   }
 }
 
@@ -53,40 +59,56 @@
   * {
     @apply border-border;
   }
+  html {
+    @apply scroll-smooth;
+  }
   body {
-    @apply bg-background text-foreground antialiased selection:bg-primary/20 selection:text-primary;
+    @apply bg-background text-foreground antialiased selection:bg-primary/15 selection:text-primary;
   }
 }
 
-/* Startup Premium Grids & Ambient Glows */
+/* Grid sutil (claro por defecto) */
 .bg-grid-pattern {
-  background-size: 32px 32px;
-  background-image: 
-    linear-gradient(to right, rgba(120, 119, 198, 0.04) 1px, transparent 1px),
-    linear-gradient(to bottom, rgba(120, 119, 198, 0.04) 1px, transparent 1px);
+  background-size: 40px 40px;
+  background-image:
+    linear-gradient(to right, rgba(99, 102, 241, 0.05) 1px, transparent 1px),
+    linear-gradient(to bottom, rgba(99, 102, 241, 0.05) 1px, transparent 1px);
 }
 .dark .bg-grid-pattern {
-  background-image: 
-    linear-gradient(to right, rgba(255, 255, 255, 0.02) 1px, transparent 1px),
-    linear-gradient(to bottom, rgba(255, 255, 255, 0.02) 1px, transparent 1px);
+  background-image:
+    linear-gradient(to right, rgba(255, 255, 255, 0.03) 1px, transparent 1px),
+    linear-gradient(to bottom, rgba(255, 255, 255, 0.03) 1px, transparent 1px);
 }
 
 .mask-radial {
   mask-image: radial-gradient(circle at center, black 40%, transparent 90%);
 }
 
-/* Premium Card hover glowing effect */
+/* Cards con hover elegante en claro */
 .glow-card-hover {
   transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
 }
 .glow-card-hover:hover {
-  box-shadow: 0 0 25px -5px rgba(99, 102, 241, 0.15), 0 8px 20px -6px rgba(0, 0, 0, 0.15);
-  border-color: rgba(99, 102, 241, 0.3);
+  box-shadow:
+    0 0 0 1px rgba(99, 102, 241, 0.12),
+    0 12px 28px -10px rgba(99, 102, 241, 0.18),
+    0 8px 16px -8px rgba(15, 23, 42, 0.08);
+  border-color: rgba(99, 102, 241, 0.28);
   transform: translateY(-2px);
 }
 .dark .glow-card-hover:hover {
-  box-shadow: 0 0 25px -5px rgba(99, 102, 241, 0.25), 0 8px 20px -6px rgba(0, 0, 0, 0.5);
+  box-shadow:
+    0 0 25px -5px rgba(99, 102, 241, 0.22),
+    0 8px 20px -6px rgba(0, 0, 0, 0.45);
   border-color: rgba(99, 102, 241, 0.4);
 }
 
-
+/* Superficies suaves reutilizables */
+.surface-soft {
+  background: hsl(var(--surface-soft));
+}
+.surface-glass {
+  background: hsl(var(--card) / 0.82);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+}

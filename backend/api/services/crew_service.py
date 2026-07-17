@@ -126,7 +126,13 @@ def _bg_phase2(num_reviewers: int, profile_parameters: Dict[str, Any], model_nam
 def execute_phase2(num_reviewers: int, profile_parameters: Dict[str, Any], model_name: str = None, session_id: str = "default-session"):
     """Inicia la Fase 2 de manera asíncrona"""
     session_dir = get_session_dir(session_id)
+    # Limpiar YA los reseñadores: si no, un poll puede devolver perfiles
+    # de una generación anterior (otra población / el simulador).
     db.set_task_status(session_id, 'phase2', 'pending')
+    try:
+        db.save_reviewers(session_id, [])
+    except Exception as e:
+        print(f"⚠️ No se pudieron limpiar reseñadores al iniciar phase2: {e}")
     
     thread = threading.Thread(target=_bg_phase2, args=(num_reviewers, profile_parameters, model_name, session_id, session_dir))
     thread.daemon = True
