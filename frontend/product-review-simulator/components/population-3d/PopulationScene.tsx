@@ -2,7 +2,7 @@
 
 import React, { useState, Suspense, useMemo } from "react"
 import { Canvas } from "@react-three/fiber"
-import { OrbitControls, Text, ContactShadows, Environment } from "@react-three/drei"
+import { OrbitControls, Text, Environment } from "@react-three/drei"
 import * as THREE from "three"
 import { RefreshCw } from "lucide-react"
 import type { BotProfile } from "@/lib/types"
@@ -295,15 +295,10 @@ function SceneContent({
         />
       ))}
 
-      <ContactShadows
-        position={[0, 0.001, 0]}
-        opacity={0.35}
-        scale={22}
-        blur={2.2}
-        far={6}
-        resolution={256}
-        frames={1}
-      />
+      <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, 0.001, 0]}>
+        <ringGeometry args={[0.1, 10, 32]} />
+        <meshBasicMaterial color="#000000" transparent opacity={0.05} depthWrite={false} />
+      </mesh>
 
       {/* Environment ligero: sin HDR pesado si hay muchos */}
       {bots.length <= 20 && <Environment preset="apartment" environmentIntensity={0.25} />}
@@ -332,9 +327,14 @@ export function PopulationScene({
 }: PopulationSceneProps) {
   const [internalLayout, setInternalLayout] = useState<SceneLayout>(layout)
   const [personalityMapIndex, setPersonalityMapIndex] = useState(0)
+  const [mounted, setMounted] = useState(false)
   const activeMap = getPersonalityMap(personalityMapIndex)
 
-  if (!bots.length) {
+  React.useEffect(() => {
+    setMounted(true)
+  }, [])
+
+  if (!mounted || !bots.length) {
     return (
       <div
         className={`flex items-center justify-center rounded-2xl border border-border bg-muted/20 ${className}`}
@@ -420,15 +420,13 @@ export function PopulationScene({
         }}
         onPointerMissed={() => onSelect?.(null)}
       >
-        <Suspense fallback={null}>
-          <SceneContent
-            bots={bots}
-            selectedId={selectedId}
-            onSelect={onSelect}
-            layout={internalLayout}
-            personalityMapIndex={personalityMapIndex}
-          />
-        </Suspense>
+        <SceneContent
+          bots={bots}
+          selectedId={selectedId}
+          onSelect={onSelect}
+          layout={internalLayout}
+          personalityMapIndex={personalityMapIndex}
+        />
       </Canvas>
     </div>
   )

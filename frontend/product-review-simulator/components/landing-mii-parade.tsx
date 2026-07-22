@@ -4,9 +4,8 @@
  * Escenario 3D protagonista de la landing: población Mii caminando.
  * Ligero (sin texturas de cara ni IA).
  */
-import React, { Suspense, useEffect, useMemo, useRef, useState } from "react"
+import React, { useEffect, useMemo, useRef, useState } from "react"
 import { Canvas, useFrame } from "@react-three/fiber"
-import { ContactShadows } from "@react-three/drei"
 import * as THREE from "three"
 import { loadAvatarFaceTexture, createHeadGeometryWithFaceUVs } from "@/lib/avatar-texture"
 
@@ -562,32 +561,6 @@ function StageFloor({ reveal }: { reveal: boolean }) {
   )
 }
 
-function FloorContactShadows({ reveal }: { reveal: boolean }) {
-  // ContactShadows (frames=1) no anima bien: montar con un pequeño delay al revelar
-  const [show, setShow] = useState(false)
-  useEffect(() => {
-    if (!reveal) {
-      setShow(false)
-      return
-    }
-    const t = window.setTimeout(() => setShow(true), 280)
-    return () => window.clearTimeout(t)
-  }, [reveal])
-
-  if (!show) return null
-  return (
-    <ContactShadows
-      position={[0, 0, 0]}
-      opacity={FLOOR_OP.shadow}
-      scale={18}
-      blur={2.8}
-      far={5}
-      resolution={256}
-      frames={1}
-    />
-  )
-}
-
 function ParadeScene({
   walkers,
   faces,
@@ -608,7 +581,10 @@ function ParadeScene({
       {walkers.map((w) => (
         <ParadeMii key={w.id} w={w} preloadedFace={faces.get(w.id) ?? null} reveal={reveal} />
       ))}
-      <FloorContactShadows reveal={reveal} />
+      <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, -0.01, 0]}>
+        <ringGeometry args={[RING_INNER - 0.2, RING_OUTER + 0.2, 64]} />
+        <meshBasicMaterial color="#000000" transparent opacity={0.06} depthWrite={false} />
+      </mesh>
     </>
   )
 }
@@ -623,41 +599,31 @@ const WALKER_COUNT = 8
 
 export default function LandingMiiParade({ className = "", variant = "hero" }: LandingMiiParadeProps) {
   const isHero = variant === "hero"
+  const [mounted, setMounted] = useState(false)
   const walkers = useMemo(() => buildWalkers(WALKER_COUNT), [])
   const [faces, setFaces] = useState<Map<number, THREE.Texture>>(() => new Map())
-  const [assetsReady, setAssetsReady] = useState(false)
-  const [glReady, setGlReady] = useState(false)
   const [reveal, setReveal] = useState(false)
 
-  // Precarga caras en paralelo (antes / durante montaje del canvas)
   useEffect(() => {
+    setMounted(true)
+    const t = window.setTimeout(() => setReveal(true), 100)
+    return () => window.clearTimeout(t)
+  }, [])
+
+  // Precarga caras en paralelo
+  useEffect(() => {
+    if (!mounted) return
     let cancelled = false
-    const safety = window.setTimeout(() => {
-      if (!cancelled) setAssetsReady(true)
-    }, 2200)
 
     preloadParadeFaces(walkers).then((map) => {
       if (cancelled) return
       setFaces(map)
-      setAssetsReady(true)
-      window.clearTimeout(safety)
     })
 
     return () => {
       cancelled = true
-      window.clearTimeout(safety)
     }
-  }, [walkers])
-
-  // Reveal solo cuando caras + WebGL están listos → transición profesional
-  useEffect(() => {
-    if (!assetsReady || !glReady || reveal) return
-    const id = window.requestAnimationFrame(() => {
-      // un frame extra para que el primer paint del canvas no sea vacío
-      window.requestAnimationFrame(() => setReveal(true))
-    })
-    return () => window.cancelAnimationFrame(id)
-  }, [assetsReady, glReady, reveal])
+  }, [walkers, mounted])
 
   return (
     <div
@@ -687,28 +653,27 @@ export default function LandingMiiParade({ className = "", variant = "hero" }: L
       )}
       {!isHero && <div className="absolute inset-0 z-10 bg-gradient-to-t from-background/50 via-transparent to-transparent" />}
 
-      <div
-        className={`absolute inset-0 transition-opacity duration-[1100ms] ease-out ${
-          reveal ? "opacity-100" : "opacity-0"
-        }`}
-      >
-        <Canvas
-          dpr={[1, 1.35]}
-          camera={{
-            position: isHero ? [0, 2.4, 9.5] : [0, 1.1, 7.5],
-            fov: isHero ? 36 : 38,
-            near: 0.1,
-            far: 50,
-          }}
-          gl={{ antialias: true, alpha: true, powerPreference: "low-power" }}
-          style={{ background: "transparent" }}
-          onCreated={() => setGlReady(true)}
+      {mounted && (
+        <div
+          className={`absolute inset-0 transition-opacity duration-[1100ms] ease-out ${
+            reveal ? "opacity-100" : "opacity-0"
+          }`}
         >
-          <Suspense fallback={null}>
+          <Canvas
+            dpr={[1, 1.35]}
+            camera={{
+              position: isHero ? [0, 2.4, 9.5] : [0, 1.1, 7.5],
+              fov: isHero ? 36 : 38,
+              near: 0.1,
+              far: 50,
+            }}
+            gl={{ antialias: true, alpha: true, powerPreference: "low-power" }}
+            style={{ background: "transparent" }}
+          >
             <ParadeScene walkers={walkers} faces={faces} reveal={reveal} />
-          </Suspense>
-        </Canvas>
-      </div>
+          </Canvas>
+        </div>
+      )}
     </div>
   )
 }
